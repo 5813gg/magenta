@@ -32,6 +32,7 @@ These functions are necessary for use with the RL Tuner class.
 """
 
 import os
+import sys
 
 # internal imports
 
