@@ -19,8 +19,8 @@
 import numpy as np
 import tensorflow as tf
 
-from magenta.models.rl_tuner import rl_tuner_ops
-
+#from magenta.models.rl_tuner import rl_tuner_ops
+import rl_tuner_ops
 
 def compute_composition_stats(rl_tuner,
                               num_compositions=10000,
