@@ -41,8 +41,10 @@ import tensorflow as tf
 import magenta
 from magenta.common import sequence_example_lib
 #from magenta.models.rl_tuner import rl_tuner_ops
+REPO_PATH = "/home/natasha/Developer/magenta_my_fork/magenta/magenta/models"
+sys.path.append(REPO_PATH)
 import rl_tuner_ops
-from magenta.models.shared import events_rnn_graph
+from shared import events_rnn_graph
 from magenta.music import melodies_lib
 from magenta.music import midi_io
 from magenta.music import sequences_lib
