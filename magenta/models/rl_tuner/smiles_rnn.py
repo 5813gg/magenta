@@ -104,7 +104,7 @@ class SmilesRNN(object):
       self.vocab_file = vocab_file
       self.pickle_file = pickle_file
 
-      self.data_loader = smiles_data_loader.SmilesLoader(data_file, vocab_file, 
+      self.data_loader = smiles_data_loader.SmilesLoader(vocab_file, data_file, 
                                                          pickle_file, self.hparams.batch_size)
 
     self.build_graph()
