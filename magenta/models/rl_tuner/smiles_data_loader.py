@@ -17,7 +17,7 @@ class SmilesLoader():
         self.create_char_conversions()
 
         self.batch_list = []
-        if os.path.exists(self.numpy_file):
+        if os.path.exists(self.pickle_file):
             self.load_preprocessed()
         else:
             self.preprocess()
