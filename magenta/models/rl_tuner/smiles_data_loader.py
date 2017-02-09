@@ -98,8 +98,12 @@ class SmilesLoader():
         return string.rstrip('\n')
 
     def next_batch(self, dataset='train'):
+        num_batches = len(self.batches[dataset])
+        i = np.random.randint(0,num_batches)
 
-        x, y = self.x_batches[self.pointer], self.y_batches[self.pointer]
-        self.pointer += 1
-        return x, y
+        X = self.batches[dataset][i]['X']
+        Y = self.batches[dataset][i]['Y']
+        lens = = self.batches[dataset][i]['lengths']
+
+        return X, Y, lens
 
