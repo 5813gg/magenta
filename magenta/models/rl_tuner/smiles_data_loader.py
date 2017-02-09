@@ -53,9 +53,7 @@ class SmilesLoader():
         
         pickle.dump(self.batch_list, open(self.pickle_file,"wb"))
 
-    def smiles_batch_to_one_hot(self, smiles_list, max_len):
-        smiles_list = [self.check_len_and_pad(x) for x in smiles_list if self.check_len_and_pad(x)]
-        
+    def smiles_batch_to_one_hot(self, smiles_list, max_len):        
         Z = np.zeros((len(smiles_list),
                       max_len, self.vocab_size),
                       dtype=np.bool)
@@ -65,10 +63,6 @@ class SmilesLoader():
                 print '\t', t, char, self.char_to_index[char]
                 Z[i, t, self.char_to_index[char]] = 1
         return Z
-
-    def check_len_and_pad(self, string):
-        if len(string) <= self.max_seq_len:
-            return string + " " * (self.max_seq_len - len(string))
 
     def clean_smile(self, string):
         return string.rstrip('\n')
