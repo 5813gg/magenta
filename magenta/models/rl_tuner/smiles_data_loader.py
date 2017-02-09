@@ -41,6 +41,7 @@ class SmilesLoader():
         i = 0
         while(i < num_seqs):
             smiles = lines[i:i+self.batch_size]
+            smiles = [self.clean_smile(x) for x in smiles]
             lens = [len(x) for x in smiles]
             max_len = max(lens)
 
@@ -49,7 +50,7 @@ class SmilesLoader():
         pickle.dump(self.batch_list, open(self.pickle_file,"wb"))
 
     def smiles_batch_to_one_hot(self, smiles_list, max_len):
-        smiles_list = [self.clean_and_pad_smile(x) for x in smiles_list if self.check_smile_len(x)]
+        smiles_list = [self.check_len_and_pad(x) for x in smiles_list if self.check_len_and_pad(x)]
         
         Z = np.zeros((len(smiles_list),
                       max_len, self.vocab_size),
@@ -59,15 +60,12 @@ class SmilesLoader():
                 Z[i, t, self.char_to_index[char]] = 1
         return Z
 
-    def check_smile_len(self, string):
+    def check_len_and_pad(self, string):
         if len(string) <= self.max_seq_len:
-            return True
-        else:
-            return False
+            return string + " " * (self.max_seq_len - len(string))
 
-    def clean_and_pad_smile(self, string):
-        string = string.rstrip('\n')
-        return string + " " * (self.max_seq_len - len(string))
+    def clean_smile(self, string):
+        return string.rstrip('\n')
 
     def next_batch(self):
         x, y = self.x_batches[self.pointer], self.y_batches[self.pointer]
