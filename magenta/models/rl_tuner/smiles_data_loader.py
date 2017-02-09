@@ -3,28 +3,39 @@ import os
 import collections
 from six.moves import cPickle
 import numpy as np
+import json
 
-class TextLoader():
-    def __init__(self, data_dir, batch_size, seq_length, encoding='utf-8'):
-        self.data_dir = data_dir
+class SmilesLoader():
+    def __init__(self, input_file, vocab_file, batch_size, numpy_file=None, max_seq_length=120):
+        self.input_file = input_file
+        self.vocab_file = vocab_file
         self.batch_size = batch_size
-        self.seq_length = seq_length
-        self.encoding = encoding
+        self.numpy_file = numpy_file
+        self.max_seq_length = max_seq_length
 
-        input_file = os.path.join(data_dir, "input.txt")
-        vocab_file = os.path.join(data_dir, "vocab.pkl")
-        tensor_file = os.path.join(data_dir, "data.npy")
-
-        if not (os.path.exists(vocab_file) and os.path.exists(tensor_file)):
-            print("reading text file")
-            self.preprocess(input_file, vocab_file, tensor_file)
+        self.create_char_conversions()
+        
+        if self.numpy_file is not None:
+            self.load_preprocessed
         else:
-            print("loading preprocessed files")
-            self.load_preprocessed(vocab_file, tensor_file)
-        self.create_batches()
-        self.reset_batch_pointer()
+            self.preprocess()
 
-    def preprocess(self, input_file, vocab_file, tensor_file):
+    def create_char_conversions(self):
+        self.char_list = json.load(open(vocab_file))
+        self.n_chars = len(self.char_list)
+        self.char_to_index = dict((c, i) for i, c in enumerate(self.char_list))
+        self.index_to_char = dict((i, c) for i, c in enumerate(self.char_list))
+
+    def load_preprocessed(self):
+        with open(vocab_file, 'rb') as f:
+            self.chars = cPickle.load(f)
+        self.vocab_size = len(self.chars)
+        self.vocab = dict(zip(self.chars, range(len(self.chars))))
+        self.tensor = np.load(tensor_file)
+        self.num_batches = int(self.tensor.size / (self.batch_size *
+                                                   self.seq_length))
+
+    def preprocess(self):
         with codecs.open(input_file, "r", encoding=self.encoding) as f:
             data = f.read()
         counter = collections.Counter(data)
@@ -37,30 +48,7 @@ class TextLoader():
         self.tensor = np.array(list(map(self.vocab.get, data)))
         np.save(tensor_file, self.tensor)
 
-    def load_preprocessed(self, vocab_file, tensor_file):
-        with open(vocab_file, 'rb') as f:
-            self.chars = cPickle.load(f)
-        self.vocab_size = len(self.chars)
-        self.vocab = dict(zip(self.chars, range(len(self.chars))))
-        self.tensor = np.load(tensor_file)
-        self.num_batches = int(self.tensor.size / (self.batch_size *
-                                                   self.seq_length))
 
-    def create_batches(self):
-        self.num_batches = int(self.tensor.size / (self.batch_size *
-                                                   self.seq_length))
-
-        # When the data (tensor) is too small, let's give them a better error message
-        if self.num_batches==0:
-            assert False, "Not enough data. Make seq_length and batch_size small."
-
-        self.tensor = self.tensor[:self.num_batches * self.batch_size * self.seq_length]
-        xdata = self.tensor
-        ydata = np.copy(self.tensor)
-        ydata[:-1] = xdata[1:]
-        ydata[-1] = xdata[0]
-        self.x_batches = np.split(xdata.reshape(self.batch_size, -1), self.num_batches, 1)
-        self.y_batches = np.split(ydata.reshape(self.batch_size, -1), self.num_batches, 1)
 
 
     def next_batch(self):
@@ -68,5 +56,3 @@ class TextLoader():
         self.pointer += 1
         return x, y
 
-    def reset_batch_pointer(self):
-        self.pointer = 0

@@ -12,6 +12,7 @@ LSTM_STATE_NAME = 'lstm'
 
 # Number of output note classes. This is a property of the dataset.
 NUM_CLASSES = 38
+NUM_CLASSES_SMILE = 35
 
 # Default batch size.
 BATCH_SIZE = 128
@@ -106,7 +107,7 @@ def smiles_hparams():
                         decay_rate=0.85,
                         rnn_layer_sizes=[512],
                         skip_first_n_losses=32,
-                        one_hot_length=NUM_CLASSES,
+                        one_hot_length=NUM_CLASSES_SMILE,
                         exponentially_decay_learning_rate=True)
 
 
