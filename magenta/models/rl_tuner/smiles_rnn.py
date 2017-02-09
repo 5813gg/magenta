@@ -30,6 +30,12 @@ from magenta.common import sequence_example_lib
 
 import rl_tuner_ops
 
+def reload_files():
+  """Used to reload the imported dependency files (necessary for jupyter 
+  notebooks).
+  """
+  reload(rl_tuner_ops)
+  
 
 class SmilesRNN(object):
   """Builds graph for a Note RNN and instantiates weights from a checkpoint.
@@ -42,10 +48,8 @@ class SmilesRNN(object):
   Used as part of the RLTuner class.
   """
 
-  def __init__(self, graph, scope, checkpoint_dir, checkpoint_file=None, 
-               hparams=None,
-               softmax_within_graph=True, note_rnn_type='default', 
-               checkpoint_scope='rnn_model'):
+  def __init__(self, graph, scope='smiles_rnn', checkpoint_dir=None, checkpoint_file=None, 
+               hparams=None, note_rnn_type='default', checkpoint_scope='rnn_model'):
     """Initialize by building the graph and loading a previous checkpoint.
 
     Args:
@@ -56,40 +60,37 @@ class SmilesRNN(object):
         be found in the checkpoint_dir
       hparams: A tf_lib.HParams object. Must match the hparams used to create 
         the checkpoint file.
-      softmax_within_graph: If True, then when the network is called, it will
-        output softmax probabilities for the next note. if False, it will output
-        logits only. Used to control whether MelodyQ network is reinforcing
-        softmax probabilities or logits.
       note_rnn_type: If 'default', will use the basic LSTM described in the 
         research paper. If 'basic_rnn', will assume the checkpoint is from a
         Magenta basic_rnn model.
       checkpoint_scope: The scope in lstm which the model was originally defined
         when it was first trained.
     """
-    self.graph = graph
     self.session = None
     self.scope = scope
     self.batch_size = 1
-    self.softmax_within_graph = softmax_within_graph
     self.checkpoint_scope = checkpoint_scope
     self.note_rnn_type = note_rnn_type
     self.checkpoint_dir = checkpoint_dir
     self.checkpoint_file = checkpoint_file
+
+    if graph is None:
+      self.graph = tf.Graph()
+    else:
+      self.graph = graph
 
     if hparams is not None:
       tf.logging.info('Using custom hparams')
       self.hparams = hparams
     else:
       tf.logging.info('Empty hparams string. Using defaults')
-      self.hparams = rl_tuner_ops.default_hparams()
+      self.hparams = rl_tuner_ops.smiles_hparams()
 
     self.build_graph()
     self.state_value = self.get_zero_state()
 
     self.variable_names = rl_tuner_ops.get_variable_names(self.graph, 
                                                           self.scope)
-
-    self.transpose_amount = 0
 
   def get_zero_state(self):
     """Gets an initial state of zeros of the appropriate size.
@@ -213,22 +214,38 @@ class SmilesRNN(object):
                                     [-1, self.hparams.rnn_layer_sizes[-1]])
           logits_flat = tf.contrib.layers.legacy_linear(
               outputs_flat, self.hparams.one_hot_length)
-          if self.softmax_within_graph:
-            softmax = tf.nn.softmax(logits_flat)
-            return softmax, final_state
-          else:
-            return logits_flat, final_state
-
-        if self.softmax_within_graph:
-          (self.softmax, self.state_tensor) = run_network_on_melody(
-              self.melody_sequence, self.lengths, self.initial_state)
-        else:
-          (self.logits, self.state_tensor) = run_network_on_melody(
-              self.melody_sequence, self.lengths, self.initial_state)
-          self.softmax = tf.nn.softmax(self.logits)
+          return logits_flat, final_state
 
         self.run_network_on_melody = run_network_on_melody
 
+        (self.logits, self.state_tensor) = run_network_on_melody(
+              self.melody_sequence, self.lengths, self.initial_state)
+        self.softmax = tf.nn.softmax(self.logits)
+
+        # Code for training the model
+        self.labels_flat = tf.reshape(self.train_labels, [-1])
+        self.loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(
+          self.logits, self.labels_flat))
+        self.perplexity = tf.exp(loss)
+        
+        self.global_step = tf.Variable(0, trainable=False, name='global_step')
+
+        self.learning_rate = tf.train.exponential_decay(
+            self.hparams.initial_learning_rate, self.global_step, self.hparams.decay_steps,
+            self.hparams.decay_rate, staircase=True, name='learning_rate')
+
+        self.opt = tf.train.AdamOptimizer(learning_rate)
+        self.params = tf.trainable_variables()
+        gradients = tf.gradients(loss, params)
+        clipped_gradients, _ = tf.clip_by_global_norm(gradients,
+                                                      self.hparams.clip_norm)
+        self.train_op = opt.apply_gradients(zip(clipped_gradients, params),
+                                            self.global_step)
+
+        # Code for evaluating the model
+        self.correct_predictions = tf.to_float(
+          tf.nn.in_top_k(self.logits, self.labels_flat, 1))
+        self.accuracy = tf.reduce_mean(self.correct_predictions) * 100
 
   def restore_vars_from_checkpoint(self, checkpoint_dir):
     """Loads model weights from a saved checkpoint.
@@ -299,14 +316,9 @@ class SmilesRNN(object):
     """
     with self.graph.as_default():
       with tf.variable_scope(self.scope, reuse=True):
-        if self.softmax_within_graph:
-          softmax, self.state_tensor = self.run_network_on_melody(
+        logits, self.state_tensor = self.run_network_on_melody(
               self.melody_sequence, self.lengths, self.initial_state)
-          return softmax
-        else:
-          logits, self.state_tensor = self.run_network_on_melody(
-              self.melody_sequence, self.lengths, self.initial_state)
-          return logits
+        return logits
 
   def run_training_batch(self):
     """Runs one batch of training data through the model.
@@ -317,19 +329,10 @@ class SmilesRNN(object):
     Returns:
       A batch of softmax probabilities and model state vectors.
     """
-    if self.training_file_list is None:
-      tf.logging.warn('No training file path was provided, cannot run training'
-                   'batch')
-      return
 
-    coord = tf.train.Coordinator()
-    tf.train.start_queue_runners(sess=self.session, coord=coord)
-
-    softmax, state, lengths = self.session.run([self.train_softmax,
+    softmax, state, lengths = self.session.run([self.melody_sequence,
                                                 self.train_state,
                                                 self.train_lengths])
-
-    coord.request_stop()
 
     return softmax, state, lengths
 

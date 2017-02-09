@@ -94,6 +94,21 @@ def basic_rnn_hparams():
                         one_hot_length=NUM_CLASSES,
                         exponentially_decay_learning_rate=True)
 
+def smiles_hparams():
+  """Generates the hparams used to train note rnn used in paper."""
+  return tf_lib.HParams(use_dynamic_rnn=True,
+                        batch_size=BATCH_SIZE,
+                        lr=0.0002,
+                        l2_reg=2.5e-5,
+                        clip_norm=5,
+                        initial_learning_rate=0.01,
+                        decay_steps=1000,
+                        decay_rate=0.85,
+                        rnn_layer_sizes=[512],
+                        skip_first_n_losses=32,
+                        one_hot_length=NUM_CLASSES,
+                        exponentially_decay_learning_rate=True)
+
 
 def default_dqn_hparams():
   """Generates the default hparams for RLTuner DQN model."""
