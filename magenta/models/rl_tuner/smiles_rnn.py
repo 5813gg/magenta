@@ -225,7 +225,6 @@ class SmilesRNN(object):
         self.labels_flat = tf.reshape(self.train_labels, [-1])
         self.loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(
           self.logits, self.labels_flat))
-        self.perplexity = tf.exp(loss)
         
         self.global_step = tf.Variable(0, trainable=False, name='global_step')
 
@@ -245,6 +244,7 @@ class SmilesRNN(object):
         self.correct_predictions = tf.to_float(
           tf.nn.in_top_k(self.logits, self.labels_flat, 1))
         self.accuracy = tf.reduce_mean(self.correct_predictions) * 100
+        self.perplexity = tf.exp(self.loss)
 
   def restore_vars_from_checkpoint(self, checkpoint_dir):
     """Loads model weights from a saved checkpoint.
