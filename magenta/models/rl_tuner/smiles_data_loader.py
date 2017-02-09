@@ -62,7 +62,7 @@ class SmilesLoader():
         for i, smile in enumerate(smiles_list):
             print i, smile, len(smile)
             for t, char in enumerate(smile):
-                print '\t', t, char, loader.char_to_index[char]
+                print '\t', t, char, self.char_to_index[char]
                 Z[i, t, self.char_to_index[char]] = 1
         return Z
 
