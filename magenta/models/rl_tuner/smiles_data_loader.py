@@ -7,12 +7,12 @@ import json
 import pickle
 
 class SmilesLoader():
-    def __init__(self, input_file, vocab_file, pickle_file, batch_size, max_seq_length=120):
+    def __init__(self, input_file, vocab_file, pickle_file, batch_size, max_seq_len=120):
         self.input_file = input_file
         self.vocab_file = vocab_file
         self.batch_size = batch_size
         self.pickle_file = pickle_file
-        self.max_seq_length = max_seq_length
+        self.max_seq_len = max_seq_len
 
         self.create_char_conversions()
 
