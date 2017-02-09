@@ -48,7 +48,6 @@ class SmilesLoader():
             Z = self.smiles_batch_to_one_hot(smiles, max_len)
             self.batch_list.append(Z)
 
-            break
             i += self.batch_size
         
         pickle.dump(self.batch_list, open(self.pickle_file,"wb"))
@@ -58,9 +57,7 @@ class SmilesLoader():
                       max_len, self.vocab_size),
                       dtype=np.bool)
         for i, smile in enumerate(smiles_list):
-            print i, smile, len(smile)
             for t, char in enumerate(smile):
-                print '\t', t, char, self.char_to_index[char]
                 Z[i, t, self.char_to_index[char]] = 1
         return Z
 
