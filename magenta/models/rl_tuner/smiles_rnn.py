@@ -99,7 +99,7 @@ class SmilesRNN(object):
       tf.logging.info('Empty hparams string. Using defaults')
       self.hparams = rl_tuner_ops.smiles_hparams()
 
-    if load_training_data
+    if load_training_data:
       self.data_file = data_file
       self.vocab_file = vocab_file
       self.pickle_file = pickle_file
