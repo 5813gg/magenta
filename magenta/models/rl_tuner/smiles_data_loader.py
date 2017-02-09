@@ -76,6 +76,7 @@ class SmilesLoader():
         ydata = [''] * len(smile)
         ydata[:-1] = smile[1:]
         ydata[-1] = ' '
+        return ydata
 
     def smiles_batch_to_matrices(self, smiles_list, max_len):    
         y_smiles = [self.get_next_step_smile(x) for x in smiles_list]
