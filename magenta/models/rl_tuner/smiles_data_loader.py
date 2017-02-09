@@ -14,14 +14,14 @@ class SmilesLoader():
         self.max_seq_length = max_seq_length
 
         self.create_char_conversions()
-        
+
         if self.numpy_file is not None:
             self.load_preprocessed
         else:
             self.preprocess()
 
     def create_char_conversions(self):
-        self.char_list = json.load(open(vocab_file))
+        self.char_list = json.load(open(self.vocab_file))
         self.n_chars = len(self.char_list)
         self.char_to_index = dict((c, i) for i, c in enumerate(self.char_list))
         self.index_to_char = dict((i, c) for i, c in enumerate(self.char_list))
