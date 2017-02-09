@@ -179,9 +179,8 @@ class SmilesRNN(object):
         self.initial_state = tf.placeholder(tf.float32,
                                             [None, self.cell.state_size],
                                             name='initial_state')
-        self.train_labels = tf.placeholder(tf.float32,
-                                           [None, None,
-                                            self.hparams.one_hot_length],
+        self.train_labels = tf.placeholder(tf.int64,
+                                           [None, None],
                                            name='train_labels')
 
         # Closure function is used so that this part of the graph can be
