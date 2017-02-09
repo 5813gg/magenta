@@ -27,6 +27,9 @@ class SmilesLoader():
             self.preprocess()
 
     def create_char_conversions(self):
+        print "Loading vocabulary from file", self.vocab_file
+        if not os.path.exists(self.vocab_file):
+            print "ERROR! Vocab file", self.vocab_file, "does not exist!"
         self.char_list = json.load(open(self.vocab_file))
         self.vocab_size = len(self.char_list)
         self.char_to_index = dict((c, i) for i, c in enumerate(self.char_list))
