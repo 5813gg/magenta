@@ -4,17 +4,19 @@ import collections
 from six.moves import cPickle
 import numpy as np
 import json
+import pickle
 
 class SmilesLoader():
-    def __init__(self, input_file, vocab_file, numpy_file, batch_size, max_seq_length=120):
+    def __init__(self, input_file, vocab_file, pickle_file, batch_size, max_seq_length=120):
         self.input_file = input_file
         self.vocab_file = vocab_file
         self.batch_size = batch_size
-        self.numpy_file = numpy_file
+        self.pickle = pickle_file
         self.max_seq_length = max_seq_length
 
         self.create_char_conversions()
 
+        self.batch_list = []
         if os.path.exists(self.numpy_file):
             self.load_preprocessed()
         else:
@@ -27,7 +29,7 @@ class SmilesLoader():
         self.index_to_char = dict((i, c) for i, c in enumerate(self.char_list))
 
     def load_preprocessed(self):
-        self.batch_array = np.load(self.numpy_file)
+        self.batch_list = pickle.load(open(self.pickle_file,"rb"))
         self.num_batches = len(self.batch_array)
 
     def preprocess(self):
@@ -36,7 +38,6 @@ class SmilesLoader():
         lines = sorted(lines, key=len) # sort sequences by length for efficient processing
         num_seqs = len(lines)
 
-        batches = []
         i = 0
         while(i < num_seqs):
             smiles = lines[i:i+self.batch_size]
@@ -45,7 +46,7 @@ class SmilesLoader():
 
             i += self.batch_size
         
-        np.save(self.numpy_file, self.batch_array)
+        pickle.dump(self.batch_list, open(self.pickle_file,"wb"))
 
     def smiles_batch_to_one_hot(self, smiles_list, max_len):
         smiles_list = [self.clean_and_pad_smile(x) for x in smiles_list if self.check_smile_len(x)]
