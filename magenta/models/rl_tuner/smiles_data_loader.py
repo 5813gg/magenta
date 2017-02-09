@@ -16,7 +16,7 @@ class SmilesLoader():
 
         self.create_char_conversions()
 
-        self.batch_list = []
+        self.batches = {}
         if os.path.exists(self.pickle_file):
             self.load_preprocessed()
         else:
@@ -29,8 +29,7 @@ class SmilesLoader():
         self.index_to_char = dict((i, c) for i, c in enumerate(self.char_list))
 
     def load_preprocessed(self):
-        self.batch_list = pickle.load(open(self.pickle_file,"rb"))
-        self.num_batches = len(self.batch_list)
+        self.batches = pickle.load(open(self.pickle_file,"rb"))
 
     def preprocess(self):
         f = open(self.input_file, 'r')
@@ -38,33 +37,67 @@ class SmilesLoader():
         lines = sorted(lines, key=len) # sort sequences by length for efficient processing
         num_seqs = len(lines)
 
+        for dataset in ['train','val','test']:
+            self.batches[dataset] = []
+
         i = 0
         while(i < num_seqs):
             smiles = lines[i:i+self.batch_size]
             smiles = [self.clean_smile(x) for x in smiles]
-            lens = [len(x) for x in smiles]
+            lens = [len(x) +1 for x in smiles] # adding 1 extra space on all sequences to indicate EOS
             max_len = max(lens)
 
-            Z = self.smiles_batch_to_one_hot(smiles, max_len)
-            self.batch_list.append(Z)
+            X, Y = self.smiles_batch_to_matrices(smiles, max_len)
+            batch_dict = self.make_batch_dict(X,Y,lens)
+            dataset = self.roll_for_dataset()
+            self.batches[dataset].append(batch_dict)
 
             i += self.batch_size
         
         pickle.dump(self.batch_list, open(self.pickle_file,"wb"))
 
-    def smiles_batch_to_one_hot(self, smiles_list, max_len):        
-        Z = np.zeros((len(smiles_list),
+    def roll_for_dataset(self):
+        r = np.random.rand()
+        if r <= 0.6:
+            return 'train'
+        elif r <= 0.8:
+            return 'val'
+        else:
+            return 'test'
+
+    def make_batch_dict(self, X, Y, lens):
+        bdict = {}
+        bdict['X'] = X
+        bdict['Y'] = Y
+        bdict['lengths'] = lens
+        return bdict
+
+    def get_next_step_smile(self, smile):
+        ydata = [''] * len(smile)
+        ydata[:-1] = smile[1:]
+        ydata[-1] = ' '
+
+    def smiles_batch_to_matrices(self, smiles_list, max_len):    
+        y_smiles = [self.get_next_step_smile(x) for x in smiles_list]
+                
+        X = np.zeros((len(smiles_list),
                       max_len, self.vocab_size),
                       dtype=np.bool)
         for i, smile in enumerate(smiles_list):
             for t, char in enumerate(smile):
-                Z[i, t, self.char_to_index[char]] = 1
-        return Z
+                X[i, t, self.char_to_index[char]] = 1
+
+        Y = np.zeros((len(smiles_list), max_len), dtype=np.int32)
+        for i, smile in enumerate(y_smiles):
+            for t, char in enumerate(smile):
+                Y[i, t] = self.char_to_index[char]
+        return X, Y
 
     def clean_smile(self, string):
         return string.rstrip('\n')
 
-    def next_batch(self):
+    def next_batch(self, dataset='train'):
+
         x, y = self.x_batches[self.pointer], self.y_batches[self.pointer]
         self.pointer += 1
         return x, y
