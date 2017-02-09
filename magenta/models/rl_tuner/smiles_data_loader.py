@@ -45,6 +45,10 @@ class SmilesLoader():
             lens = [len(x) for x in smiles]
             max_len = max(lens)
 
+            Z = self.smiles_batch_to_one_hot(smiles, max_len)
+            self.batch_list.append(Z)
+
+            break
             i += self.batch_size
         
         pickle.dump(self.batch_list, open(self.pickle_file,"wb"))
