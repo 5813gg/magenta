@@ -15,25 +15,20 @@ class SmilesLoader():
 
         self.create_char_conversions()
 
-        if self.numpy_file is not None:
-            self.load_preprocessed
-        else:
-            self.preprocess()
+        #if self.numpy_file is not None:
+        #    self.load_preprocessed()
+        #else:
+        #    self.preprocess()
 
     def create_char_conversions(self):
         self.char_list = json.load(open(self.vocab_file))
-        self.n_chars = len(self.char_list)
+        self.vocab_size = len(self.char_list)
         self.char_to_index = dict((c, i) for i, c in enumerate(self.char_list))
         self.index_to_char = dict((i, c) for i, c in enumerate(self.char_list))
 
     def load_preprocessed(self):
-        with open(vocab_file, 'rb') as f:
-            self.chars = cPickle.load(f)
-        self.vocab_size = len(self.chars)
-        self.vocab = dict(zip(self.chars, range(len(self.chars))))
-        self.tensor = np.load(tensor_file)
-        self.num_batches = int(self.tensor.size / (self.batch_size *
-                                                   self.seq_length))
+        self.batch_array = np.load(self.numpy_file)
+        self.num_batches = len(self.batch_array)
 
     def preprocess(self):
         with codecs.open(input_file, "r", encoding=self.encoding) as f:
