@@ -107,7 +107,7 @@ class SmilesLoader():
 
         X = self.batches[dataset][i]['X']
         Y = self.batches[dataset][i]['Y']
-        lens = = self.batches[dataset][i]['lengths']
+        lens = self.batches[dataset][i]['lengths']
 
         return X, Y, lens
 
