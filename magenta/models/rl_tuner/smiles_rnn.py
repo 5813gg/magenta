@@ -35,7 +35,7 @@ def reload_files():
   notebooks).
   """
   reload(rl_tuner_ops)
-  
+
 
 class SmilesRNN(object):
   """Builds graph for a Note RNN and instantiates weights from a checkpoint.
@@ -48,7 +48,7 @@ class SmilesRNN(object):
   Used as part of the RLTuner class.
   """
 
-  def __init__(self, graph, scope='smiles_rnn', checkpoint_dir=None, checkpoint_file=None, 
+  def __init__(self, graph=None, scope='smiles_rnn', checkpoint_dir=None, checkpoint_file=None, 
                hparams=None, note_rnn_type='default', checkpoint_scope='rnn_model'):
     """Initialize by building the graph and loading a previous checkpoint.
 
