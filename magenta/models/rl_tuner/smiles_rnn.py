@@ -232,7 +232,7 @@ class SmilesRNN(object):
             self.hparams.initial_learning_rate, self.global_step, self.hparams.decay_steps,
             self.hparams.decay_rate, staircase=True, name='learning_rate')
 
-        self.opt = tf.train.AdamOptimizer(learning_rate)
+        self.opt = tf.train.AdamOptimizer(self.learning_rate)
         self.params = tf.trainable_variables()
         gradients = tf.gradients(loss, params)
         clipped_gradients, _ = tf.clip_by_global_norm(gradients,
