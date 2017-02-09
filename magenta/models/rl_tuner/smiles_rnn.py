@@ -29,6 +29,9 @@ from magenta.music import sequences_lib
 from magenta.common import sequence_example_lib
 
 import rl_tuner_ops
+import smiles_data_loader
+
+SMILES_PATH = '/home/natasha/Dropbox (MIT)/Google/SMILES-Project/'
 
 def reload_files():
   """Used to reload the imported dependency files (necessary for jupyter 
@@ -49,7 +52,9 @@ class SmilesRNN(object):
   """
 
   def __init__(self, graph=None, scope='smiles_rnn', checkpoint_dir=None, checkpoint_file=None, 
-               hparams=None, note_rnn_type='default', checkpoint_scope='rnn_model'):
+               hparams=None, note_rnn_type='default', checkpoint_scope='rnn_model', 
+               load_training_data=False, data_file=SMILES_PATH+'250k_drugs_clean.smi', 
+               vocab_file=SMILES_PATH+'zinc_char_list.json', pickle_file=SMILES_PATH+'smiles.p'):
     """Initialize by building the graph and loading a previous checkpoint.
 
     Args:
@@ -65,6 +70,13 @@ class SmilesRNN(object):
         Magenta basic_rnn model.
       checkpoint_scope: The scope in lstm which the model was originally defined
         when it was first trained.
+      load_training_data: A bool that should be true if the model is going to load
+        SMILES training data for training from scratch.
+      data_file: A file containing text strings representing SMILES encodings of 
+        molecules. Needs to be provided if RNN will be trained from scratch.
+      vocab_file: A json file containing a list of all the characters in the SMILES
+        vocabulary
+      pickle_file: A pickle file containing pre-processed batches of SMILES data
     """
     self.session = None
     self.scope = scope
@@ -73,6 +85,7 @@ class SmilesRNN(object):
     self.note_rnn_type = note_rnn_type
     self.checkpoint_dir = checkpoint_dir
     self.checkpoint_file = checkpoint_file
+    self.load_training_data = load_training_data
 
     if graph is None:
       self.graph = tf.Graph()
@@ -85,6 +98,14 @@ class SmilesRNN(object):
     else:
       tf.logging.info('Empty hparams string. Using defaults')
       self.hparams = rl_tuner_ops.smiles_hparams()
+
+    if load_training_data
+      self.data_file = data_file
+      self.vocab_file = vocab_file
+      self.pickle_file = pickle_file
+
+      self.data_loader = smiles_data_loader.SmilesLoader(data_file, vocab_file, 
+                                                         pickle_file, self.hparams.batch_size)
 
     self.build_graph()
     self.state_value = self.get_zero_state()

@@ -5,9 +5,10 @@ from six.moves import cPickle
 import numpy as np
 import json
 import pickle
+import sys
 
 class SmilesLoader():
-    def __init__(self, input_file, vocab_file, pickle_file, batch_size, max_seq_len=120):
+    def __init__(self, vocab_file, input_file=None, pickle_file='smiles.p', batch_size=128, max_seq_len=120):
         self.input_file = input_file
         self.vocab_file = vocab_file
         self.batch_size = batch_size
@@ -17,9 +18,12 @@ class SmilesLoader():
         self.create_char_conversions()
 
         self.batches = {}
-        if os.path.exists(self.pickle_file):
+        if os.path.exists(pickle_file):
             self.load_preprocessed()
         else:
+            if self.input_file is None:
+                print "Error! Pre-processed pickle file does not exist and input file not provided"
+                sys.exit()
             self.preprocess()
 
     def create_char_conversions(self):
