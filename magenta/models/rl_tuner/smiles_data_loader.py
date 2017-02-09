@@ -54,7 +54,7 @@ class SmilesLoader():
 
             i += self.batch_size
         
-        pickle.dump(self.batch_list, open(self.pickle_file,"wb"))
+        pickle.dump(self.batches, open(self.pickle_file,"wb"))
 
     def roll_for_dataset(self):
         r = np.random.rand()
