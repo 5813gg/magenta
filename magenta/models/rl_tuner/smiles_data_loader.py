@@ -30,7 +30,7 @@ class SmilesLoader():
 
     def load_preprocessed(self):
         self.batch_list = pickle.load(open(self.pickle_file,"rb"))
-        self.num_batches = len(self.batch_array)
+        self.num_batches = len(self.batch_list)
 
     def preprocess(self):
         f = open(self.input_file, 'r')
