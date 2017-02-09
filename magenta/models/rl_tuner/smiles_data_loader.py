@@ -11,7 +11,7 @@ class SmilesLoader():
         self.input_file = input_file
         self.vocab_file = vocab_file
         self.batch_size = batch_size
-        self.pickle = pickle_file
+        self.pickle_file = pickle_file
         self.max_seq_length = max_seq_length
 
         self.create_char_conversions()
