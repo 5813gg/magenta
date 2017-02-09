@@ -19,10 +19,10 @@ import rl_tuner
 import rl_tuner_ops
 
 FLAGS = tf.app.flags.FLAGS
-tf.app.flags.DEFINE_string('output_dir', '',
+tf.app.flags.DEFINE_string('output_dir', '/home/natasha/Dropbox (MIT)/Google/RL-RNN-Project/rl_rnn_output/',
                            'Directory where the model will save its'
                            'compositions and checkpoints (midi files)')
-tf.app.flags.DEFINE_string('note_rnn_checkpoint_dir', '',
+tf.app.flags.DEFINE_string('note_rnn_checkpoint_dir', '/home/natasha/Dropbox (MIT)/Google/code/note_rnn_checkpoint/',
                            'Path to directory holding checkpoints for note rnn'
                            'melody prediction models. These will be loaded into'
                            'the NoteRNNLoader class object. The directory '
@@ -30,7 +30,7 @@ tf.app.flags.DEFINE_string('note_rnn_checkpoint_dir', '',
 tf.app.flags.DEFINE_string('note_rnn_checkpoint_name', 'note_rnn.ckpt',
                            'Filename of a checkpoint within the '
                            'note_rnn_checkpoint_dir directory.')
-tf.app.flags.DEFINE_string('midi_primer', './testdata/primer.mid',
+tf.app.flags.DEFINE_string('midi_primer', '/home/natasha/Dropbox (MIT)/Google/code/testdata/primer.mid',
                            'A midi file that can be used to prime the model')
 tf.app.flags.DEFINE_integer('training_steps', 1000000,
                             'The number of steps used to train the model')
@@ -49,7 +49,7 @@ tf.app.flags.DEFINE_integer('output_every_nth', 50000,
                             'itself and store a checkpoint')
 tf.app.flags.DEFINE_integer('num_notes_in_melody', 32,
                             'The number of notes in each composition')
-tf.app.flags.DEFINE_float('reward_scaler', 0.1,
+tf.app.flags.DEFINE_float('reward_scaler', 2,
                           'The weight placed on music theory rewards')
 tf.app.flags.DEFINE_string('training_data_path', '',
                            'Directory where the model will get melody training'
