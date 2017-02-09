@@ -31,7 +31,7 @@ from magenta.common import sequence_example_lib
 import rl_tuner_ops
 
 
-class NoteRNNLoader(object):
+class SmilesRNN(object):
   """Builds graph for a Note RNN and instantiates weights from a checkpoint.
 
   Loads weights from a previously saved checkpoint file corresponding to a pre-
@@ -43,8 +43,8 @@ class NoteRNNLoader(object):
   """
 
   def __init__(self, graph, scope, checkpoint_dir, checkpoint_file=None, 
-               midi_primer=None, training_file_list=None, hparams=None,
-               softmax_within_graph=False, note_rnn_type='default', 
+               hparams=None,
+               softmax_within_graph=True, note_rnn_type='default', 
                checkpoint_scope='rnn_model'):
     """Initialize by building the graph and loading a previous checkpoint.
 
@@ -54,10 +54,6 @@ class NoteRNNLoader(object):
       checkpoint_dir: Path to the directory where the checkpoint file is saved.
       checkpoint_file: Path to a backup checkpoint file to be used if none can 
         be found in the checkpoint_dir
-      midi_primer: Path to a single midi file that can be used to prime the
-        model.
-      training_file_list: List of paths to tfrecord files containing melody 
-        training data.
       hparams: A tf_lib.HParams object. Must match the hparams used to create 
         the checkpoint file.
       softmax_within_graph: If True, then when the network is called, it will
@@ -74,11 +70,9 @@ class NoteRNNLoader(object):
     self.session = None
     self.scope = scope
     self.batch_size = 1
-    self.midi_primer = midi_primer
     self.softmax_within_graph = softmax_within_graph
     self.checkpoint_scope = checkpoint_scope
     self.note_rnn_type = note_rnn_type
-    self.training_file_list = training_file_list
     self.checkpoint_dir = checkpoint_dir
     self.checkpoint_file = checkpoint_file
 
@@ -91,9 +85,6 @@ class NoteRNNLoader(object):
 
     self.build_graph()
     self.state_value = self.get_zero_state()
-
-    if midi_primer is not None:
-      self.load_primer()
 
     self.variable_names = rl_tuner_ops.get_variable_names(self.graph, 
                                                           self.scope)
@@ -172,91 +163,72 @@ class NoteRNNLoader(object):
     tf.logging.info('Initializing melody RNN graph for scope %s', self.scope)
 
     with self.graph.as_default():
-      with tf.device(lambda op: ''):
-        with tf.variable_scope(self.scope):
-          # Make an LSTM cell with the number and size of layers specified in
-          # hparams.
-          self.cell = rl_tuner_ops.make_cell(self.hparams, self.note_rnn_type)
+      with tf.variable_scope(self.scope):
+        # Make an LSTM cell with the number and size of layers specified in
+        # hparams.
+        self.cell = rl_tuner_ops.make_cell(self.hparams, self.note_rnn_type)
 
-          # Shape of melody_sequence is batch size, melody length, number of
-          # output note actions.
-          self.melody_sequence = tf.placeholder(tf.float32,
-                                                [None, None,
-                                                 self.hparams.one_hot_length],
-                                                name='melody_sequence')
-          self.lengths = tf.placeholder(tf.int32, [None], name='lengths')
-          self.initial_state = tf.placeholder(tf.float32,
-                                              [None, self.cell.state_size],
-                                              name='initial_state')
+        # Shape of melody_sequence is batch size, melody length, number of
+        # output note actions.
+        self.melody_sequence = tf.placeholder(tf.float32,
+                                              [None, None,
+                                               self.hparams.one_hot_length],
+                                              name='melody_sequence')
+        self.lengths = tf.placeholder(tf.int32, [None], name='lengths')
+        self.initial_state = tf.placeholder(tf.float32,
+                                            [None, self.cell.state_size],
+                                            name='initial_state')
+        self.train_labels = tf.placeholder(tf.float32,
+                                           [None, None,
+                                            self.hparams.one_hot_length],
+                                           name='train_labels')
 
-          if self.training_file_list is not None:
-            # Set up a tf queue to read melodies from the training data tfrecord
-            (self.train_sequence,
-             self.train_labels,
-             self.train_lengths) = sequence_example_lib.get_padded_batch(
-                 self.training_file_list, self.hparams.batch_size, 
-                 self.hparams.one_hot_length)
+        # Closure function is used so that this part of the graph can be
+        # re-run in multiple places, such as __call__.
+        def run_network_on_melody(m_seq,
+                                  lens,
+                                  initial_state,
+                                  swap_memory=True,
+                                  parallel_iterations=1):
+          """Internal function that defines the RNN network structure.
 
-          # Closure function is used so that this part of the graph can be
-          # re-run in multiple places, such as __call__.
-          def run_network_on_melody(m_seq,
-                                    lens,
-                                    initial_state,
-                                    swap_memory=True,
-                                    parallel_iterations=1):
-            """Internal function that defines the RNN network structure.
+          Args:
+            m_seq: A batch of melody sequences of one-hot notes.
+            lens: Lengths of the melody_sequences.
+            initial_state: Vector representing the initial state of the RNN.
+            swap_memory: Uses more memory and is faster.
+            parallel_iterations: Argument to tf.nn.dynamic_rnn.
+          Returns:
+            Output of network (either softmax or logits) and RNN state.
+          """
+          outputs, final_state = tf.nn.dynamic_rnn(
+              self.cell,
+              m_seq,
+              sequence_length=lens,
+              initial_state=initial_state,
+              swap_memory=swap_memory,
+              parallel_iterations=parallel_iterations)
 
-            Args:
-              m_seq: A batch of melody sequences of one-hot notes.
-              lens: Lengths of the melody_sequences.
-              initial_state: Vector representing the initial state of the RNN.
-              swap_memory: Uses more memory and is faster.
-              parallel_iterations: Argument to tf.nn.dynamic_rnn.
-            Returns:
-              Output of network (either softmax or logits) and RNN state.
-            """
-            outputs, final_state = tf.nn.dynamic_rnn(
-                self.cell,
-                m_seq,
-                sequence_length=lens,
-                initial_state=initial_state,
-                swap_memory=swap_memory,
-                parallel_iterations=parallel_iterations)
-
-            outputs_flat = tf.reshape(outputs,
-                                      [-1, self.hparams.rnn_layer_sizes[-1]])
-            logits_flat = tf.contrib.layers.legacy_linear(
-                outputs_flat, self.hparams.one_hot_length)
-            if self.softmax_within_graph:
-              softmax = tf.nn.softmax(logits_flat)
-              return softmax, final_state
-            else:
-              return logits_flat, final_state
-
+          outputs_flat = tf.reshape(outputs,
+                                    [-1, self.hparams.rnn_layer_sizes[-1]])
+          logits_flat = tf.contrib.layers.legacy_linear(
+              outputs_flat, self.hparams.one_hot_length)
           if self.softmax_within_graph:
-            (self.softmax, self.state_tensor) = run_network_on_melody(
-                self.melody_sequence, self.lengths, self.initial_state)
+            softmax = tf.nn.softmax(logits_flat)
+            return softmax, final_state
           else:
-            (self.logits, self.state_tensor) = run_network_on_melody(
-                self.melody_sequence, self.lengths, self.initial_state)
-            self.softmax = tf.nn.softmax(self.logits)
+            return logits_flat, final_state
 
-          self.run_network_on_melody = run_network_on_melody
+        if self.softmax_within_graph:
+          (self.softmax, self.state_tensor) = run_network_on_melody(
+              self.melody_sequence, self.lengths, self.initial_state)
+        else:
+          (self.logits, self.state_tensor) = run_network_on_melody(
+              self.melody_sequence, self.lengths, self.initial_state)
+          self.softmax = tf.nn.softmax(self.logits)
 
-        if self.training_file_list is not None:
-          # Does not recreate the model architecture but rather uses it to feed
-          # data from the training queue through the model.
-          with tf.variable_scope(self.scope, reuse=True):
-            zero_state = self.cell.zero_state(
-                batch_size=self.hparams.batch_size, dtype=tf.float32)
+        self.run_network_on_melody = run_network_on_melody
 
-            if self.softmax_within_graph:
-              (self.train_softmax, self.train_state) = run_network_on_melody(
-                  self.train_sequence, self.train_lengths, zero_state)
-            else:
-              (self.train_logits, self.train_state) = run_network_on_melody(
-                  self.train_sequence, self.train_lengths, zero_state)
-              self.train_softmax = tf.nn.softmax(self.train_logits)
 
   def restore_vars_from_checkpoint(self, checkpoint_dir):
     """Loads model weights from a saved checkpoint.
@@ -281,41 +253,11 @@ class NoteRNNLoader(object):
 
     saver.restore(self.session, checkpoint_file)
 
-  def load_primer(self):
-    """Loads default MIDI primer file.
-
-    Also assigns the steps per bar of this file to be the model's defaults.
-    """
-
-    if not os.path.exists(self.midi_primer):
-      tf.logging.warn('ERROR! No such primer file exists! %s', self.midi_primer)
-      return
-
-    self.primer_sequence = midi_io.midi_file_to_sequence_proto(self.midi_primer)
-    quantized_seq = sequences_lib.QuantizedSequence()
-    quantized_seq.from_note_sequence(self.primer_sequence,
-                                     steps_per_quarter=4)
-    extracted_melodies, _ = melodies_lib.extract_melodies(quantized_seq,
-                                                          min_bars=0,
-                                                          min_unique_pitches=1)
-    self.primer = extracted_melodies[0]
-    self.steps_per_bar = self.primer.steps_per_bar
-
-  def prime_model(self):
-    """Primes the model with its default midi primer."""
+  def prime_model(self, primer_input):
+    """Primes the model with a sequence that has already been correctly encoded."""
     with self.graph.as_default():
-      tf.logging.debug('Priming the model with MIDI file %s', self.midi_primer)
 
-      # Convert primer Melody to model inputs.
-      encoder = magenta.music.OneHotEventSequenceEncoderDecoder(
-        magenta.music.MelodyOneHotEncoding(
-            min_note=rl_tuner_ops.MIN_NOTE,
-            max_note=rl_tuner_ops.MAX_NOTE))
-
-      seq = encoder.encode(self.primer)
       features = seq.feature_lists.feature_list['inputs'].feature
-      primer_input = [list(i.float_list.value) for i in features]
-
       # Run model over primer sequence.
       primer_input_batch = np.tile([primer_input], (self.batch_size, 1, 1))
       self.state_value, softmax = self.session.run(
