@@ -31,7 +31,7 @@ from magenta.common import sequence_example_lib
 import rl_tuner_ops
 import smiles_data_loader
 
-SMILES_PATH = '/home/natasha/Dropbox (MIT)/Google/SMILES-Project/'
+SMILES_DATA = '/home/natasha/Dropbox (MIT)/Google/SMILES-Project/data/'
 
 def reload_files():
   """Used to reload the imported dependency files (necessary for jupyter 
@@ -53,8 +53,8 @@ class SmilesRNN(object):
 
   def __init__(self, graph=None, scope='smiles_rnn', checkpoint_dir=None, checkpoint_file=None, 
                hparams=None, note_rnn_type='default', checkpoint_scope='rnn_model', 
-               load_training_data=False, data_file=SMILES_PATH+'250k_drugs_clean.smi', 
-               vocab_file=SMILES_PATH+'zinc_char_list.json', pickle_file=SMILES_PATH+'smiles.p'):
+               load_training_data=False, data_file=SMILES_DATA+'250k_drugs_clean.smi', 
+               vocab_file=SMILES_DATA+'zinc_char_list.json', pickle_file=SMILES_DATA+'smiles.p'):
     """Initialize by building the graph and loading a previous checkpoint.
 
     Args:
