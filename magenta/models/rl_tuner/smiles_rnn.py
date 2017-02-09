@@ -237,7 +237,7 @@ class SmilesRNN(object):
         gradients = tf.gradients(self.loss, self.params)
         clipped_gradients, _ = tf.clip_by_global_norm(gradients,
                                                       self.hparams.clip_norm)
-        self.train_op = opt.apply_gradients(zip(clipped_gradients, params),
+        self.train_op = self.opt.apply_gradients(zip(clipped_gradients, params),
                                             self.global_step)
 
         # Code for evaluating the model
