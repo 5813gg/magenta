@@ -6,7 +6,7 @@ import numpy as np
 import json
 
 class SmilesLoader():
-    def __init__(self, input_file, vocab_file, batch_size, numpy_file=None, max_seq_length=120):
+    def __init__(self, input_file, vocab_file, numpy_file, batch_size, max_seq_length=120):
         self.input_file = input_file
         self.vocab_file = vocab_file
         self.batch_size = batch_size
@@ -15,10 +15,10 @@ class SmilesLoader():
 
         self.create_char_conversions()
 
-        #if self.numpy_file is not None:
-        #    self.load_preprocessed()
-        #else:
-        #    self.preprocess()
+        if os.path.exists(self.numpy_file):
+            self.load_preprocessed()
+        else:
+            self.preprocess()
 
     def create_char_conversions(self):
         self.char_list = json.load(open(self.vocab_file))
@@ -31,20 +31,42 @@ class SmilesLoader():
         self.num_batches = len(self.batch_array)
 
     def preprocess(self):
-        with codecs.open(input_file, "r", encoding=self.encoding) as f:
-            data = f.read()
-        counter = collections.Counter(data)
-        count_pairs = sorted(counter.items(), key=lambda x: -x[1])
-        self.chars, _ = zip(*count_pairs)
-        self.vocab_size = len(self.chars)
-        self.vocab = dict(zip(self.chars, range(len(self.chars))))
-        with open(vocab_file, 'wb') as f:
-            cPickle.dump(self.chars, f)
-        self.tensor = np.array(list(map(self.vocab.get, data)))
-        np.save(tensor_file, self.tensor)
+        f = open(self.input_file, 'r')
+        lines = f.readlines()
+        lines = sorted(lines, key=len) # sort sequences by length for efficient processing
+        num_seqs = len(lines)
 
+        batches = []
+        i = 0
+        while(i < num_seqs):
+            smiles = lines[i:i+self.batch_size]
+            lens = [len(x) for x in smiles]
+            max_len = max(lens)
 
+            i += self.batch_size
+        
+        np.save(self.numpy_file, self.batch_array)
 
+    def smiles_batch_to_one_hot(self, smiles_list, max_len):
+        smiles_list = [self.clean_and_pad_smile(x) for x in smiles_list if self.check_smile_len(x)]
+        
+        Z = np.zeros((len(smiles_list),
+                      max_len, self.vocab_size),
+                      dtype=np.bool)
+        for i, smile in enumerate(smiles_list):
+            for t, char in enumerate(smile):
+                Z[i, t, self.char_to_index[char]] = 1
+        return Z
+
+    def check_smile_len(self, string):
+        if len(string) <= self.max_seq_len:
+            return True
+        else:
+            return False
+
+    def clean_and_pad_smile(self, string):
+        string = string.rstrip('\n')
+        return string + " " * (self.max_seq_len - len(string))
 
     def next_batch(self):
         x, y = self.x_batches[self.pointer], self.y_batches[self.pointer]
