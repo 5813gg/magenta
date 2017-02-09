@@ -234,7 +234,7 @@ class SmilesRNN(object):
 
         self.opt = tf.train.AdamOptimizer(self.learning_rate)
         self.params = tf.trainable_variables()
-        gradients = tf.gradients(loss, params)
+        gradients = tf.gradients(self.loss, self.params)
         clipped_gradients, _ = tf.clip_by_global_norm(gradients,
                                                       self.hparams.clip_norm)
         self.train_op = opt.apply_gradients(zip(clipped_gradients, params),
