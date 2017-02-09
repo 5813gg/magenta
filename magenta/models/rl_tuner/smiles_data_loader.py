@@ -56,7 +56,9 @@ class SmilesLoader():
                       max_len, self.vocab_size),
                       dtype=np.bool)
         for i, smile in enumerate(smiles_list):
+            print i, smile, len(smile)
             for t, char in enumerate(smile):
+                print '\t', t, char, loader.char_to_index[char]
                 Z[i, t, self.char_to_index[char]] = 1
         return Z
 
