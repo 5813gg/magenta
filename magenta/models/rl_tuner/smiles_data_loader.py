@@ -112,6 +112,7 @@ class SmilesLoader():
         Y = self.batches[dataset][i]['Y']
         lens = self.batches[dataset][i]['lengths']
         while len(X) != self.batch_size:
+            print "batch of weird length,", len(X), "... skipping"
             X,Y,lens = self.next_batch(dataset=dataset)
 
         return X, Y, lens
