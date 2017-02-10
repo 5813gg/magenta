@@ -357,24 +357,22 @@ class SmilesRNN(object):
 
     with self.graph.as_default():
       self.saver = tf.train.Saver()
-    self.session = tf.Session(graph=self.graph)
-    self.session.run(tf.initialize_all_variables())
+      self.session = tf.Session(graph=self.graph)
+      self.session.run(tf.initialize_all_variables())
 
-    for step in range(num_steps):
-      X, Y, lens = self.data_loader.get_next_batch()
-      feed_dict = {self.melody_sequence: X,
-                   self.train_labels: Y,
-                   self.lengths: lens}
-      if step % output_every == 0:
-        _, acc = self.session.run([self.train_op, self.accuracy], feed_dict)
-        print "Training iteration", step, "Accuracy:", acc
-        self.saver.save(self.session, self.checkpoint_dir, 
-                        global_step=step)
-      else:
-        _ = self.session.run([self.train_op], feed_dict)
-
-
-    return softmax, state, lengths
+      for step in range(num_steps):
+        X, Y, lens = self.data_loader.get_next_batch()
+        feed_dict = {self.melody_sequence: X,
+                     self.train_labels: Y,
+                     self.lengths: lens}
+        if step % output_every == 0:
+          _, acc = self.session.run([self.train_op, self.accuracy], feed_dict)
+          print "Training iteration", step, "Accuracy:", acc
+          self.saver.save(self.session, self.checkpoint_dir, 
+                          global_step=step)
+        else:
+          _ = self.session.run([self.train_op], feed_dict)
+          
 
   def get_next_note_from_note(self, note):
     """Given a note, uses the model to predict the most probable next note.
