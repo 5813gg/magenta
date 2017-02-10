@@ -113,6 +113,9 @@ class SmilesRNN(object):
     self.variable_names = rl_tuner_ops.get_variable_names(self.graph, 
                                                           self.scope)
 
+    self.session = None
+    self.saver = None
+
   def get_zero_state(self):
     """Gets an initial state of zeros of the appropriate size.
 
@@ -340,7 +343,7 @@ class SmilesRNN(object):
               self.melody_sequence, self.lengths, self.initial_state)
         return logits
 
-  def run_training_batch(self):
+  def train(self, num_steps=30000, output_every=1000):
     """Runs one batch of training data through the model.
 
     Uses a queue runner to pull one batch of data from the training files
@@ -349,10 +352,25 @@ class SmilesRNN(object):
     Returns:
       A batch of softmax probabilities and model state vectors.
     """
+    if not self.load_training_data or not self.data_loader:
+      print "Error! must load training data in order to train"
 
-    softmax, state, lengths = self.session.run([self.melody_sequence,
-                                                self.train_state,
-                                                self.train_lengths])
+    self.saver = tf.train.Saver()
+    self.session = tf.Session(graph=self.graph)
+    self.session.run(tf.initialize_all_variables())
+
+    for step in range(num_steps):
+      X, Y, lens = self.data_loader.get_next_batch()
+      feed_dict = {self.melody_sequence: X,
+                   self.train_labels: Y,
+                   self.lengths: lens}
+      if step % output_every == 0:
+        _, acc = self.session.run([self.train_op, self.accuracy], feed_dict)
+        print "Training iteration", step, "Accuracy:", acc
+
+      else:
+        _ = self.session.run([self.train_op], feed_dict)
+
 
     return softmax, state, lengths
 
