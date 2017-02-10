@@ -365,16 +365,18 @@ class SmilesRNN(object):
 
       zero_state = self.get_zero_state()
 
-      for step in range(num_steps):
+      step = 0
+      while step < num_steps:
         X, Y, lens = self.data_loader.next_batch()
         feed_dict = {self.melody_sequence: X,
                    self.train_labels: Y,
                    self.lengths: lens, 
                    self.initial_state: zero_state}
         if step % output_every == 0:
-          _, train_acc, train_pplex = self.session.run([self.train_op, 
-                                                        self.accuracy,
-                                                        self.perplexity], feed_dict)
+          _, step, train_acc, train_pplex = self.session.run([self.train_op, 
+                                                              self.global_step,
+                                                              self.accuracy,
+                                                              self.perplexity], feed_dict)
           X, Y, lens = self.data_loader.next_batch(dataset='val')
           feed_dict = {self.melody_sequence: X,
                      self.train_labels: Y,
@@ -390,7 +392,7 @@ class SmilesRNN(object):
           self.saver.save(self.session, self.checkpoint_dir+self.scope, 
                           global_step=step)
         else:
-          _ = self.session.run([self.train_op], feed_dict)
+          _, step = self.session.run([self.train_op, self.global_step], feed_dict)
 
 
   def get_next_note_from_note(self, note):
