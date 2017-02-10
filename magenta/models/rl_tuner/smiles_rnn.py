@@ -360,11 +360,14 @@ class SmilesRNN(object):
       self.session = tf.Session(graph=self.graph)
       self.session.run(tf.initialize_all_variables())
 
+      zero_state = self.get_zero_state()
+
       for step in range(num_steps):
         X, Y, lens = self.data_loader.next_batch()
         feed_dict = {self.melody_sequence: X,
                      self.train_labels: Y,
-                     self.lengths: lens}
+                     self.lengths: lens, 
+                     self.initial_state: zero_state}
         if step % output_every == 0:
           _, acc = self.session.run([self.train_op, self.accuracy], feed_dict)
           print "Training iteration", step, "Accuracy:", acc
