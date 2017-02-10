@@ -27,6 +27,7 @@ from magenta.music import midi_io
 import note_rnn_loader
 import rl_tuner_ops
 import rl_tuner_eval_metrics
+import rl_tutor
 
 # Note values of pecial actions.
 NOTE_OFF = 0
@@ -43,9 +44,10 @@ def reload_files():
   reload(note_rnn_loader)
   reload(rl_tuner_ops)
   reload(rl_tuner_eval_metrics)
+  reload(rl_tutor)
 
 
-class RLTuner(object):
+class RLTuner(rl_tutor.RLTutor):
   """Implements a recurrent DQN designed to produce melody sequences."""
 
   def __init__(self, output_dir,
@@ -128,96 +130,18 @@ class RLTuner(object):
       initialize_immediately: if True, the class will instantiate its component
         MelodyRNN networks and build the graph in the constructor.
     """
-    # Make graph.
-    self.graph = tf.Graph()
-
-    with self.graph.as_default():
-      # Memorize arguments.
-      self.input_size = input_size
-      self.num_actions = num_actions
-      self.output_every_nth = output_every_nth
-      self.output_dir = output_dir
-      self.save_path = os.path.join(output_dir, save_name)
-      self.reward_scaler = reward_scaler
-      self.reward_mode = reward_mode
-      self.exploration_mode = exploration_mode
-      self.num_notes_in_melody = num_notes_in_melody
-      self.stochastic_observations = stochastic_observations
-      self.algorithm = algorithm
-      self.priming_mode = priming_mode
-      self.midi_primer = midi_primer
-      self.training_file_list = training_file_list
-      self.note_rnn_checkpoint_dir = note_rnn_checkpoint_dir
-      self.note_rnn_checkpoint_file = note_rnn_checkpoint_file
-      self.note_rnn_hparams = note_rnn_hparams
-      self.note_rnn_type = note_rnn_type
-
-      if priming_mode == 'single_midi' and midi_primer is None:
-        tf.logging.fatal('A midi primer file is required when using'
-                         'the single_midi priming mode.')
-
-      if note_rnn_checkpoint_dir is None or note_rnn_checkpoint_dir == '':
-        print 'Retrieving checkpoint of Note RNN from Magenta download server.'
-        urllib.urlretrieve(
-          'http://download.magenta.tensorflow.org/models/rl_tuner_note_rnn.ckpt', 
-          'note_rnn.ckpt')
-        self.note_rnn_checkpoint_dir = os.getcwd()
-        self.note_rnn_checkpoint_file = os.path.join(os.getcwd(), 
-                                                    'note_rnn.ckpt')
-
-      if self.note_rnn_hparams is None:
-        if self.note_rnn_type == 'basic_rnn':
-          self.note_rnn_hparams = rl_tuner_ops.basic_rnn_hparams()
-        else:
-          self.note_rnn_hparams = rl_tuner_ops.default_hparams()
-
-      if self.algorithm == 'g' or self.algorithm == 'pure_rl':
-        self.reward_mode = 'music_theory_only'
-
-      if dqn_hparams is None:
-        self.dqn_hparams = rl_tuner_ops.default_dqn_hparams()
-      else:
-        self.dqn_hparams = dqn_hparams
-      self.discount_rate = tf.constant(self.dqn_hparams.discount_rate)
-      self.target_network_update_rate = tf.constant(
-          self.dqn_hparams.target_network_update_rate)
-
-      self.optimizer = tf.train.AdamOptimizer()
-
-      # DQN state.
-      self.actions_executed_so_far = 0
-      self.experience = deque(maxlen=self.dqn_hparams.max_experience)
-      self.iteration = 0
-      self.summary_writer = summary_writer
-      self.num_times_store_called = 0
-      self.num_times_train_called = 0
-
-    # Stored reward metrics.
-    self.reward_last_n = 0
-    self.rewards_batched = []
-    self.music_theory_reward_last_n = 0
-    self.music_theory_rewards_batched = []
-    self.note_rnn_reward_last_n = 0
-    self.note_rnn_rewards_batched = []
-    self.eval_avg_reward = []
-    self.eval_avg_music_theory_reward = []
-    self.eval_avg_note_rnn_reward = []
-    self.target_val_list = []
-
-    # Variables to keep track of characteristics of the current composition
-    #TODO(natashajaques): Implement composition as a class to obtain data 
-    # encapsulation so that you can't accidentally change the leap direction.
-    self.beat = 0
-    self.composition = []
-    self.composition_direction = 0
-    self.leapt_from = None  # stores the note at which composition leapt
-    self.steps_since_last_leap = 0
-
-    if not exists(self.output_dir):
-      makedirs(self.output_dir)
-
-    if initialize_immediately:
-      self.initialize_internal_models_graph_session()
+    
+    rl_tutor.RLTutor.__init__(self, output_dir, dqn_hparams=dqn_hparams, 
+      reward_mode=reward_mode, reward_scaler=reward_scaler, 
+      exploration_mode=exploration_mode, priming_mode=priming_mode,
+      stochastic_observations=stochastic_observations, algorithm=algorithm,
+      note_rnn_checkpoint_dir=note_rnn_checkpoint_dir, 
+      note_rnn_checkpoint_file=note_rnn_checkpoint_file, 
+      note_rnn_type=note_rnn_type, note_rnn_hparams=note_rnn_hparams,
+      num_notes_in_melody=num_notes_in_melody, input_size=input_size,
+      num_actions=num_actions, midi_primer=midi_primer, save_name=save_name,
+      output_every_nth=output_every_nth, training_file_list=training_file_list,
+      summary_writer=summary_writer, initialize_immediately=initialize_immediately):
 
     if self.priming_mode == 'random_midi':
       tf.logging.info('Getting priming melodies')
@@ -386,7 +310,7 @@ class RLTuner(object):
     return np.array(rl_tuner_ops.make_onehot([note_idx],
                                            self.num_actions)).flatten()
 
-  def reset_composition(self):
+  def reset_for_new_sequence(self):
     """Starts the models internal composition over at beat 0, with no notes.
 
     Also resets statistics about whether the composition is in the middle of a
