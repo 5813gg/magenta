@@ -355,7 +355,8 @@ class SmilesRNN(object):
     if not self.load_training_data or not self.data_loader:
       print "Error! must load training data in order to train"
 
-    self.saver = tf.train.Saver()
+    with self.graph.as_default():
+      self.saver = tf.train.Saver()
     self.session = tf.Session(graph=self.graph)
     self.session.run(tf.initialize_all_variables())
 
@@ -367,7 +368,8 @@ class SmilesRNN(object):
       if step % output_every == 0:
         _, acc = self.session.run([self.train_op, self.accuracy], feed_dict)
         print "Training iteration", step, "Accuracy:", acc
-
+        self.saver.save(self.session, self.checkpoint_dir, 
+                        global_step=step)
       else:
         _ = self.session.run([self.train_op], feed_dict)
 
