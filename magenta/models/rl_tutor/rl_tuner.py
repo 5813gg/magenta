@@ -154,45 +154,45 @@ class RLTuner(rl_tutor.RLTutor):
     function for this rather than doing it in the constructor, it allows classes
     inheriting from this class to define their own type of q_network.
     """
-      # Add internal networks to the graph.
-      tf.logging.info('Initializing q network')
-      self.q_network = note_rnn_loader.NoteRNNLoader(
-        self.graph, 'q_network',
-        self.note_rnn_checkpoint_dir,
-        midi_primer=self.midi_primer,
-        training_file_list=
-        self.training_file_list,
-        checkpoint_file=
-        self.note_rnn_checkpoint_file,
-        hparams=self.note_rnn_hparams,
-        note_rnn_type=self.note_rnn_type)
+    # Add internal networks to the graph.
+    tf.logging.info('Initializing q network')
+    self.q_network = note_rnn_loader.NoteRNNLoader(
+      self.graph, 'q_network',
+      self.note_rnn_checkpoint_dir,
+      midi_primer=self.midi_primer,
+      training_file_list=
+      self.training_file_list,
+      checkpoint_file=
+      self.note_rnn_checkpoint_file,
+      hparams=self.note_rnn_hparams,
+      note_rnn_type=self.note_rnn_type)
 
-      tf.logging.info('Initializing target q network')
-      self.target_q_network = note_rnn_loader.NoteRNNLoader(
-        self.graph,
-        'target_q_network',
-        self.note_rnn_checkpoint_dir,
-        midi_primer=self.midi_primer,
-        training_file_list=
-        self.training_file_list,
-        checkpoint_file=
-        self.note_rnn_checkpoint_file,
-        hparams=self.note_rnn_hparams,
-        note_rnn_type=self.note_rnn_type)
+    tf.logging.info('Initializing target q network')
+    self.target_q_network = note_rnn_loader.NoteRNNLoader(
+      self.graph,
+      'target_q_network',
+      self.note_rnn_checkpoint_dir,
+      midi_primer=self.midi_primer,
+      training_file_list=
+      self.training_file_list,
+      checkpoint_file=
+      self.note_rnn_checkpoint_file,
+      hparams=self.note_rnn_hparams,
+      note_rnn_type=self.note_rnn_type)
 
-      tf.logging.info('Initializing reward network')
-      self.reward_rnn = note_rnn_loader.NoteRNNLoader(
-        self.graph, 'reward_rnn',
-        self.note_rnn_checkpoint_dir,
-        midi_primer=self.midi_primer,
-        training_file_list=
-        self.training_file_list,
-        checkpoint_file=
-        self.note_rnn_checkpoint_file,
-        hparams=self.note_rnn_hparams,
-        note_rnn_type=self.note_rnn_type)
+    tf.logging.info('Initializing reward network')
+    self.reward_rnn = note_rnn_loader.NoteRNNLoader(
+      self.graph, 'reward_rnn',
+      self.note_rnn_checkpoint_dir,
+      midi_primer=self.midi_primer,
+      training_file_list=
+      self.training_file_list,
+      checkpoint_file=
+      self.note_rnn_checkpoint_file,
+      hparams=self.note_rnn_hparams,
+      note_rnn_type=self.note_rnn_type)
 
-      tf.logging.info('Q network cell: %s', self.q_network.cell)
+    tf.logging.info('Q network cell: %s', self.q_network.cell)
 
   def get_priming_melodies(self):
     """Runs a batch of training data through MelodyRNN model.
