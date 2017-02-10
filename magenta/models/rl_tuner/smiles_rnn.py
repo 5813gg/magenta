@@ -381,7 +381,7 @@ class SmilesRNN(object):
                                                     self.accuracy,
                                                     self.perplexity], feed_dict)
 
-          print "Training iteration", step, 
+          print "Training iteration", step
           print "\t Training accuracy", train_acc, "perplexity", train_pplex
           print "\t Validation accuracy", train_acc, "perplexity", train_pplex
           self.saver.save(self.session, self.checkpoint_dir, 
