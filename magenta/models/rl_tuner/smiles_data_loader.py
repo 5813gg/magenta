@@ -111,6 +111,8 @@ class SmilesLoader():
         X = self.batches[dataset][i]['X']
         Y = self.batches[dataset][i]['Y']
         lens = self.batches[dataset][i]['lengths']
+        while len(X) != self.batch_size:
+            X,Y,lens = self.next_batch(dataset=dataset)
 
         return X, Y, lens
 
