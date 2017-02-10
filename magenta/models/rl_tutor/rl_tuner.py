@@ -141,7 +141,7 @@ class RLTuner(rl_tutor.RLTutor):
       num_notes_in_melody=num_notes_in_melody, input_size=input_size,
       num_actions=num_actions, midi_primer=midi_primer, save_name=save_name,
       output_every_nth=output_every_nth, training_file_list=training_file_list,
-      summary_writer=summary_writer, initialize_immediately=initialize_immediately):
+      summary_writer=summary_writer, initialize_immediately=initialize_immediately)
 
     if self.priming_mode == 'random_midi':
       tf.logging.info('Getting priming melodies')
