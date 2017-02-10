@@ -144,28 +144,9 @@ class RLTutor(object):
       self.note_rnn_hparams = note_rnn_hparams
       self.note_rnn_type = note_rnn_type
 
-      if priming_mode == 'single_midi' and midi_primer is None:
-        tf.logging.fatal('A midi primer file is required when using'
-                         'the single_midi priming mode.')
-
-      if note_rnn_checkpoint_dir is None or note_rnn_checkpoint_dir == '':
-        print 'Retrieving checkpoint of Note RNN from Magenta download server.'
-        urllib.urlretrieve(
-          'http://download.magenta.tensorflow.org/models/rl_tuner_note_rnn.ckpt', 
-          'note_rnn.ckpt')
-        self.note_rnn_checkpoint_dir = os.getcwd()
-        self.note_rnn_checkpoint_file = os.path.join(os.getcwd(), 
-                                                    'note_rnn.ckpt')
-
-      if self.note_rnn_hparams is None:
-        if self.note_rnn_type == 'basic_rnn':
-          self.note_rnn_hparams = rl_tuner_ops.basic_rnn_hparams()
-        else:
-          self.note_rnn_hparams = rl_tuner_ops.default_hparams()
-
       if self.algorithm == 'g' or self.algorithm == 'pure_rl':
-        self.reward_mode = 'music_theory_only'
-
+        reward_mode = 'music_theory_only'
+      
       if dqn_hparams is None:
         self.dqn_hparams = rl_tuner_ops.default_dqn_hparams()
       else:
