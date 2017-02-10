@@ -52,7 +52,7 @@ class SmilesRNN(object):
   """
 
   def __init__(self, checkpoint_dir, graph=None, scope='smiles_rnn', checkpoint_file=None, 
-               hparams=None, note_rnn_type='default', checkpoint_scope='rnn_model', 
+               hparams=None, note_rnn_type='default', checkpoint_scope='smiles_rnn', 
                load_training_data=False, data_file=SMILES_DATA+'250k_drugs_clean.smi', 
                vocab_file=SMILES_DATA+'zinc_char_list.json', pickle_file=SMILES_DATA+'smiles.p'):
     """Initialize by building the graph and loading a previous checkpoint.
