@@ -80,7 +80,6 @@ class SmilesRNN(object):
     """
     self.session = None
     self.scope = scope
-    self.batch_size = 1
     self.checkpoint_scope = checkpoint_scope
     self.note_rnn_type = note_rnn_type
     self.checkpoint_dir = checkpoint_dir
@@ -124,7 +123,7 @@ class SmilesRNN(object):
     Returns:
       A matrix of batch_size x cell size zeros.
     """
-    return np.zeros((self.batch_size, self.cell.state_size))
+    return np.zeros((self.hparams.batch_size, self.cell.state_size))
 
   def restore_initialize_prime(self, session):
     """Saves the session, restores variables from checkpoint, primes model.
@@ -299,12 +298,12 @@ class SmilesRNN(object):
 
       features = seq.feature_lists.feature_list['inputs'].feature
       # Run model over primer sequence.
-      primer_input_batch = np.tile([primer_input], (self.batch_size, 1, 1))
+      primer_input_batch = np.tile([primer_input], (self.hparams.batch_size, 1, 1))
       self.state_value, softmax = self.session.run(
           [self.state_tensor, self.softmax],
           feed_dict={self.initial_state: self.state_value,
                      self.melody_sequence: primer_input_batch,
-                     self.lengths: np.full(self.batch_size,
+                     self.lengths: np.full(self.hparams.batch_size,
                                            len(self.primer),
                                            dtype=int)})
       priming_output = softmax[-1, :]
@@ -387,10 +386,10 @@ class SmilesRNN(object):
     """
     with self.graph.as_default():
       with tf.variable_scope(self.scope, reuse=True):
-        singleton_lengths = np.full(self.batch_size, 1, dtype=int)
+        singleton_lengths = np.full(self.hparams.batch_size, 1, dtype=int)
 
         input_batch = np.reshape(note,
-                                 (self.batch_size, 1, rl_tuner_ops.NUM_CLASSES))
+                                 (self.hparams.batch_size, 1, rl_tuner_ops.NUM_CLASSES))
 
         softmax, self.state_value = self.session.run(
             [self.softmax, self.state_tensor],
