@@ -59,26 +59,26 @@ class RLTuner(RLTutor):
                exploration_mode='egreedy',
                priming_mode='random_note',
                stochastic_observations=False,
-               algorithm='q',
+               algorithm='q',      
 
-               # Trained Note RNN to load and tune
+               # Pre-trained RNN to load and tune
                note_rnn_checkpoint_dir=None,
                note_rnn_checkpoint_file=None,
                note_rnn_type='default',
                note_rnn_hparams=None,
 
-               # Other music related settings.
-               num_notes_in_melody=32,
+               # Logistics.
                input_size=rl_tuner_ops.NUM_CLASSES,
                num_actions=rl_tuner_ops.NUM_CLASSES,
-               midi_primer=None,
-
-               # Logistics.
                save_name='rl_tuner.ckpt',
                output_every_nth=1000,
-               training_file_list=None,
                summary_writer=None,
-               initialize_immediately=True):
+               initialize_immediately=True,
+
+               # Settings specific to RLTuner
+               num_notes_in_melody=32,
+               midi_primer=None,
+               training_file_list=None,):
     """Initializes the MelodyQNetwork class.
 
     Args:
@@ -114,9 +114,6 @@ class RLTuner(RLTutor):
         Magenta basic_rnn model.
       note_rnn_hparams: A tf.HParams object which defines the hyper parameters
         used to train the MelodyRNN model that will be loaded from a checkpoint.
-      num_notes_in_melody: The length of a composition of the model
-      midi_primer: A midi file that can be used to prime the model if
-        priming_mode is set to 'single_midi'.
       input_size: the size of the one-hot vector encoding a note that is input
         to the model.
       num_actions: The size of the one-hot vector encoding a note that is
@@ -124,13 +121,19 @@ class RLTuner(RLTutor):
       save_name: Name the model will use to save checkpoints.
       output_every_nth: How many training steps before the model will print
         an output saying the cumulative reward, and save a checkpoint.
-      training_file_list: A list of paths to tfrecord files containing melody 
-        training data. This is necessary to use the 'random_midi' priming mode.
       summary_writer: A tf.train.SummaryWriter used to log metrics.
       initialize_immediately: if True, the class will instantiate its component
         MelodyRNN networks and build the graph in the constructor.
+      num_notes_in_melody: The length of a composition of the model
+      midi_primer: A midi file that can be used to prime the model if
+        priming_mode is set to 'single_midi'.
+      training_file_list: A list of paths to tfrecord files containing melody 
+        training data. This is necessary to use the 'random_midi' priming mode.
     """
-    
+    self.num_notes_in_melody = num_notes_in_melody
+    self.midi_primer = midi_primer
+    self.training_file_list = training_file_list
+
     RLTutor.__init__(self, output_dir, dqn_hparams=dqn_hparams, 
       reward_mode=reward_mode, reward_scaler=reward_scaler, 
       exploration_mode=exploration_mode, priming_mode=priming_mode,

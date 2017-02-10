@@ -160,7 +160,7 @@ def compose_and_evaluate_piece(rl_tuner,
     created.
   """
   last_observation = rl_tuner.prime_internal_models()
-  rl_tuner.reset_composition()
+  rl_tuner.reset_for_new_sequence()
 
   for _ in range(composition_length):
     if sample_next_obs:
@@ -422,7 +422,7 @@ def debug_music_theory_reward(rl_tuner,
       be received from playing this composition.
   """
   last_observation = rl_tuner.prime_internal_models()
-  rl_tuner.reset_composition()
+  rl_tuner.reset_for_new_sequence()
 
   for i in range(composition_length):
     print "Last observation", np.argmax(last_observation)

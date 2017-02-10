@@ -136,12 +136,9 @@ class RLTutor(object):
       self.reward_scaler = reward_scaler
       self.reward_mode = reward_mode
       self.exploration_mode = exploration_mode
-      self.num_notes_in_melody = num_notes_in_melody
       self.stochastic_observations = stochastic_observations
       self.algorithm = algorithm
       self.priming_mode = priming_mode
-      self.midi_primer = midi_primer
-      self.training_file_list = training_file_list
       self.note_rnn_checkpoint_dir = note_rnn_checkpoint_dir
       self.note_rnn_checkpoint_file = note_rnn_checkpoint_file
       self.note_rnn_hparams = note_rnn_hparams
