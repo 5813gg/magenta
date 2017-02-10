@@ -386,7 +386,7 @@ class SmilesRNN(object):
 
           print "Training iteration", step
           print "\t Training accuracy", train_acc, "perplexity", train_pplex
-          print "\t Validation accuracy", train_acc, "perplexity", train_pplex
+          print "\t Validation accuracy", val_acc, "perplexity", val_pplex
           self.saver.save(self.session, self.checkpoint_dir+self.scope, 
                           global_step=step)
         else:
