@@ -361,7 +361,7 @@ class SmilesRNN(object):
       self.session.run(tf.initialize_all_variables())
 
       for step in range(num_steps):
-        X, Y, lens = self.data_loader.get_next_batch()
+        X, Y, lens = self.data_loader.next_batch()
         feed_dict = {self.melody_sequence: X,
                      self.train_labels: Y,
                      self.lengths: lens}
@@ -372,7 +372,7 @@ class SmilesRNN(object):
                           global_step=step)
         else:
           _ = self.session.run([self.train_op], feed_dict)
-          
+
 
   def get_next_note_from_note(self, note):
     """Given a note, uses the model to predict the most probable next note.
