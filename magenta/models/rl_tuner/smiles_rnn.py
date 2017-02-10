@@ -364,12 +364,25 @@ class SmilesRNN(object):
       for step in range(num_steps):
         X, Y, lens = self.data_loader.next_batch()
         feed_dict = {self.melody_sequence: X,
+                   self.train_labels: Y,
+                   self.lengths: lens, 
+                   self.initial_state: zero_state}
+        if step % output_every == 0:
+          _, train_acc, train_pplex = self.session.run([self.train_op, 
+                                                        self.accuracy,
+                                                        self.perplexity], feed_dict)
+          X, Y, lens = self.data_loader.next_batch(dataset='val')
+          feed_dict = {self.melody_sequence: X,
                      self.train_labels: Y,
                      self.lengths: lens, 
                      self.initial_state: zero_state}
-        if step % output_every == 0:
-          _, acc = self.session.run([self.train_op, self.accuracy], feed_dict)
-          print "Training iteration", step, "Accuracy:", acc
+          _, val_acc, val_pplex = self.session.run([self.train_op, 
+                                                    self.accuracy,
+                                                    self.perplexity], feed_dict)
+
+          print "Training iteration", step, 
+          print "\t Training accuracy", train_acc, "perplexity", train_pplex
+          print "\t Validation accuracy", train_acc, "perplexity", train_pplex
           self.saver.save(self.session, self.checkpoint_dir, 
                           global_step=step)
         else:
