@@ -27,7 +27,7 @@ from magenta.music import midi_io
 import note_rnn_loader
 import rl_tuner_ops
 import rl_tuner_eval_metrics
-import rl_tutor
+from rl_tutor import RLTutor
 
 # Note values of pecial actions.
 NOTE_OFF = 0
@@ -47,7 +47,7 @@ def reload_files():
   reload(rl_tutor)
 
 
-class RLTuner(rl_tutor.RLTutor):
+class RLTuner(RLTutor):
   """Implements a recurrent DQN designed to produce melody sequences."""
 
   def __init__(self, output_dir,
@@ -131,7 +131,7 @@ class RLTuner(rl_tutor.RLTutor):
         MelodyRNN networks and build the graph in the constructor.
     """
     
-    rl_tutor.RLTutor.__init__(self, output_dir, dqn_hparams=dqn_hparams, 
+    RLTutor.__init__(self, output_dir, dqn_hparams=dqn_hparams, 
       reward_mode=reward_mode, reward_scaler=reward_scaler, 
       exploration_mode=exploration_mode, priming_mode=priming_mode,
       stochastic_observations=stochastic_observations, algorithm=algorithm,
