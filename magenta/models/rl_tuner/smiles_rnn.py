@@ -367,7 +367,6 @@ class SmilesRNN(object):
                      self.train_labels: Y,
                      self.lengths: lens, 
                      self.initial_state: zero_state}
-        return feed_dict
         if step % output_every == 0:
           _, acc = self.session.run([self.train_op, self.accuracy], feed_dict)
           print "Training iteration", step, "Accuracy:", acc
