@@ -1,6 +1,7 @@
-"""Defines a Deep Q Network (DQN) with augmented reward to create melodies 
-by using reinforcement learning to fine-tune a trained Note RNN according
-to some music theory rewards. 
+"""Defines a Deep Q Network (DQN) with augmented reward to create sequences
+by using reinforcement learning to fine-tune a pre-trained RNN according
+to some domain-specific rewards. This file defines a generic version that 
+can be inherited by more domain-specific child classes.
 
 Also implements two alternatives to Q learning: Psi and G learning. The 
 algorithm can be switched using the 'algorithm' hyperparameter. 
@@ -27,10 +28,6 @@ from magenta.music import midi_io
 import note_rnn_loader
 import rl_tuner_ops
 import rl_tuner_eval_metrics
-
-# Note values of pecial actions.
-NOTE_OFF = 0
-NO_EVENT = 1
 
 # Training data sequences are limited to this length, so the padding queue pads
 # to this length.
@@ -217,65 +214,24 @@ class RLTuner(object):
       makedirs(self.output_dir)
 
     if initialize_immediately:
-      self.initialize_internal_models_graph_session()
+      self.initialize()
 
-  def initialize_internal_models_graph_session(self, 
-                                               restore_from_checkpoint=True):
+  def initialize(self, restore_from_checkpoint=True):
     """Initializes internal RNN models, builds the graph, starts the session.
 
     Adds the graphs of the internal RNN models to this graph, adds the DQN ops
-    to the graph, and starts a new Saver and session. By having a separate
-    function for this rather than doing it in the constructor, it allows a model
-    inheriting from this class to define its q_network differently.
+    to the graph, and starts a new Saver and session. 
 
     Args:
       restore_from_checkpoint: If True, the weights for the 'q_network',
         'target_q_network', and 'reward_rnn' will be loaded from a checkpoint.
         If false, these models will be initialized with random weights. Useful
-        for checking what pure RL (with no influence from training data) sounds
-        like.
+        for checking how pure RL (with no influence from training data) performs
     """
     with self.graph.as_default():
-      # Add internal networks to the graph.
-      tf.logging.info('Initializing q network')
-      self.q_network = note_rnn_loader.NoteRNNLoader(
-        self.graph, 'q_network',
-        self.note_rnn_checkpoint_dir,
-        midi_primer=self.midi_primer,
-        training_file_list=
-        self.training_file_list,
-        checkpoint_file=
-        self.note_rnn_checkpoint_file,
-        hparams=self.note_rnn_hparams,
-        note_rnn_type=self.note_rnn_type)
-
-      tf.logging.info('Initializing target q network')
-      self.target_q_network = note_rnn_loader.NoteRNNLoader(
-        self.graph,
-        'target_q_network',
-        self.note_rnn_checkpoint_dir,
-        midi_primer=self.midi_primer,
-        training_file_list=
-        self.training_file_list,
-        checkpoint_file=
-        self.note_rnn_checkpoint_file,
-        hparams=self.note_rnn_hparams,
-        note_rnn_type=self.note_rnn_type)
-
-      tf.logging.info('Initializing reward network')
-      self.reward_rnn = note_rnn_loader.NoteRNNLoader(
-        self.graph, 'reward_rnn',
-        self.note_rnn_checkpoint_dir,
-        midi_primer=self.midi_primer,
-        training_file_list=
-        self.training_file_list,
-        checkpoint_file=
-        self.note_rnn_checkpoint_file,
-        hparams=self.note_rnn_hparams,
-        note_rnn_type=self.note_rnn_type)
-
-      tf.logging.info('Q network cell: %s', self.q_network.cell)
-
+      # Adds q_network, target_q_network, reward_rnn
+      self.initialize_internal_models()
+      
       # Add rest of variables to graph.
       tf.logging.info('Adding RL graph variables')
       self.build_graph()
@@ -307,37 +263,16 @@ class RLTuner(object):
         self.target_q_network.initialize_new(self.session)
         self.reward_rnn.initialize_new(self.session)
 
-    if self.priming_mode == 'random_midi':
-      tf.logging.info('Getting priming melodies')
-      self.get_priming_melodies()
+  def initialize_internal_models(self):
+    """Initializes internal RNN models: q_network, target_q_network, reward_rnn.
 
-  def get_priming_melodies(self):
-    """Runs a batch of training data through MelodyRNN model.
+    Adds the graphs of the internal RNN models to this graph, by having a separate
+    function for this rather than doing it in the constructor, it allows classes
+    inheriting from this class to define their own type of q_network.
 
-    If the priming mode is 'random_midi', priming the q-network requires a
-    random training melody. Therefore this function runs a batch of data from
-    the training directory through the internal model, and the resulting
-    internal states of the LSTM are stored in a list. The next note in each
-    training melody is also stored in a corresponding list called
-    'priming_notes'. Therefore, to prime the model with a random melody, it is
-    only necessary to select a random index from 0 to batch_size-1 and use the
-    hidden states and note at that index as input to the model.
+    This should be overwritten in the child class. 
     """
-    (next_note_softmax,
-     self.priming_states, lengths) = self.q_network.run_training_batch()
-
-    # Get the next note that was predicted for each priming melody to be used
-    # in priming.
-    self.priming_notes = [0] * len(lengths)
-    for i in range(len(lengths)):
-      # Each melody has TRAIN_SEQUENCE_LENGTH outputs, but the last note is
-      # actually stored at lengths[i]. The rest is padding.
-      start_i = i * TRAIN_SEQUENCE_LENGTH
-      end_i = start_i + lengths[i] - 1
-      end_softmax = next_note_softmax[end_i, :]
-      self.priming_notes[i] = np.argmax(end_softmax)
-
-    tf.logging.info('Stored priming notes: %s', self.priming_notes)
+    raise NotImplementedError
 
   def prime_internal_model(self, model):
     """Prime an internal model such as the q_network based on priming mode.
@@ -347,52 +282,17 @@ class RLTuner(object):
 
     Returns:
       The first observation to feed into the model.
+
+    Should be overwritten in child class.
     """
-    model.state_value = model.get_zero_state()
+    raise NotImplementedError
 
-    if self.priming_mode == 'random_midi':
-      priming_idx = np.random.randint(0, len(self.priming_states))
-      model.state_value = np.reshape(
-          self.priming_states[priming_idx, :],
-          (1, model.cell.state_size))
-      priming_note = self.priming_notes[priming_idx]
-      next_obs = np.array(
-          rl_tuner_ops.make_onehot([priming_note], self.num_actions)).flatten()
-      tf.logging.debug(
-        'Feeding priming state for midi file %s and corresponding note %s',
-        priming_idx, priming_note)
-    elif self.priming_mode == 'single_midi':
-      model.prime_model()
-      next_obs = model.priming_note
-    elif self.priming_mode == 'random_note':
-      next_obs = self.get_random_note()
-    else:
-      tf.logging.warn('Error! Invalid priming mode. Priming with random note')
-      next_obs = self.get_random_note()
+  def reset_for_new_sequence(self):
+    """Resets any model state variables for a new sequence.
 
-    return next_obs
-
-  def get_random_note(self):
-    """Samle a note uniformly at random.
-
-    Returns:
-      random note
+    Should be overwritten in child class.
     """
-    note_idx = np.random.randint(0, self.num_actions - 1)
-    return np.array(rl_tuner_ops.make_onehot([note_idx],
-                                           self.num_actions)).flatten()
-
-  def reset_composition(self):
-    """Starts the models internal composition over at beat 0, with no notes.
-
-    Also resets statistics about whether the composition is in the middle of a
-    melodic leap.
-    """
-    self.beat = 0
-    self.composition = []
-    self.composition_direction = 0
-    self.leapt_from = None
-    self.steps_since_last_leap = 0
+    raise NotImplementedError
 
   def build_graph(self):
     """Builds the reinforcement learning tensorflow graph."""
