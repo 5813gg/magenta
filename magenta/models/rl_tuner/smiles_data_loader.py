@@ -26,6 +26,8 @@ class SmilesLoader():
                 sys.exit()
             self.preprocess()
 
+        print "Successfully loaded SMILES data which is stored in file", pickle_file, "and has", len(self.batches['train']), "training batches"
+
     def create_char_conversions(self):
         print "Loading vocabulary from file", self.vocab_file
         if not os.path.exists(self.vocab_file):

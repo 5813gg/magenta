@@ -138,13 +138,16 @@ class SmilesRNN(object):
     self.restore_vars_from_checkpoint(self.checkpoint_dir)
     self.prime_model()
 
-  def initialize_and_restore(self, session):
+  def initialize_and_restore(self, session=None):
     """Saves the session, restores variables from checkpoint.
 
     Args:
       session: A tensorflow session.
     """
-    self.session = session
+    if session is None:
+      self.session = tf.Session(graph=self.graph)
+    else:
+      self.session = session
     self.restore_vars_from_checkpoint(self.checkpoint_dir)
 
   def initialize_new(self, session=None):
@@ -355,10 +358,10 @@ class SmilesRNN(object):
     if not self.load_training_data or not self.data_loader:
       print "Error! must load training data in order to train"
 
+    if not self.session: self.initialize_new()
+    
     with self.graph.as_default():
       self.saver = tf.train.Saver()
-      self.session = tf.Session(graph=self.graph)
-      self.session.run(tf.initialize_all_variables())
 
       zero_state = self.get_zero_state()
 
