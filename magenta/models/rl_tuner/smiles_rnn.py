@@ -359,7 +359,7 @@ class SmilesRNN(object):
       print "Error! must load training data in order to train"
 
     if not self.session: self.initialize_new()
-    
+
     with self.graph.as_default():
       self.saver = tf.train.Saver()
 
@@ -387,7 +387,7 @@ class SmilesRNN(object):
           print "Training iteration", step
           print "\t Training accuracy", train_acc, "perplexity", train_pplex
           print "\t Validation accuracy", train_acc, "perplexity", train_pplex
-          self.saver.save(self.session, self.checkpoint_dir, 
+          self.saver.save(self.session, self.checkpoint_dir+self.scope, 
                           global_step=step)
         else:
           _ = self.session.run([self.train_op], feed_dict)
