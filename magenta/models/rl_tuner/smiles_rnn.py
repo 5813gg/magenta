@@ -51,16 +51,17 @@ class SmilesRNN(object):
   Used as part of the RLTuner class.
   """
 
-  def __init__(self, graph=None, scope='smiles_rnn', checkpoint_dir=None, checkpoint_file=None, 
+  def __init__(self, checkpoint_dir, graph=None, scope='smiles_rnn', checkpoint_file=None, 
                hparams=None, note_rnn_type='default', checkpoint_scope='rnn_model', 
                load_training_data=False, data_file=SMILES_DATA+'250k_drugs_clean.smi', 
                vocab_file=SMILES_DATA+'zinc_char_list.json', pickle_file=SMILES_DATA+'smiles.p'):
     """Initialize by building the graph and loading a previous checkpoint.
 
     Args:
+      checkpoint_dir: Path to the directory where the checkpoint file is saved or 
+        will be saved.
       graph: A tensorflow graph where the MelodyRNN's graph will be added.
       scope: The tensorflow scope where this network will be saved.
-      checkpoint_dir: Path to the directory where the checkpoint file is saved.
       checkpoint_file: Path to a backup checkpoint file to be used if none can 
         be found in the checkpoint_dir
       hparams: A tf_lib.HParams object. Must match the hparams used to create 
