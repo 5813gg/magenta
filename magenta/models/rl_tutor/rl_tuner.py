@@ -130,6 +130,8 @@ class RLTuner(RLTutor):
       training_file_list: A list of paths to tfrecord files containing melody 
         training data. This is necessary to use the 'random_midi' priming mode.
     """
+    print "In child class RL Tuner"
+
     self.num_notes_in_melody = num_notes_in_melody
     self.midi_primer = midi_primer
     self.training_file_list = training_file_list
@@ -157,9 +159,9 @@ class RLTuner(RLTutor):
       reward_mode=reward_mode, reward_scaler=reward_scaler, 
       exploration_mode=exploration_mode, priming_mode=priming_mode,
       stochastic_observations=stochastic_observations, algorithm=algorithm,
-      note_rnn_checkpoint_dir=note_rnn_checkpoint_dir, 
-      note_rnn_checkpoint_file=note_rnn_checkpoint_file, 
-      note_rnn_type=note_rnn_type, note_rnn_hparams=note_rnn_hparams,
+      rnn_checkpoint_dir=note_rnn_checkpoint_dir, 
+      rnn_checkpoint_file=note_rnn_checkpoint_file, 
+      rnn_type=note_rnn_type, rnn_hparams=note_rnn_hparams,
       num_notes_in_melody=num_notes_in_melody, input_size=input_size,
       num_actions=num_actions, midi_primer=midi_primer, save_name=save_name,
       output_every_nth=output_every_nth, training_file_list=training_file_list,
@@ -185,39 +187,39 @@ class RLTuner(RLTutor):
     tf.logging.info('Initializing q network')
     self.q_network = note_rnn_loader.NoteRNNLoader(
       self.graph, 'q_network',
-      self.note_rnn_checkpoint_dir,
+      self.rnn_checkpoint_dir,
       midi_primer=self.midi_primer,
       training_file_list=
       self.training_file_list,
       checkpoint_file=
-      self.note_rnn_checkpoint_file,
-      hparams=self.note_rnn_hparams,
-      note_rnn_type=self.note_rnn_type)
+      self.rnn_checkpoint_file,
+      hparams=self.rnn_hparams,
+      note_rnn_type=self.rnn_type)
 
     tf.logging.info('Initializing target q network')
     self.target_q_network = note_rnn_loader.NoteRNNLoader(
       self.graph,
       'target_q_network',
-      self.note_rnn_checkpoint_dir,
+      self.rnn_checkpoint_dir,
       midi_primer=self.midi_primer,
       training_file_list=
       self.training_file_list,
       checkpoint_file=
-      self.note_rnn_checkpoint_file,
-      hparams=self.note_rnn_hparams,
-      note_rnn_type=self.note_rnn_type)
+      self.rnn_checkpoint_file,
+      hparams=self.rnn_hparams,
+      note_rnn_type=self.rnn_type)
 
     tf.logging.info('Initializing reward network')
     self.reward_rnn = note_rnn_loader.NoteRNNLoader(
       self.graph, 'reward_rnn',
-      self.note_rnn_checkpoint_dir,
+      self.rnn_checkpoint_dir,
       midi_primer=self.midi_primer,
       training_file_list=
       self.training_file_list,
       checkpoint_file=
-      self.note_rnn_checkpoint_file,
-      hparams=self.note_rnn_hparams,
-      note_rnn_type=self.note_rnn_type)
+      self.rnn_checkpoint_file,
+      hparams=self.rnn_hparams,
+      note_rnn_type=self.rnn_type)
 
     tf.logging.info('Q network cell: %s', self.q_network.cell)
 
@@ -324,8 +326,8 @@ class RLTuner(RLTutor):
       Float reward value.
     """
     # Gets and saves log p(a|s) as output by reward_rnn.
-    note_rnn_reward = self.reward_from_reward_rnn_scores(action, reward_scores)
-    self.note_rnn_reward_last_n += note_rnn_reward
+    data_reward = self.reward_from_reward_rnn_scores(action, reward_scores)
+    self.data_reward_last_n += data_reward
 
     if self.reward_mode == 'scale':
       # Makes the model play a scale (defaults to c major).
@@ -358,7 +360,7 @@ class RLTuner(RLTutor):
       reward += self.reward_tonic(action)
       reward += self.reward_penalize_repeating(action)
 
-      return reward * self.reward_scaler + note_rnn_reward
+      return reward * self.reward_scaler + data_reward
     elif self.reward_mode == 'music_theory_basic_plus_variety':
       # Uses the same reward function as above, but adds a penalty for
       # compositions with a high autocorrelation (aka those that don't have
@@ -368,28 +370,28 @@ class RLTuner(RLTutor):
       reward += self.reward_penalize_repeating(action)
       reward += self.reward_penalize_autocorrelation(action)
 
-      return reward * self.reward_scaler + note_rnn_reward
+      return reward * self.reward_scaler + data_reward
     elif self.reward_mode == 'preferred_intervals':
       reward = self.reward_preferred_intervals(action)
     elif self.reward_mode == 'music_theory_all':
       if verbose:
-        print 'Note RNN reward:', note_rnn_reward
+        print 'Note RNN reward:', data_reward
 
       reward = self.reward_music_theory(action, verbose=verbose)
 
       if verbose:
         print 'Total music theory reward:', self.reward_scaler * reward
-        print 'Total note rnn reward:', note_rnn_reward
+        print 'Total note rnn reward:', data_reward
         print ""
       
-      self.music_theory_reward_last_n += reward * self.reward_scaler
-      return reward * self.reward_scaler + note_rnn_reward
+      self.domain_reward_last_n += reward * self.reward_scaler
+      return reward * self.reward_scaler + data_reward
     elif self.reward_mode == 'music_theory_only':
       reward = self.reward_music_theory(action, verbose=verbose)
     else:
       tf.logging.fatal('ERROR! Not a valid reward mode. Cannot compute reward')
 
-    self.music_theory_reward_last_n += reward * self.reward_scaler
+    self.domain_reward_last_n += reward * self.reward_scaler
     return reward * self.reward_scaler
 
 

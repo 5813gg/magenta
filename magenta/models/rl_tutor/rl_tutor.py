@@ -35,7 +35,6 @@ def reload_files():
   """Used to reload the imported dependency files (necessary for jupyter 
   notebooks).
   """
-  reload(note_rnn_loader)
   reload(rl_tuner_ops)
   reload(rl_tuner_eval_metrics)
 
@@ -47,7 +46,7 @@ class RLTutor(object):
 
                # Hyperparameters
                dqn_hparams=None,
-               reward_mode='music_theory_all',
+               reward_mode='default',
                reward_scaler=1.0,
                exploration_mode='egreedy',
                priming_mode='random_note',
@@ -55,10 +54,10 @@ class RLTutor(object):
                algorithm='q',
 
                # Trained Note RNN to load and tune
-               note_rnn_checkpoint_dir=None,
-               note_rnn_checkpoint_file=None,
-               note_rnn_type='default',
-               note_rnn_hparams=None,
+               rnn_checkpoint_dir=None,
+               rnn_checkpoint_file=None,
+               rnn_type='default',
+               rnn_hparams=None,
 
                # Other music related settings.
                num_notes_in_melody=32,
@@ -79,40 +78,38 @@ class RLTutor(object):
       dqn_hparams: A tf_lib.hparams() object containing the hyperparameters of 
         the DQN algorithm, including minibatch size, exploration probability, 
         etc.
-      reward_mode: Controls which reward function can be applied. There are
-        several, including 'scale', which teaches the model to play a scale,
-        and of course 'music_theory_all', which is a music-theory-based reward
-        function composed of other functions. 
-      reward_scaler: Controls the emphasis placed on the music theory rewards. 
+      reward_mode: Controls which reward function can be applied. Each domain
+        can have several different ones; 'domain_only' applies only the domain-
+        specific rewards, and no reward_rnn rewards.
+      reward_scaler: Controls the emphasis placed on the domain rewards. 
         This value is the inverse of 'c' in the academic paper.
       exploration_mode: can be 'egreedy' which is an epsilon greedy policy, or
         it can be 'boltzmann', in which the model will sample from its output
         distribution to choose the next action.
       priming_mode: Each time the model begins a new composition, it is primed
-        with either a random note ('random_note'), a random MIDI file from the
-        training data ('random_midi'), or a particular MIDI file
-        ('single_midi').
-      stochastic_observations: If False, the note that the model chooses to
+        with a different method; possibly a random token, or a random training
+        sequence.
+      stochastic_observations: If False, the token that the model chooses to
         play next (the argmax of its softmax probabilities) deterministically
-        becomes the next note it will observe. If True, the next observation
+        becomes the next token it will observe. If True, the next observation
         will be sampled from the model's softmax output.
       algorithm: can be 'default', 'psi', 'g' or 'pure_rl', for different 
         learning algorithms
-      note_rnn_checkpoint_dir: The directory from which the internal 
-        NoteRNNLoader will load its checkpointed LSTM.
-      note_rnn_checkpoint_file: A checkpoint file to use in case one cannot be
-        found in the note_rnn_checkpoint_dir.
-      note_rnn_type: If 'default', will use the basic LSTM described in the 
+      rnn_checkpoint_dir: The directory from which the internal 
+        RNN loader class will load its checkpointed LSTM.
+      rnn_checkpoint_file: A checkpoint file to use in case one cannot be
+        found in the rnn_checkpoint_dir.
+      rnn_type: If 'default', will use the basic LSTM described in the 
         research paper. If 'basic_rnn', will assume the checkpoint is from a
         Magenta basic_rnn model.
-      note_rnn_hparams: A tf.HParams object which defines the hyper parameters
+      rnn_hparams: A tf.HParams object which defines the hyper parameters
         used to train the MelodyRNN model that will be loaded from a checkpoint.
       num_notes_in_melody: The length of a composition of the model
       midi_primer: A midi file that can be used to prime the model if
         priming_mode is set to 'single_midi'.
-      input_size: the size of the one-hot vector encoding a note that is input
+      input_size: the size of the one-hot vector encoding a token that is input
         to the model.
-      num_actions: The size of the one-hot vector encoding a note that is
+      num_actions: The size of the one-hot vector encoding a token that is
         output by the model.
       save_name: Name the model will use to save checkpoints.
       output_every_nth: How many training steps before the model will print
@@ -123,6 +120,8 @@ class RLTutor(object):
       initialize_immediately: if True, the class will instantiate its component
         MelodyRNN networks and build the graph in the constructor.
     """
+    print "In parent class RL Tutor"
+
     # Make graph.
     self.graph = tf.Graph()
 
@@ -139,13 +138,13 @@ class RLTutor(object):
       self.stochastic_observations = stochastic_observations
       self.algorithm = algorithm
       self.priming_mode = priming_mode
-      self.note_rnn_checkpoint_dir = note_rnn_checkpoint_dir
-      self.note_rnn_checkpoint_file = note_rnn_checkpoint_file
-      self.note_rnn_hparams = note_rnn_hparams
-      self.note_rnn_type = note_rnn_type
+      self.rnn_checkpoint_dir = rnn_checkpoint_dir
+      self.rnn_checkpoint_file = rnn_checkpoint_file
+      self.rnn_hparams = rnn_hparams
+      self.rnn_type = rnn_type
 
       if self.algorithm == 'g' or self.algorithm == 'pure_rl':
-        reward_mode = 'music_theory_only'
+        reward_mode = 'domain_only'
       
       if dqn_hparams is None:
         self.dqn_hparams = rl_tuner_ops.default_dqn_hparams()
@@ -168,13 +167,13 @@ class RLTutor(object):
     # Stored reward metrics.
     self.reward_last_n = 0
     self.rewards_batched = []
-    self.music_theory_reward_last_n = 0
-    self.music_theory_rewards_batched = []
-    self.note_rnn_reward_last_n = 0
-    self.note_rnn_rewards_batched = []
+    self.domain_reward_last_n = 0
+    self.domain_rewards_batched = []
+    self.data_reward_last_n = 0
+    self.data_rewards_batched = []
     self.eval_avg_reward = []
-    self.eval_avg_music_theory_reward = []
-    self.eval_avg_note_rnn_reward = []
+    self.eval_avg_domain_reward = []
+    self.eval_avg_data_reward = []
     self.target_val_list = []
 
     # Variables to keep track of characteristics of the current composition
@@ -276,8 +275,7 @@ class RLTutor(object):
 
     tf.logging.info('Adding taking action portion of graph')
     with tf.name_scope('taking_action'):
-      # Output of the q network gives the value of taking each action (playing
-      # each note).
+      # Output of the q network gives the value of taking each action
       self.action_scores = tf.identity(self.q_network(), name='action_scores')
       tf.histogram_summary('action_scores', self.action_scores)
 
@@ -466,12 +464,12 @@ class RLTutor(object):
 
         if self.algorithm == 'g':
           self.rewards_batched.append(
-            self.music_theory_reward_last_n + self.note_rnn_reward_last_n)
+            self.domain_reward_last_n + self.data_reward_last_n)
         else:
           self.rewards_batched.append(self.reward_last_n)
-        self.music_theory_rewards_batched.append(
-          self.music_theory_reward_last_n)
-        self.note_rnn_rewards_batched.append(self.note_rnn_reward_last_n)
+        self.domain_rewards_batched.append(
+          self.domain_reward_last_n)
+        self.data_rewards_batched.append(self.data_reward_last_n)
 
         # Save a checkpoint.
         save_step = len(self.rewards_batched)*self.output_every_nth
@@ -481,14 +479,14 @@ class RLTutor(object):
         tf.logging.info('Training iteration %s', i)
         tf.logging.info('\tReward for last %s steps: %s', 
                         self.output_every_nth, r)
-        tf.logging.info('\t\tMusic theory reward: %s', 
-                        self.music_theory_reward_last_n)
-        tf.logging.info('\t\tNote RNN reward: %s', self.note_rnn_reward_last_n)
+        tf.logging.info('\t\tDomain reward: %s', 
+                        self.domain_reward_last_n)
+        tf.logging.info('\t\tReward RNN reward: %s', self.data_reward_last_n)
         
         print 'Training iteration', i
         print '\tReward for last', self.output_every_nth, 'steps:', r
-        print '\t\tMusic theory reward:', self.music_theory_reward_last_n
-        print '\t\tNote RNN reward:', self.note_rnn_reward_last_n
+        print '\t\tDomain reward:', self.domain_reward_last_n
+        print '\t\tReward RNN reward:', self.data_reward_last_n
 
         if self.exploration_mode == 'egreedy':
           exploration_p = rl_tuner_ops.linear_annealing(
@@ -498,8 +496,8 @@ class RLTutor(object):
           print '\tExploration probability is', exploration_p
         
         self.reward_last_n = 0
-        self.music_theory_reward_last_n = 0
-        self.note_rnn_reward_last_n = 0
+        self.domain_reward_last_n = 0
+        self.data_reward_last_n = 0
 
       # Backprop.
       self.training_step()
@@ -520,7 +518,7 @@ class RLTutor(object):
     Does not backprop.
 
     Args:
-      observation: A one-hot encoding of a single observation (note).
+      observation: A one-hot encoding of a single observation.
       exploration_period: The total length of the period the network will
         spend exploring, as set in the train function.
       enable_random: If False, the network cannot act randomly.
@@ -580,8 +578,8 @@ class RLTutor(object):
       if not sample_next_obs:
         return action, reward_scores
       else:
-        obs_note = rl_tuner_ops.sample_softmax(action_softmax)
-        next_obs = np.array(rl_tuner_ops.make_onehot([obs_note],
+        obs = rl_tuner_ops.sample_softmax(action_softmax)
+        next_obs = np.array(rl_tuner_ops.make_onehot([obs],
                                                    self.num_actions)).flatten()
         return action, next_obs, reward_scores
 
@@ -594,7 +592,7 @@ class RLTutor(object):
     finally a new observation and a new LSTM internal state.
 
     Args:
-      observation: A one hot encoding of an observed note.
+      observation: A one hot encoding of an observed token.
       state: The internal state of the q_network MelodyRNN LSTM model.
       action: A one hot encoding of action taken by network.
       reward: Reward received for taking the action.
@@ -708,19 +706,19 @@ class RLTutor(object):
   def evaluate_model(self, num_trials=100, sample_next_obs=True):
     """Used to evaluate the rewards the model receives without exploring.
 
-    Generates num_trials compositions and computes the note_rnn and music
-    theory rewards. Uses no exploration so rewards directly relate to the 
+    Generates num_trials compositions and computes the reward_rnn and 
+    domain rewards. Uses no exploration so rewards directly relate to the 
     model's policy. Stores result in internal variables.
 
     Args:
       num_trials: The number of compositions to use for evaluation.
-      sample_next_obs: If True, the next note the model plays will be 
+      sample_next_obs: If True, the next token the model picks will be 
         sampled from its output distribution. If False, the model will 
-        deterministically choose the note with maximum value.
+        deterministically choose the token with maximum value.
     """
 
-    note_rnn_rewards = [0] * num_trials
-    music_theory_rewards = [0] * num_trials
+    data_rewards = [0] * num_trials
+    domain_rewards = [0] * num_trials
     total_rewards = [0] * num_trials
 
     for t in range(num_trials):
@@ -743,16 +741,14 @@ class RLTutor(object):
               sample_next_obs=sample_next_obs)
           new_observation = action
 
-        obs_note = np.argmax(new_observation)
+        data_reward = self.reward_from_reward_rnn_scores(new_observation, 
+                                                         reward_scores)
+        domain_reward = self.reward_music_theory(new_observation)
+        adjusted_domain_reward = self.reward_scaler * domain_reward
+        total_reward = data_reward + adjusted_domain_reward
 
-        note_rnn_reward = self.reward_from_reward_rnn_scores(new_observation, 
-                                                             reward_scores)
-        music_theory_reward = self.reward_music_theory(new_observation)
-        adjusted_mt_reward = self.reward_scaler * music_theory_reward
-        total_reward = note_rnn_reward + adjusted_mt_reward
-
-        note_rnn_rewards[t] = note_rnn_reward
-        music_theory_rewards[t] = music_theory_reward * self.reward_scaler
+        data_rewards[t] = data_reward
+        domain_rewards[t] = adjusted_domain_reward
         total_rewards[t] = total_reward
 
         self.generated_seq.append(np.argmax(new_observation))
@@ -760,8 +756,8 @@ class RLTutor(object):
         last_observation = new_observation
 
     self.eval_avg_reward.append(np.mean(total_rewards))
-    self.eval_avg_note_rnn_reward.append(np.mean(note_rnn_rewards))
-    self.eval_avg_music_theory_reward.append(np.mean(music_theory_rewards))
+    self.eval_avg_data_reward.append(np.mean(data_rewards))
+    self.eval_avg_domain_reward.append(np.mean(domain_rewards))
 
 
   def collect_reward(self, obs, action, reward_scores, verbose=False):
@@ -936,11 +932,11 @@ class RLTutor(object):
                             file_name + '-' + str(training_epochs))
     np.savez(filename,
              train_rewards=self.rewards_batched,
-             train_music_theory_rewards=self.music_theory_rewards_batched,
-             train_note_rnn_rewards=self.note_rnn_rewards_batched,
+             train_domain_rewards=self.domain_rewards_batched,
+             train_data_rewards=self.data_rewards_batched,
              eval_rewards=self.eval_avg_reward,
-             eval_music_theory_rewards=self.eval_avg_music_theory_reward,
-             eval_note_rnn_rewards=self.eval_avg_note_rnn_reward,
+             eval_domain_rewards=self.eval_avg_domain_reward,
+             eval_data_rewards=self.eval_avg_data_reward,
              target_val_list=self.target_val_list)
 
   def save_model_and_figs(self, name, directory=None):
@@ -982,11 +978,11 @@ class RLTutor(object):
     x = [reward_batch * i for i in np.arange(len(self.rewards_batched))]
     plt.figure()
     plt.plot(x, self.rewards_batched)
-    plt.plot(x, self.music_theory_rewards_batched)
-    plt.plot(x, self.note_rnn_rewards_batched)
+    plt.plot(x, self.domain_rewards_batched)
+    plt.plot(x, self.data_rewards_batched)
     plt.xlabel('Training epoch')
     plt.ylabel('Cumulative reward for last ' + str(reward_batch) + ' steps')
-    plt.legend(['Total', 'Music theory', 'Note RNN'], loc='best')
+    plt.legend(['Total', 'Domain', 'Reward RNN'], loc='best')
     if image_name is not None:
       plt.savefig(directory + '/' + image_name)
     else:
@@ -1015,11 +1011,11 @@ class RLTutor(object):
     start_index = start_at_epoch / self.output_every_nth
     plt.figure()
     plt.plot(x[start_index:], self.eval_avg_reward[start_index:])
-    plt.plot(x[start_index:], self.eval_avg_music_theory_reward[start_index:])
-    plt.plot(x[start_index:], self.eval_avg_note_rnn_reward[start_index:])
+    plt.plot(x[start_index:], self.eval_avg_domain_reward[start_index:])
+    plt.plot(x[start_index:], self.eval_avg_data_reward[start_index:])
     plt.xlabel('Training epoch')
     plt.ylabel('Average reward')
-    plt.legend(['Total', 'Music theory', 'Note RNN'], loc='best')
+    plt.legend(['Total', 'Domain', 'Reward RNN'], loc='best')
     if image_name is not None:
       plt.savefig(directory + '/' + image_name)
     else:
@@ -1101,9 +1097,9 @@ class RLTutor(object):
       npz_file = np.load(npz_file_name)
 
       self.rewards_batched = npz_file['train_rewards']
-      self.music_theory_rewards_batched = npz_file['train_music_theory_rewards']
-      self.note_rnn_rewards_batched = npz_file['train_note_rnn_rewards']
+      self.domain_rewards_batched = npz_file['train_domain_rewards']
+      self.data_rewards_batched = npz_file['train_data_rewards']
       self.eval_avg_reward = npz_file['eval_rewards']
-      self.eval_avg_music_theory_reward = npz_file['eval_music_theory_rewards']
-      self.eval_avg_note_rnn_reward = npz_file['eval_note_rnn_rewards']
+      self.eval_avg_domain_reward = npz_file['eval_domain_rewards']
+      self.eval_avg_data_reward = npz_file['eval_data_rewards']
       self.target_val_list = npz_file['target_val_list']

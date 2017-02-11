@@ -22,14 +22,13 @@ FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_string('output_dir', '/home/natasha/Dropbox (MIT)/Google/RL-RNN-Project/rl-rnn-output/',
                            'Directory where the model will save its'
                            'compositions and checkpoints (midi files)')
-tf.app.flags.DEFINE_string('note_rnn_checkpoint_dir', '/home/natasha/Dropbox (MIT)/Google/code/note_rnn_checkpoint/',
-                           'Path to directory holding checkpoints for note rnn'
-                           'melody prediction models. These will be loaded into'
-                           'the NoteRNNLoader class object. The directory '
-                           'should contain a train subdirectory')
-tf.app.flags.DEFINE_string('note_rnn_checkpoint_name', 'note_rnn.ckpt',
+tf.app.flags.DEFINE_string('rnn_checkpoint_dir', '/home/natasha/Dropbox (MIT)/Google/code/note_rnn_checkpoint/',
+                           'Path to directory holding checkpoints for pre-trained rnn'
+                           'model. These will be loaded into the NoteRNNLoader class '
+                           'object. The directory should contain a train subdirectory')
+tf.app.flags.DEFINE_string('rnn_checkpoint_name', 'note_rnn.ckpt',
                            'Filename of a checkpoint within the '
-                           'note_rnn_checkpoint_dir directory.')
+                           'rnn_checkpoint_dir directory.')
 tf.app.flags.DEFINE_string('midi_primer', '/home/natasha/Dropbox (MIT)/Google/code/testdata/primer.mid',
                            'A midi file that can be used to prime the model')
 tf.app.flags.DEFINE_integer('training_steps', 1000000,
@@ -72,8 +71,8 @@ def main(_):
 
   output_dir = os.path.join(FLAGS.output_dir, FLAGS.algorithm)
   output_ckpt = FLAGS.algorithm + '.ckpt'
-  backup_checkpoint_file = os.path.join(FLAGS.note_rnn_checkpoint_dir, 
-                                        FLAGS.note_rnn_checkpoint_name)
+  backup_checkpoint_file = os.path.join(FLAGS.rnn_checkpoint_dir, 
+                                        FLAGS.rnn_checkpoint_name)
 
   rlt = rl_tuner.RLTuner(output_dir,
                          midi_primer=FLAGS.midi_primer, 
@@ -81,7 +80,7 @@ def main(_):
                          reward_scaler=FLAGS.reward_scaler,
                          save_name = output_ckpt,
                          output_every_nth=FLAGS.output_every_nth, 
-                         note_rnn_checkpoint_dir=FLAGS.note_rnn_checkpoint_dir,
+                         note_rnn_checkpoint_dir=FLAGS.rnn_checkpoint_dir,
                          note_rnn_checkpoint_file=backup_checkpoint_file,
                          note_rnn_hparams=hparams, 
                          num_notes_in_melody=FLAGS.num_notes_in_melody,
