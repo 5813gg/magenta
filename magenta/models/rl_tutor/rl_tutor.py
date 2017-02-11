@@ -180,11 +180,8 @@ class RLTutor(object):
     # Variables to keep track of characteristics of the current composition
     #TODO(natashajaques): Implement composition as a class to obtain data 
     # encapsulation so that you can't accidentally change the leap direction.
-    self.beat = 0
-    self.composition = []
-    self.composition_direction = 0
-    self.leapt_from = None  # stores the note at which composition leapt
-    self.steps_since_last_leap = 0
+    self.generated_seq_step = 0
+    self.generated_seq = []
 
     if not exists(self.output_dir):
       makedirs(self.output_dir)
@@ -459,8 +456,8 @@ class RLTutor(object):
 
       # Used to keep track of the current musical composition and beat for
       # the reward functions.
-      self.composition.append(np.argmax(new_observation))
-      self.beat += 1
+      self.generated_seq.append(np.argmax(new_observation))
+      self.generated_seq_step += 1
 
       if i > 0 and i % self.output_every_nth == 0:
         print "Evaluating model..."
@@ -511,7 +508,7 @@ class RLTutor(object):
       last_observation = new_observation
 
       # Reset the state after each composition is complete.
-      if self.beat % self.num_notes_in_melody == 0:
+      if self.generated_seq_step % self.num_notes_in_melody == 0:
         if verbose: print "\nResetting composition!\n"
         self.reset_for_new_sequence()
         last_observation = self.prime_internal_models()
@@ -758,8 +755,8 @@ class RLTutor(object):
         music_theory_rewards[t] = music_theory_reward * self.reward_scaler
         total_rewards[t] = total_reward
 
-        self.composition.append(np.argmax(new_observation))
-        self.beat += 1
+        self.generated_seq.append(np.argmax(new_observation))
+        self.generated_seq_step += 1
         last_observation = new_observation
 
     self.eval_avg_reward.append(np.mean(total_rewards))

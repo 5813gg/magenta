@@ -19,7 +19,7 @@ import rl_tuner
 import rl_tuner_ops
 
 FLAGS = tf.app.flags.FLAGS
-tf.app.flags.DEFINE_string('output_dir', '/home/natasha/Dropbox (MIT)/Google/RL-RNN-Project/rl_rnn_output/',
+tf.app.flags.DEFINE_string('output_dir', '/home/natasha/Dropbox (MIT)/Google/RL-RNN-Project/rl-rnn-output/',
                            'Directory where the model will save its'
                            'compositions and checkpoints (midi files)')
 tf.app.flags.DEFINE_string('note_rnn_checkpoint_dir', '/home/natasha/Dropbox (MIT)/Google/code/note_rnn_checkpoint/',

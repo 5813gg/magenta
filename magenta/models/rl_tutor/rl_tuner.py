@@ -165,6 +165,11 @@ class RLTuner(RLTutor):
       output_every_nth=output_every_nth, training_file_list=training_file_list,
       summary_writer=summary_writer, initialize_immediately=initialize_immediately)
 
+    # State variables needed by reward functions.
+    self.composition_direction = 0
+    self.leapt_from = None  # stores the note at which composition leapt
+    self.steps_since_last_leap = 0
+
     if self.priming_mode == 'random_midi':
       tf.logging.info('Getting priming melodies')
       self.get_priming_melodies()
@@ -293,8 +298,8 @@ class RLTuner(RLTutor):
     Also resets statistics about whether the composition is in the middle of a
     melodic leap.
     """
-    self.beat = 0
-    self.composition = []
+    self.generated_seq_step = 0
+    self.generated_seq = []
     self.composition_direction = 0
     self.leapt_from = None
     self.steps_since_last_leap = 0
@@ -564,13 +569,13 @@ class RLTuner(RLTutor):
     action_note = np.argmax(action)
     first_note_of_final_bar = self.num_notes_in_melody - 4
 
-    if self.beat == 0 or self.beat == first_note_of_final_bar:
+    if self.generated_seq_step == 0 or self.generated_seq_step == first_note_of_final_bar:
       if action_note == tonic_note:
         return reward_amount
-    elif self.beat == first_note_of_final_bar + 1:
+    elif self.generated_seq_step == first_note_of_final_bar + 1:
       if action_note == NO_EVENT:
           return reward_amount
-    elif self.beat > first_note_of_final_bar + 1:
+    elif self.generated_seq_step > first_note_of_final_bar + 1:
       if action_note == NO_EVENT or action_note == NOTE_OFF:
         return reward_amount
     return 0.0
@@ -604,12 +609,12 @@ class RLTuner(RLTutor):
     contains_breaks = False
 
     # Note that the current action yas not yet been added to the composition
-    for i in xrange(len(self.composition)-1, -1, -1):
-      if self.composition[i] == action_note:
+    for i in xrange(len(self.generated_seq)-1, -1, -1):
+      if self.generated_seq[i] == action_note:
         num_repeated += 1
-      elif self.composition[i] == NOTE_OFF:
+      elif self.generated_seq[i] == NOTE_OFF:
         contains_breaks = True
-      elif self.composition[i] == NO_EVENT:
+      elif self.generated_seq[i] == NO_EVENT:
         contains_held_notes = True
       else:
         break
@@ -666,7 +671,7 @@ class RLTuner(RLTutor):
     Returns:
       Float reward value.
     """
-    composition = self.composition + [np.argmax(action)]
+    composition = self.generated_seq + [np.argmax(action)]
     lags = [1, 2, 3]
     sum_penalty = 0
     for lag in lags:
@@ -691,7 +696,7 @@ class RLTuner(RLTutor):
       composition.
     """
     if composition is None:
-      composition = self.composition
+      composition = self.generated_seq
 
     if len(composition) < bar_length:
       return None, 0
@@ -720,7 +725,7 @@ class RLTuner(RLTutor):
       Float reward value.
     """
 
-    composition = self.composition + [np.argmax(action)]
+    composition = self.generated_seq + [np.argmax(action)]
     motif, num_notes_in_motif = self.detect_last_motif(composition=composition)
     if motif is not None:
       motif_complexity_bonus = max((num_notes_in_motif - 3)*.3, 0)
@@ -739,7 +744,7 @@ class RLTuner(RLTutor):
       True if the note just played belongs to a motif that is repeated. False
       otherwise.
     """
-    composition = self.composition + [np.argmax(action)]
+    composition = self.generated_seq + [np.argmax(action)]
     if len(composition) < bar_length:
       return False, None
 
@@ -748,7 +753,7 @@ class RLTuner(RLTutor):
     if motif is None:
       return False, None
 
-    prev_composition = self.composition[:-(bar_length-1)]
+    prev_composition = self.generated_seq[:-(bar_length-1)]
 
     # Check if the motif is in the previous composition.
     for i in range(len(prev_composition) - len(motif) + 1):
@@ -800,10 +805,10 @@ class RLTuner(RLTutor):
       An integer value representing the interval, or a constant value for
       special intervals.
     """
-    if not self.composition:
+    if not self.generated_seq:
       return 0, None, None
 
-    prev_note = self.composition[-1]
+    prev_note = self.generated_seq[-1]
     action_note = np.argmax(action)
 
     c_major = False
@@ -817,10 +822,10 @@ class RLTuner(RLTutor):
       fifth_notes = [9, 21, 33]
 
     # get rid of non-notes in prev_note
-    prev_note_index = len(self.composition) - 1
+    prev_note_index = len(self.generated_seq) - 1
     while (prev_note == NO_EVENT or
            prev_note == NOTE_OFF) and prev_note_index >= 0:
-      prev_note = self.composition[prev_note_index]
+      prev_note = self.generated_seq[prev_note_index]
       prev_note_index -= 1
     if prev_note == NOTE_OFF or prev_note == NO_EVENT:
       if verbose: print "action_note:", action_note, "prev_note:", prev_note
@@ -965,10 +970,10 @@ class RLTuner(RLTutor):
     Returns:
       Float reward value.
     """
-    if len(self.composition) + 1 != self.num_notes_in_melody:
+    if len(self.generated_seq) + 1 != self.num_notes_in_melody:
       return 0.0
 
-    composition = np.array(self.composition)
+    composition = np.array(self.generated_seq)
     composition = np.append(composition, np.argmax(action))
 
     reward = 0.0
@@ -1000,7 +1005,7 @@ class RLTuner(RLTutor):
       0 if there is no leap, 'LEAP_RESOLVED' if an existing leap has been
       resolved, 'LEAP_DOUBLED' if 2 leaps in the same direction were made.
     """
-    if not self.composition:
+    if not self.generated_seq:
       return 0
 
     outcome = 0

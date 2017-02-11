@@ -190,13 +190,13 @@ def compose_and_evaluate_piece(rl_tuner,
     stat_dict = add_repeated_motif_stat(rl_tuner, new_observation, stat_dict)
     stat_dict = add_leap_stats(rl_tuner, new_observation, stat_dict)
 
-    rl_tuner.composition.append(np.argmax(new_observation))
-    rl_tuner.beat += 1
+    rl_tuner.generated_seq.append(np.argmax(new_observation))
+    rl_tuner.generated_seq_step += 1
     last_observation = new_observation
 
   for lag in [1, 2, 3]:
     stat_dict['autocorrelation' + str(lag)].append(
-        rl_tuner_ops.autocorrelate(rl_tuner.composition, lag))
+        rl_tuner_ops.autocorrelate(rl_tuner.generated_seq, lag))
 
   add_high_low_unique_stats(rl_tuner, stat_dict)
 
@@ -315,7 +315,7 @@ def add_tonic_start_stat(rl_tuner,
     A dictionary of composition statistics with 'num_starting_tonic' field
     updated.
   """
-  if rl_tuner.beat == 0 and action_note == tonic_note:
+  if rl_tuner.generated_seq_step == 0 and action_note == tonic_note:
     stat_dict['num_starting_tonic'] += 1
   return stat_dict
 
@@ -345,7 +345,7 @@ def add_motif_stat(rl_tuner, action, stat_dict):
     A dictionary of composition statistics with 'notes_in_motif' field
     updated.
   """
-  composition = rl_tuner.composition + [np.argmax(action)]
+  composition = rl_tuner.generated_seq + [np.argmax(action)]
   motif, _ = rl_tuner.detect_last_motif(composition=composition)
   if motif is not None:
     stat_dict['notes_in_motif'] += 1
@@ -385,7 +385,7 @@ def add_leap_stats(rl_tuner, action, stat_dict):
   return stat_dict
 
 def add_high_low_unique_stats(rl_tuner, stat_dict):
-  """Updates stat dict if rl_tuner.composition has unique extrema notes.
+  """Updates stat dict if rl_tuner.generated_seq has unique extrema notes.
 
   Args:
     stat_dict: A dictionary containing fields for statistics about
@@ -394,9 +394,9 @@ def add_high_low_unique_stats(rl_tuner, stat_dict):
     A dictionary of composition statistics with 'notes_in_repeated_motif'
     field updated.
   """
-  if rl_tuner.detect_high_unique(rl_tuner.composition):
+  if rl_tuner.detect_high_unique(rl_tuner.generated_seq):
     stat_dict['num_high_unique'] += 1
-  if rl_tuner.detect_low_unique(rl_tuner.composition):
+  if rl_tuner.detect_low_unique(rl_tuner.generated_seq):
     stat_dict['num_low_unique'] += 1
 
   return stat_dict
@@ -449,10 +449,10 @@ def debug_music_theory_reward(rl_tuner,
       new_observation = np.array(rl_tuner_ops.make_onehot(
         [obs_note],rl_tuner.num_actions)).flatten()
     
-    composition = rl_tuner.composition + [obs_note]
+    composition = rl_tuner.generated_seq + [obs_note]
     
     print "New_observation", np.argmax(new_observation)
-    print "Composition was", rl_tuner.composition
+    print "Composition was", rl_tuner.generated_seq
     print "Action was", action_note
     print "New composition", composition
     print ""
@@ -495,17 +495,17 @@ def debug_music_theory_reward(rl_tuner,
       print "Autocorr at lag", lag, rl_tuner_ops.autocorrelate(composition, lag)
     print ""
 
-    rl_tuner.composition.append(np.argmax(new_observation))
-    rl_tuner.beat += 1
+    rl_tuner.generated_seq.append(np.argmax(new_observation))
+    rl_tuner.generated_seq_step += 1
     last_observation = new_observation
 
     print "-----------------------------"
 
-  if rl_tuner.detect_high_unique(rl_tuner.composition):
+  if rl_tuner.detect_high_unique(rl_tuner.generated_seq):
     print "Highest note is unique!"
   else:
     print "No unique highest note :("
-  if rl_tuner.detect_low_unique(rl_tuner.composition):
+  if rl_tuner.detect_low_unique(rl_tuner.generated_seq):
     print "Lowest note is unique!"
   else:
     print "No unique lowest note :("
