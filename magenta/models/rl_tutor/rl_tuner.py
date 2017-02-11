@@ -44,7 +44,6 @@ def reload_files():
   reload(note_rnn_loader)
   reload(rl_tuner_ops)
   reload(rl_tuner_eval_metrics)
-  reload(rl_tutor)
 
 
 class RLTuner(RLTutor):
