@@ -897,7 +897,6 @@ class RLTutor(object):
     if visualize_probs:
       prob_image = np.zeros((self.input_size, length))
 
-    generated_seq = []
     i = 0
     while not self.is_end_of_sequence():
       input_batch = np.reshape(next_obs, (self.q_network.batch_size, 1,
@@ -928,8 +927,8 @@ class RLTutor(object):
         sample = np.argmax(softmax)
       else:
         sample = rl_tutor_ops.sample_softmax(softmax)
-      generated_seq.append(sample)
-      generated_seq_step += 1
+      self.generated_seq.append(sample)
+      self.generated_seq_step += 1
       next_obs = np.array(rl_tutor_ops.make_onehot([sample],
                                                  self.num_actions)).flatten()
       i += 1
@@ -937,10 +936,10 @@ class RLTutor(object):
     # Trim excess image columns
     prob_image = prob_image[:,0:i]
 
-    tf.logging.info('Generated sequence: %s', generated_seq)
-    print 'Generated sequence:', generated_seq
+    tf.logging.info('Generated sequence: %s', self.generated_seq)
+    print 'Generated sequence:', self.generated_seq
 
-    self.render_sequence(generated_seq, title=title)
+    self.render_sequence(self.generated_seq, title=title)
 
     if visualize_probs:
       tf.logging.info('Visualizing action selection probabilities:')
