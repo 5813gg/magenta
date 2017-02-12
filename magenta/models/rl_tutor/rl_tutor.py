@@ -929,6 +929,7 @@ class RLTutor(object):
       else:
         sample = rl_tutor_ops.sample_softmax(softmax)
       generated_seq.append(sample)
+      generated_seq_step += 1
       next_obs = np.array(rl_tutor_ops.make_onehot([sample],
                                                  self.num_actions)).flatten()
       i += 1
