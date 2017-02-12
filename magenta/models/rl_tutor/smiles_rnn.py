@@ -28,7 +28,7 @@ from magenta.music import midi_io
 from magenta.music import sequences_lib
 from magenta.common import sequence_example_lib
 
-import rl_tuner_ops
+import rl_tutor_ops
 import smiles_data_loader
 
 SMILES_DATA = '/home/natasha/Dropbox (MIT)/Google/SMILES-Project/data/'
@@ -37,7 +37,7 @@ def reload_files():
   """Used to reload the imported dependency files (necessary for jupyter 
   notebooks).
   """
-  reload(rl_tuner_ops)
+  reload(rl_tutor_ops)
 
 
 class SmilesRNN(object):
@@ -97,7 +97,7 @@ class SmilesRNN(object):
       self.hparams = hparams
     else:
       tf.logging.info('Empty hparams string. Using defaults')
-      self.hparams = rl_tuner_ops.smiles_hparams()
+      self.hparams = rl_tutor_ops.smiles_hparams()
 
     if load_training_data:
       self.data_file = data_file
@@ -110,7 +110,7 @@ class SmilesRNN(object):
     self.build_graph()
     self.state_value = self.get_zero_state()
 
-    self.variable_names = rl_tuner_ops.get_variable_names(self.graph, 
+    self.variable_names = rl_tutor_ops.get_variable_names(self.graph, 
                                                           self.scope)
 
     self.session = None
@@ -171,8 +171,8 @@ class SmilesRNN(object):
     """
     var_dict = dict()
     for var in self.variables():
-      inner_name = rl_tuner_ops.get_inner_scope(var.name)
-      inner_name = rl_tuner_ops.trim_variable_postfixes(inner_name)
+      inner_name = rl_tutor_ops.get_inner_scope(var.name)
+      inner_name = rl_tutor_ops.trim_variable_postfixes(inner_name)
       if self.note_rnn_type == 'basic_rnn':
         if 'fully_connected' in inner_name and 'bias' in inner_name:
           # 'fully_connected/bias' has been changed to 'fully_connected/biases'
@@ -194,7 +194,7 @@ class SmilesRNN(object):
       with tf.variable_scope(self.scope):
         # Make an LSTM cell with the number and size of layers specified in
         # hparams.
-        self.cell = rl_tuner_ops.make_cell(self.hparams, self.note_rnn_type)
+        self.cell = rl_tutor_ops.make_cell(self.hparams, self.note_rnn_type)
 
         # Shape of melody_sequence is batch size, melody length, number of
         # output note actions.
@@ -323,8 +323,8 @@ class SmilesRNN(object):
     """
 
     note_idx = np.argmax(softmax)
-    note_enc = rl_tuner_ops.make_onehot([note_idx], rl_tuner_ops.NUM_CLASSES)
-    return np.reshape(note_enc, (rl_tuner_ops.NUM_CLASSES))
+    note_enc = rl_tutor_ops.make_onehot([note_idx], rl_tutor_ops.NUM_CLASSES)
+    return np.reshape(note_enc, (rl_tutor_ops.NUM_CLASSES))
 
   def __call__(self):
     """Allows the network to be called, as in the following code snippet!
@@ -408,7 +408,7 @@ class SmilesRNN(object):
         singleton_lengths = np.full(self.hparams.batch_size, 1, dtype=int)
 
         input_batch = np.reshape(note,
-                                 (self.hparams.batch_size, 1, rl_tuner_ops.NUM_CLASSES))
+                                 (self.hparams.batch_size, 1, rl_tutor_ops.NUM_CLASSES))
 
         softmax, self.state_value = self.session.run(
             [self.softmax, self.state_tensor],

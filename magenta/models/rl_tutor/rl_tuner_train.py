@@ -16,7 +16,7 @@ import tensorflow as tf
 from magenta.common import tf_lib
 
 import rl_tuner
-import rl_tuner_ops
+import rl_tutor_ops
 
 FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_string('output_dir', '/home/natasha/Dropbox (MIT)/Google/RL-RNN-Project/rl-rnn-output/',
@@ -59,7 +59,7 @@ tf.app.flags.DEFINE_string('algorithm', 'q',
 
 
 def main(_):
-  hparams = rl_tuner_ops.default_hparams()
+  hparams = rl_tutor_ops.default_hparams()
 
   dqn_hparams = tf_lib.HParams(random_action_probability=0.1,
                                store_every_nth=1,

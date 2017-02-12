@@ -25,7 +25,7 @@ import tensorflow as tf
 from magenta.music import melodies_lib as mlib
 from magenta.music import midi_io
 
-import rl_tuner_ops
+import rl_tutor_ops
 
 # Training data sequences are limited to this length, so the padding queue pads
 # to this length.
@@ -35,7 +35,7 @@ def reload_files():
   """Used to reload the imported dependency files (necessary for jupyter 
   notebooks).
   """
-  reload(rl_tuner_ops)
+  reload(rl_tutor_ops)
   reload(rl_tuner_eval_metrics)
 
 
@@ -61,8 +61,8 @@ class RLTutor(object):
 
                # Other music related settings.
                num_notes_in_melody=32,
-               input_size=rl_tuner_ops.NUM_CLASSES,
-               num_actions=rl_tuner_ops.NUM_CLASSES,
+               input_size=rl_tutor_ops.NUM_CLASSES,
+               num_actions=rl_tutor_ops.NUM_CLASSES,
                midi_primer=None,
 
                # Logistics.
@@ -148,7 +148,7 @@ class RLTutor(object):
         self.domain_rewards_only = True
       
       if dqn_hparams is None:
-        self.dqn_hparams = rl_tuner_ops.default_dqn_hparams()
+        self.dqn_hparams = rl_tutor_ops.default_dqn_hparams()
       else:
         self.dqn_hparams = dqn_hparams
       self.discount_rate = tf.constant(self.dqn_hparams.discount_rate)
@@ -392,7 +392,7 @@ class RLTutor(object):
       one-hot encoding of random action
     """
     act_idx = np.random.randint(0, self.num_actions - 1)
-    return np.array(rl_tuner_ops.make_onehot([act_idx], 
+    return np.array(rl_tutor_ops.make_onehot([act_idx], 
                                              self.num_actions)).flatten()
   
   def train(self, num_steps=10000, exploration_period=5000, enable_random=True, 
@@ -500,7 +500,7 @@ class RLTutor(object):
         print '\t\tReward RNN reward:', self.data_reward_last_n
 
         if self.exploration_mode == 'egreedy':
-          exploration_p = rl_tuner_ops.linear_annealing(
+          exploration_p = rl_tutor_ops.linear_annealing(
               self.actions_executed_so_far, exploration_period, 1.0,
               self.dqn_hparams.random_action_probability)
           tf.logging.info('\tExploration probability is %s', exploration_p)
@@ -547,7 +547,7 @@ class RLTutor(object):
 
     if self.exploration_mode == 'egreedy':
       # Compute the exploration probability.
-      exploration_p = rl_tuner_ops.linear_annealing(
+      exploration_p = rl_tutor_ops.linear_annealing(
           self.actions_executed_so_far, exploration_period, 1.0,
           self.dqn_hparams.random_action_probability)
     elif self.exploration_mode == 'boltzmann':
@@ -589,8 +589,8 @@ class RLTutor(object):
       if not sample_next_obs:
         return action, reward_scores
       else:
-        obs = rl_tuner_ops.sample_softmax(action_softmax)
-        next_obs = np.array(rl_tuner_ops.make_onehot([obs],
+        obs = rl_tutor_ops.sample_softmax(action_softmax)
+        next_obs = np.array(rl_tutor_ops.make_onehot([obs],
                                                    self.num_actions)).flatten()
         return action, next_obs, reward_scores
 
@@ -914,19 +914,19 @@ class RLTutor(object):
       if most_probable:
         sample = np.argmax(softmax)
       else:
-        sample = rl_tuner_ops.sample_softmax(softmax)
+        sample = rl_tutor_ops.sample_softmax(softmax)
       generated_seq[i] = sample
-      next_obs = np.array(rl_tuner_ops.make_onehot([sample],
+      next_obs = np.array(rl_tutor_ops.make_onehot([sample],
                                                  self.num_actions)).flatten()
 
     tf.logging.info('Generated sequence: %s', generated_seq)
     print 'Generated sequence:', generated_seq
 
-    melody = mlib.Melody(rl_tuner_ops.decoder(generated_seq, 
+    melody = mlib.Melody(rl_tutor_ops.decoder(generated_seq, 
                                               self.q_network.transpose_amount))
 
-    sequence = melody.to_sequence(qpm=rl_tuner_ops.DEFAULT_QPM)
-    filename = rl_tuner_ops.get_next_file_name(self.output_dir, title, 'mid')
+    sequence = melody.to_sequence(qpm=rl_tutor_ops.DEFAULT_QPM)
+    filename = rl_tutor_ops.get_next_file_name(self.output_dir, title, 'mid')
     midi_io.sequence_proto_to_midi_file(sequence, filename)
 
     tf.logging.info('Wrote a melody to %s', self.output_dir)

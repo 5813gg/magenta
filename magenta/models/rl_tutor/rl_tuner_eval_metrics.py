@@ -3,13 +3,13 @@
 import numpy as np
 import tensorflow as tf
 
-import rl_tuner_ops
+import rl_tutor_ops
 
 def compute_composition_stats(rl_tuner,
                               num_compositions=10000,
                               composition_length=32,
                               key=None,
-                              tonic_note=rl_tuner_ops.C_MAJOR_TONIC):
+                              tonic_note=rl_tutor_ops.C_MAJOR_TONIC):
   """Uses the model to create many compositions, stores statistics about them.
 
   Args:
@@ -142,7 +142,7 @@ def compose_and_evaluate_piece(rl_tuner,
                                stat_dict,
                                composition_length=32,
                                key=None,
-                               tonic_note=rl_tuner_ops.C_MAJOR_TONIC,
+                               tonic_note=rl_tutor_ops.C_MAJOR_TONIC,
                                sample_next_obs=True):
   """Composes a piece using the model, stores statistics about it in a dict.
 
@@ -196,7 +196,7 @@ def compose_and_evaluate_piece(rl_tuner,
 
   for lag in [1, 2, 3]:
     stat_dict['autocorrelation' + str(lag)].append(
-        rl_tuner_ops.autocorrelate(rl_tuner.generated_seq, lag))
+        rl_tutor_ops.autocorrelate(rl_tuner.generated_seq, lag))
 
   add_high_low_unique_stats(rl_tuner, stat_dict)
 
@@ -255,26 +255,26 @@ def add_interval_stat(rl_tuner, action, stat_dict, key=None):
   if interval == 0:
     return stat_dict
 
-  if interval == rl_tuner_ops.REST_INTERVAL:
+  if interval == rl_tutor_ops.REST_INTERVAL:
     stat_dict['num_rest_intervals'] += 1
-  elif interval == rl_tuner_ops.REST_INTERVAL_AFTER_THIRD_OR_FIFTH:
+  elif interval == rl_tutor_ops.REST_INTERVAL_AFTER_THIRD_OR_FIFTH:
     stat_dict['num_special_rest_intervals'] += 1
-  elif interval > rl_tuner_ops.OCTAVE:
+  elif interval > rl_tutor_ops.OCTAVE:
     stat_dict['num_octave_jumps'] += 1
-  elif interval == (rl_tuner_ops.IN_KEY_FIFTH or 
-                    interval == rl_tuner_ops.IN_KEY_THIRD):
+  elif interval == (rl_tutor_ops.IN_KEY_FIFTH or 
+                    interval == rl_tutor_ops.IN_KEY_THIRD):
     stat_dict['num_in_key_preferred_intervals'] += 1
-  elif interval == rl_tuner_ops.FIFTH:
+  elif interval == rl_tutor_ops.FIFTH:
     stat_dict['num_fifths'] += 1
-  elif interval == rl_tuner_ops.THIRD:
+  elif interval == rl_tutor_ops.THIRD:
     stat_dict['num_thirds'] += 1
-  elif interval == rl_tuner_ops.SIXTH:
+  elif interval == rl_tutor_ops.SIXTH:
     stat_dict['num_sixths'] += 1
-  elif interval == rl_tuner_ops.SECOND:
+  elif interval == rl_tutor_ops.SECOND:
     stat_dict['num_seconds'] += 1
-  elif interval == rl_tuner_ops.FOURTH:
+  elif interval == rl_tutor_ops.FOURTH:
     stat_dict['num_fourths'] += 1
-  elif interval == rl_tuner_ops.SEVENTH:
+  elif interval == rl_tutor_ops.SEVENTH:
     stat_dict['num_sevenths'] += 1
 
   return stat_dict
@@ -293,7 +293,7 @@ def add_in_key_stat(rl_tuner, action_note, stat_dict, key=None):
     updated.
   """
   if key is None:
-    key = rl_tuner_ops.C_MAJOR_KEY
+    key = rl_tutor_ops.C_MAJOR_KEY
 
   if action_note not in key:
     stat_dict['notes_not_in_key'] += 1
@@ -303,7 +303,7 @@ def add_in_key_stat(rl_tuner, action_note, stat_dict, key=None):
 def add_tonic_start_stat(rl_tuner,
                          action_note,
                          stat_dict,
-                         tonic_note=rl_tuner_ops.C_MAJOR_TONIC):
+                         tonic_note=rl_tutor_ops.C_MAJOR_TONIC):
   """Updates stat dict based on whether composition started with the tonic.
 
   Args:
@@ -378,9 +378,9 @@ def add_leap_stats(rl_tuner, action, stat_dict):
     A dictionary of composition statistics with leap-related fields updated.
   """
   leap_outcome = rl_tuner.detect_leap_up_back(action)
-  if leap_outcome == rl_tuner_ops.LEAP_RESOLVED:
+  if leap_outcome == rl_tutor_ops.LEAP_RESOLVED:
     stat_dict['num_resolved_leaps'] += 1
-  elif leap_outcome == rl_tuner_ops.LEAP_DOUBLED:
+  elif leap_outcome == rl_tutor_ops.LEAP_DOUBLED:
     stat_dict['num_leap_twice'] += 1
   return stat_dict
 
@@ -404,7 +404,7 @@ def add_high_low_unique_stats(rl_tuner, stat_dict):
 def debug_music_theory_reward(rl_tuner,
                               composition_length=32,
                               key=None,
-                              tonic_note=rl_tuner_ops.C_MAJOR_TONIC,
+                              tonic_note=rl_tutor_ops.C_MAJOR_TONIC,
                               sample_next_obs=True,
                               test_composition=None):
   """Composes a piece and prints rewards from music theory functions.
@@ -446,7 +446,7 @@ def debug_music_theory_reward(rl_tuner,
     
     if test_composition is not None:
       obs_note = test_composition[i]
-      new_observation = np.array(rl_tuner_ops.make_onehot(
+      new_observation = np.array(rl_tutor_ops.make_onehot(
         [obs_note],rl_tuner.num_actions)).flatten()
     
     composition = rl_tuner.generated_seq + [obs_note]
@@ -492,7 +492,7 @@ def debug_music_theory_reward(rl_tuner,
     print ""
 
     for lag in [1, 2, 3]:
-      print "Autocorr at lag", lag, rl_tuner_ops.autocorrelate(composition, lag)
+      print "Autocorr at lag", lag, rl_tutor_ops.autocorrelate(composition, lag)
     print ""
 
     rl_tuner.generated_seq.append(np.argmax(new_observation))

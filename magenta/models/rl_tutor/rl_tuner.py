@@ -25,7 +25,7 @@ from magenta.music import melodies_lib as mlib
 from magenta.music import midi_io
 
 import note_rnn_loader
-import rl_tuner_ops
+import rl_tutor_ops
 import rl_tuner_eval_metrics
 from rl_tutor import RLTutor
 
@@ -42,7 +42,7 @@ def reload_files():
   notebooks).
   """
   reload(note_rnn_loader)
-  reload(rl_tuner_ops)
+  reload(rl_tutor_ops)
   reload(rl_tuner_eval_metrics)
 
 
@@ -67,8 +67,8 @@ class RLTuner(RLTutor):
                note_rnn_hparams=None,
 
                # Logistics.
-               input_size=rl_tuner_ops.NUM_CLASSES,
-               num_actions=rl_tuner_ops.NUM_CLASSES,
+               input_size=rl_tutor_ops.NUM_CLASSES,
+               num_actions=rl_tutor_ops.NUM_CLASSES,
                save_name='rl_tuner.ckpt',
                output_every_nth=1000,
                summary_writer=None,
@@ -150,9 +150,9 @@ class RLTuner(RLTutor):
 
     if note_rnn_hparams is None:
       if note_rnn_type == 'basic_rnn':
-        note_rnn_hparams = rl_tuner_ops.basic_rnn_hparams()
+        note_rnn_hparams = rl_tutor_ops.basic_rnn_hparams()
       else:
-        note_rnn_hparams = rl_tuner_ops.default_hparams()
+        note_rnn_hparams = rl_tutor_ops.default_hparams()
 
     RLTutor.__init__(self, output_dir, dqn_hparams=dqn_hparams, 
       reward_mode=reward_mode, reward_scaler=reward_scaler, 
@@ -268,7 +268,7 @@ class RLTuner(RLTutor):
           (1, model.cell.state_size))
       priming_note = self.priming_notes[priming_idx]
       next_obs = np.array(
-          rl_tuner_ops.make_onehot([priming_note], self.num_actions)).flatten()
+          rl_tutor_ops.make_onehot([priming_note], self.num_actions)).flatten()
       tf.logging.debug(
         'Feeding priming state for midi file %s and corresponding note %s',
         priming_idx, priming_note)
@@ -448,7 +448,7 @@ class RLTuner(RLTutor):
     """
 
     if scale is None:
-      scale = rl_tuner_ops.C_MAJOR_SCALE
+      scale = rl_tutor_ops.C_MAJOR_SCALE
 
     obs = np.argmax(obs)
     action = np.argmax(action)
@@ -484,7 +484,7 @@ class RLTuner(RLTutor):
       Float reward value.
     """
     if key is None:
-      key = rl_tuner_ops.C_MAJOR_KEY
+      key = rl_tutor_ops.C_MAJOR_KEY
 
     reward = 0
 
@@ -510,7 +510,7 @@ class RLTuner(RLTutor):
       Float reward value.
     """
     if key is None:
-      key = rl_tuner_ops.C_MAJOR_KEY
+      key = rl_tutor_ops.C_MAJOR_KEY
 
     reward = 0
 
@@ -520,7 +520,7 @@ class RLTuner(RLTutor):
 
     return reward
 
-  def reward_tonic(self, action, tonic_note=rl_tuner_ops.C_MAJOR_TONIC, 
+  def reward_tonic(self, action, tonic_note=rl_tutor_ops.C_MAJOR_TONIC, 
                    reward_amount=3.0):
     """Rewards for playing the tonic note at the right times.
 
@@ -644,7 +644,7 @@ class RLTuner(RLTutor):
     lags = [1, 2, 3]
     sum_penalty = 0
     for lag in lags:
-      coeff = rl_tuner_ops.autocorrelate(composition, lag=lag)
+      coeff = rl_tutor_ops.autocorrelate(composition, lag=lag)
       if not np.isnan(coeff):
         if np.abs(coeff) > 0.15:
           sum_penalty += np.abs(coeff) * penalty_weight
@@ -782,7 +782,7 @@ class RLTuner(RLTutor):
 
     c_major = False
     if key is None:
-      key = rl_tuner_ops.C_MAJOR_KEY
+      key = rl_tutor_ops.C_MAJOR_KEY
       c_notes = [2, 14, 26]
       g_notes = [9, 21, 33]
       e_notes = [6, 18, 30]
@@ -805,25 +805,25 @@ class RLTuner(RLTutor):
     # get rid of non-notes in action_note
     if action_note == NO_EVENT:
       if prev_note in tonic_notes or prev_note in fifth_notes:
-        return (rl_tuner_ops.HOLD_INTERVAL_AFTER_THIRD_OR_FIFTH, 
+        return (rl_tutor_ops.HOLD_INTERVAL_AFTER_THIRD_OR_FIFTH, 
                 action_note, prev_note)
       else:
-        return rl_tuner_ops.HOLD_INTERVAL, action_note, prev_note
+        return rl_tutor_ops.HOLD_INTERVAL, action_note, prev_note
     elif action_note == NOTE_OFF:
       if prev_note in tonic_notes or prev_note in fifth_notes:
-        return (rl_tuner_ops.REST_INTERVAL_AFTER_THIRD_OR_FIFTH, 
+        return (rl_tutor_ops.REST_INTERVAL_AFTER_THIRD_OR_FIFTH, 
                 action_note, prev_note)
       else:
-        return rl_tuner_ops.REST_INTERVAL, action_note, prev_note
+        return rl_tutor_ops.REST_INTERVAL, action_note, prev_note
 
     interval = abs(action_note - prev_note)
 
-    if c_major and interval == rl_tuner_ops.FIFTH and (
+    if c_major and interval == rl_tutor_ops.FIFTH and (
         prev_note in c_notes or prev_note in g_notes):
-      return rl_tuner_ops.IN_KEY_FIFTH, action_note, prev_note
-    if c_major and interval == rl_tuner_ops.THIRD and (
+      return rl_tutor_ops.IN_KEY_FIFTH, action_note, prev_note
+    if c_major and interval == rl_tutor_ops.THIRD and (
         prev_note in c_notes or prev_note in e_notes):
-      return rl_tuner_ops.IN_KEY_THIRD, action_note, prev_note
+      return rl_tutor_ops.IN_KEY_THIRD, action_note, prev_note
 
     return interval, action_note, prev_note
 
@@ -850,49 +850,49 @@ class RLTuner(RLTutor):
     reward = 0.0
 
     # rests can be good
-    if interval == rl_tuner_ops.REST_INTERVAL:
+    if interval == rl_tutor_ops.REST_INTERVAL:
       reward = 0.05
       if verbose: print "rest interval"
-    if interval == rl_tuner_ops.HOLD_INTERVAL:
+    if interval == rl_tutor_ops.HOLD_INTERVAL:
       reward = 0.075
-    if interval == rl_tuner_ops.REST_INTERVAL_AFTER_THIRD_OR_FIFTH:
+    if interval == rl_tutor_ops.REST_INTERVAL_AFTER_THIRD_OR_FIFTH:
       reward = 0.15
       if verbose: print "rest interval after 1st or 5th"
-    if interval == rl_tuner_ops.HOLD_INTERVAL_AFTER_THIRD_OR_FIFTH:
+    if interval == rl_tutor_ops.HOLD_INTERVAL_AFTER_THIRD_OR_FIFTH:
       reward = 0.3
 
     # large leaps and awkward intervals bad
-    if interval == rl_tuner_ops.SEVENTH:
+    if interval == rl_tutor_ops.SEVENTH:
       reward = -0.3
       if verbose: print "7th"
-    if interval > rl_tuner_ops.OCTAVE:
+    if interval > rl_tutor_ops.OCTAVE:
       reward = -1.0
       if verbose: print "More than octave"
 
     # common major intervals are good
-    if interval == rl_tuner_ops.IN_KEY_FIFTH:
+    if interval == rl_tutor_ops.IN_KEY_FIFTH:
       reward = 0.1
       if verbose: print "in key 5th"
-    if interval == rl_tuner_ops.IN_KEY_THIRD:
+    if interval == rl_tutor_ops.IN_KEY_THIRD:
       reward = 0.15
       if verbose: print "in key 3rd"
 
     # smaller steps are generally preferred
-    if interval == rl_tuner_ops.THIRD:
+    if interval == rl_tutor_ops.THIRD:
       reward = 0.09
       if verbose: print "3rd"
-    if interval == rl_tuner_ops.SECOND:
+    if interval == rl_tutor_ops.SECOND:
       reward = 0.08
       if verbose: print "2nd"
-    if interval == rl_tuner_ops.FOURTH:
+    if interval == rl_tutor_ops.FOURTH:
       reward = 0.07
       if verbose: print "4th"
 
     # larger leaps not as good, especially if not in key
-    if interval == rl_tuner_ops.SIXTH:
+    if interval == rl_tutor_ops.SIXTH:
       reward = 0.05
       if verbose: print "6th"
-    if interval == rl_tuner_ops.FIFTH:
+    if interval == rl_tutor_ops.FIFTH:
       reward = 0.02
       if verbose: print "5th"
 
@@ -989,14 +989,14 @@ class RLTuner(RLTutor):
       return 0
 
     # detect if leap
-    if interval >= rl_tuner_ops.FIFTH or interval == rl_tuner_ops.IN_KEY_FIFTH:
+    if interval >= rl_tutor_ops.FIFTH or interval == rl_tutor_ops.IN_KEY_FIFTH:
       if action_note > prev_note:
-        leap_direction = rl_tuner_ops.ASCENDING
+        leap_direction = rl_tutor_ops.ASCENDING
         if verbose:
           tf.logging.info('Detected an ascending leap')
           print 'Detected an ascending leap'
       else:
-        leap_direction = rl_tuner_ops.DESCENDING
+        leap_direction = rl_tutor_ops.DESCENDING
         if verbose:
           tf.logging.info('Detected a descending leap')
           print 'Detected a descending leap'
@@ -1011,7 +1011,7 @@ class RLTuner(RLTutor):
             print('Leap resolved by a leap. Num steps since last leap:', 
                   self.steps_since_last_leap)
           if self.steps_since_last_leap > steps_between_leaps:
-            outcome = rl_tuner_ops.LEAP_RESOLVED
+            outcome = rl_tutor_ops.LEAP_RESOLVED
             if verbose:
               tf.logging.info('Sufficient steps before leap resolved, '
                            'awarding bonus')
@@ -1022,7 +1022,7 @@ class RLTuner(RLTutor):
           if verbose:
             tf.logging.info('Detected a double leap')
             print 'Detected a double leap!'
-          outcome = rl_tuner_ops.LEAP_DOUBLED
+          outcome = rl_tutor_ops.LEAP_DOUBLED
 
       # the composition had no previous leaps
       else:
@@ -1044,14 +1044,14 @@ class RLTuner(RLTutor):
       # If there was a leap before, check if composition has gradually returned
       # This could be changed by requiring you to only go a 5th back in the 
       # opposite direction of the leap.
-      if (self.composition_direction == rl_tuner_ops.ASCENDING and
+      if (self.composition_direction == rl_tutor_ops.ASCENDING and
           action_note <= self.leapt_from) or (
-              self.composition_direction == rl_tuner_ops.DESCENDING and
+              self.composition_direction == rl_tutor_ops.DESCENDING and
               action_note >= self.leapt_from):
         if verbose:
           tf.logging.info('detected a gradually resolved leap')
           print 'Detected a gradually resolved leap'
-        outcome = rl_tuner_ops.LEAP_RESOLVED
+        outcome = rl_tutor_ops.LEAP_RESOLVED
         self.composition_direction = 0
         self.leapt_from = None
 
@@ -1079,10 +1079,10 @@ class RLTuner(RLTutor):
     """
 
     leap_outcome = self.detect_leap_up_back(action, verbose=verbose)
-    if leap_outcome == rl_tuner_ops.LEAP_RESOLVED:
+    if leap_outcome == rl_tutor_ops.LEAP_RESOLVED:
       if verbose: print "leap resolved, awarding", resolving_leap_bonus
       return resolving_leap_bonus
-    elif leap_outcome == rl_tuner_ops.LEAP_DOUBLED:
+    elif leap_outcome == rl_tutor_ops.LEAP_DOUBLED:
       if verbose: print "leap doubled, awarding", leaping_twice_punishment
       return leaping_twice_punishment
     else:
@@ -1096,7 +1096,7 @@ class RLTuner(RLTutor):
     pass
 
   def evaluate_music_theory_metrics(self, num_compositions=10000, key=None,
-                                    tonic_note=rl_tuner_ops.C_MAJOR_TONIC):
+                                    tonic_note=rl_tutor_ops.C_MAJOR_TONIC):
     """Computes statistics about music theory rule adherence.
 
     Args: 

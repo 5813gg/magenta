@@ -12,7 +12,7 @@ import matplotlib
 matplotlib.use('Agg')
 
 import rl_tuner
-import rl_tuner_ops
+import rl_tutor_ops
 
 
 class RLTunerTest(tf.test.TestCase):

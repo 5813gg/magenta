@@ -28,7 +28,7 @@ from magenta.music import midi_io
 from magenta.music import sequences_lib
 from magenta.common import sequence_example_lib
 
-import rl_tuner_ops
+import rl_tutor_ops
 
 
 class NoteRNNLoader(object):
@@ -87,7 +87,7 @@ class NoteRNNLoader(object):
       self.hparams = hparams
     else:
       tf.logging.info('Empty hparams string. Using defaults')
-      self.hparams = rl_tuner_ops.default_hparams()
+      self.hparams = rl_tutor_ops.default_hparams()
 
     self.build_graph()
     self.state_value = self.get_zero_state()
@@ -95,7 +95,7 @@ class NoteRNNLoader(object):
     if midi_primer is not None:
       self.load_primer()
 
-    self.variable_names = rl_tuner_ops.get_variable_names(self.graph, 
+    self.variable_names = rl_tutor_ops.get_variable_names(self.graph, 
                                                           self.scope)
 
     self.transpose_amount = 0
@@ -152,8 +152,8 @@ class NoteRNNLoader(object):
     """
     var_dict = dict()
     for var in self.variables():
-      inner_name = rl_tuner_ops.get_inner_scope(var.name)
-      inner_name = rl_tuner_ops.trim_variable_postfixes(inner_name)
+      inner_name = rl_tutor_ops.get_inner_scope(var.name)
+      inner_name = rl_tutor_ops.trim_variable_postfixes(inner_name)
       if self.note_rnn_type == 'basic_rnn':
         if 'fully_connected' in inner_name and 'bias' in inner_name:
           # 'fully_connected/bias' has been changed to 'fully_connected/biases'
@@ -176,7 +176,7 @@ class NoteRNNLoader(object):
         with tf.variable_scope(self.scope):
           # Make an LSTM cell with the number and size of layers specified in
           # hparams.
-          self.cell = rl_tuner_ops.make_cell(self.hparams, self.note_rnn_type)
+          self.cell = rl_tutor_ops.make_cell(self.hparams, self.note_rnn_type)
 
           # Shape of melody_sequence is batch size, melody length, number of
           # output note actions.
@@ -309,8 +309,8 @@ class NoteRNNLoader(object):
       # Convert primer Melody to model inputs.
       encoder = magenta.music.OneHotEventSequenceEncoderDecoder(
         magenta.music.MelodyOneHotEncoding(
-            min_note=rl_tuner_ops.MIN_NOTE,
-            max_note=rl_tuner_ops.MAX_NOTE))
+            min_note=rl_tutor_ops.MIN_NOTE,
+            max_note=rl_tutor_ops.MAX_NOTE))
 
       seq = encoder.encode(self.primer)
       features = seq.feature_lists.feature_list['inputs'].feature
@@ -338,8 +338,8 @@ class NoteRNNLoader(object):
     """
 
     note_idx = np.argmax(softmax)
-    note_enc = rl_tuner_ops.make_onehot([note_idx], rl_tuner_ops.NUM_CLASSES)
-    return np.reshape(note_enc, (rl_tuner_ops.NUM_CLASSES))
+    note_enc = rl_tutor_ops.make_onehot([note_idx], rl_tutor_ops.NUM_CLASSES)
+    return np.reshape(note_enc, (rl_tutor_ops.NUM_CLASSES))
 
   def __call__(self):
     """Allows the network to be called, as in the following code snippet!
@@ -404,7 +404,7 @@ class NoteRNNLoader(object):
         singleton_lengths = np.full(self.batch_size, 1, dtype=int)
 
         input_batch = np.reshape(note,
-                                 (self.batch_size, 1, rl_tuner_ops.NUM_CLASSES))
+                                 (self.batch_size, 1, rl_tutor_ops.NUM_CLASSES))
 
         softmax, self.state_value = self.session.run(
             [self.softmax, self.state_tensor],
