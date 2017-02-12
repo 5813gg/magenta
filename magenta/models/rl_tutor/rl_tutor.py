@@ -868,7 +868,7 @@ class RLTutor(object):
     return rewards
 
   def generate_music_sequence(self, title='rltutor_sample', 
-    visualize_probs=False, prob_image_name=None, length=None, 
+    visualize_probs=False, prob_image_name=None, length=120, 
     most_probable=False):
     """Generates a music sequence with the current model, and saves it to MIDI.
 
@@ -898,6 +898,7 @@ class RLTutor(object):
       prob_image = np.zeros((self.input_size, length))
 
     generated_seq = []
+    i = 0
     while not self.is_end_of_sequence():
       input_batch = np.reshape(next_obs, (self.q_network.batch_size, 1,
                                           self.num_actions))
@@ -930,6 +931,10 @@ class RLTutor(object):
       generated_seq.append(sample)
       next_obs = np.array(rl_tutor_ops.make_onehot([sample],
                                                  self.num_actions)).flatten()
+      i += 1
+
+    # Trim excess image columns
+    prob_image = prob_image[:,0:i]
 
     tf.logging.info('Generated sequence: %s', generated_seq)
     print 'Generated sequence:', generated_seq
