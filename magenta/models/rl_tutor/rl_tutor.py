@@ -897,7 +897,6 @@ class RLTutor(object):
     if visualize_probs:
       prob_image = np.zeros((self.input_size, length))
     
-    print "generating sequence. Outside loop. Length is:", len(self.generated_seq), "step is:", self.generated_seq_step
     i = 0
     while not self.is_end_of_sequence():
       input_batch = np.reshape(next_obs, (self.q_network.batch_size, 1,
@@ -933,7 +932,6 @@ class RLTutor(object):
       next_obs = np.array(rl_tutor_ops.make_onehot([sample],
                                                  self.num_actions)).flatten()
       i += 1
-      print "generating sequence. At end of loop. Length is:", len(self.generated_seq), "step is:", self.generated_seq_step
 
     # Trim excess image columns
     prob_image = prob_image[:,0:i]
