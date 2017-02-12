@@ -300,7 +300,8 @@ class RLTuner(RLTutor):
 
     Should be overwritten by child class.
     """
-    if self.generated_seq_step == self.num_notes_in_melody:
+    if (self.generated_seq_step + 1 == self.num_notes_in_melody) or (
+      len(self.generated_seq) == self.num_notes_in_melody):
       return True
     return False
 
