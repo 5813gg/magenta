@@ -132,8 +132,6 @@ class RLTuner(RLTutor):
     print "In child class RL Tuner"
 
     self.num_notes_in_melody = num_notes_in_melody
-    print "num notes in melody came in as:", num_notes_in_melody
-    print "num notes in melody in class as:", self.num_notes_in_melody
     self.midi_primer = midi_primer
     self.training_file_list = training_file_list
 
@@ -310,7 +308,7 @@ class RLTuner(RLTutor):
     """Renders a generated melody sequence into an audio MIDI file. 
 
     The resulting MIDI file is saved to the model's output_dir directory. 
-    
+
     Args:
       generated_seq: A list of integer note/action values.
       title: A title to use in the sequence filename.

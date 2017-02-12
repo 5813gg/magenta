@@ -22,9 +22,6 @@ import numpy as np
 from scipy.misc import logsumexp
 import tensorflow as tf
 
-from magenta.music import melodies_lib as mlib
-from magenta.music import midi_io
-
 import rl_tutor_ops
 
 # Training data sequences are limited to this length, so the padding queue pads
