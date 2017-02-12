@@ -132,6 +132,8 @@ class RLTuner(RLTutor):
     print "In child class RL Tuner"
 
     self.num_notes_in_melody = num_notes_in_melody
+    print "num notes in melody came in as:", num_notes_in_melody
+    print "num notes in melody in class as:", self.num_notes_in_melody
     self.midi_primer = midi_primer
     self.training_file_list = training_file_list
 
@@ -169,7 +171,6 @@ class RLTuner(RLTutor):
     self.composition_direction = 0
     self.leapt_from = None  # stores the note at which composition leapt
     self.steps_since_last_leap = 0
-    self.num_notes_in_melody=num_notes_in_melody,
 
     if self.priming_mode == 'random_midi':
       tf.logging.info('Getting priming melodies')
