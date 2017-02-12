@@ -937,6 +937,7 @@ class RLTutor(object):
 
     # Trim excess image columns
     prob_image = prob_image[:,0:i]
+    print "trimmed prob image to dimensions:", np.shape(prob_image)
 
     tf.logging.info('Generated sequence: %s', self.generated_seq)
     print 'Generated sequence:', self.generated_seq
