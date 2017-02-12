@@ -276,22 +276,12 @@ class RLTuner(RLTutor):
       model.prime_model()
       next_obs = model.priming_note
     elif self.priming_mode == 'random_note':
-      next_obs = self.get_random_note()
+      next_obs = self.get_random_action()
     else:
       tf.logging.warn('Error! Invalid priming mode. Priming with random note')
-      next_obs = self.get_random_note()
+      next_obs = self.get_random_action()
 
     return next_obs
-
-  def get_random_note(self):
-    """Samle a note uniformly at random.
-
-    Returns:
-      random note
-    """
-    note_idx = np.random.randint(0, self.num_actions - 1)
-    return np.array(rl_tuner_ops.make_onehot([note_idx],
-                                           self.num_actions)).flatten()
 
   def reset_for_new_sequence(self):
     """Starts the models internal composition over at beat 0, with no notes.

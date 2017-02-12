@@ -385,6 +385,16 @@ class RLTutor(object):
     self.summarize = tf.merge_all_summaries()
     self.no_op1 = tf.no_op()
 
+  def get_random_action(self):
+    """Sample an action uniformly at random.
+
+    Returns:
+      one-hot encoding of random action
+    """
+    act_idx = np.random.randint(0, self.num_actions - 1)
+    return np.array(rl_tuner_ops.make_onehot([act_idx], 
+                                             self.num_actions)).flatten()
+  
   def train(self, num_steps=10000, exploration_period=5000, enable_random=True, 
             verbose=False):
     """Main training function that allows model to act, collects reward, trains.
@@ -570,7 +580,7 @@ class RLTutor(object):
     action = np.reshape(action, (self.num_actions))
 
     if enable_random and random.random() < exploration_p:
-      note = self.get_random_note()
+      note = self.get_random_action()
       if sample_next_obs:
         return note, note, reward_scores
       else:

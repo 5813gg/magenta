@@ -47,7 +47,7 @@ class RLTunerTest(tf.test.TestCase):
     rlt = rl_tuner.RLTuner(self.output_dir)
 
     zero_state = rlt.q_network.get_zero_state()
-    priming_note = rlt.get_random_note()
+    priming_note = rlt.get_random_action()
 
     reward_scores = rlt.get_reward_rnn_scores(priming_note, zero_state)
     self.assertTrue(reward_scores is not None)
