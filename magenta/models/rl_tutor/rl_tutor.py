@@ -79,8 +79,8 @@ class RLTutor(object):
         the DQN algorithm, including minibatch size, exploration probability, 
         etc.
       reward_mode: Controls which reward function can be applied. Each domain
-        can have several different ones; 'domain_only' applies only the domain-
-        specific rewards, and no reward_rnn rewards.
+        can have several different ones, called within the collect_domain_reward
+        function.
       reward_scaler: Controls the emphasis placed on the domain rewards. 
         This value is the inverse of 'c' in the academic paper.
       exploration_mode: can be 'egreedy' which is an epsilon greedy policy, or
@@ -143,8 +143,9 @@ class RLTutor(object):
       self.rnn_hparams = rnn_hparams
       self.rnn_type = rnn_type
 
+      self.domain_rewards_only = False
       if self.algorithm == 'g' or self.algorithm == 'pure_rl':
-        reward_mode = 'domain_only'
+        self.domain_rewards_only = True
       
       if dqn_hparams is None:
         self.dqn_hparams = rl_tuner_ops.default_dqn_hparams()
@@ -759,11 +760,39 @@ class RLTutor(object):
     self.eval_avg_data_reward.append(np.mean(data_rewards))
     self.eval_avg_domain_reward.append(np.mean(domain_rewards))
 
-
   def collect_reward(self, obs, action, reward_scores, verbose=False):
-    """Calls whatever reward function is indicated in the reward_mode field.
+    """Collects reward from pre-trained RNN and domain-specific functions.
 
-    Domain-specific. Should be overwritten in child class. 
+    Args:
+      obs: A one-hot encoding of the observed note.
+      action: A one-hot encoding of the chosen action.
+      reward_scores: The value for each note output by the reward_rnn.
+      verbose: If True, additional logging statements about the reward after
+        each function will be printed.
+    Returns:
+      Float reward value.
+    """
+    # Gets and saves log p(a|s) as output by reward_rnn.
+    data_reward = self.reward_from_reward_rnn_scores(action, reward_scores)
+    self.data_reward_last_n += data_reward
+
+    reward = self.collect_domain_reward(obs, action, verbose=verbose)
+    self.domain_reward_last_n += reward * self.reward_scaler
+
+    if verbose:
+      print 'Pre-trained RNN reward:', data_reward
+      print 'Total domain reward:', self.reward_scaler * reward
+      print ""
+      
+    if not self.domain_rewards_only:
+      return reward * self.reward_scaler + data_reward
+    else:
+      return reward * self.reward_scaler 
+
+  def collect_domain_reward(self, obs, action, reward_scores, verbose=False):
+    """Domain-specific function that calculates domain reward.
+    
+    Should be overwritten in child class. 
     """
     raise NotImplementedError
 

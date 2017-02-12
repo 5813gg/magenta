@@ -306,27 +306,23 @@ class RLTuner(RLTutor):
     self.steps_since_last_leap = 0
 
 
-  def collect_reward(self, obs, action, reward_scores, verbose=False):
+  def collect_domain_reward(self, obs, action, verbose=False):
     """Calls whatever reward function is indicated in the reward_mode field.
 
     New reward functions can be written and called from here. Note that the
     reward functions can make use of the musical composition that has been
-    played so far, which is stored in self.composition. Some reward functions
+    played so far, which is stored in self.generated_seq. Some reward functions
     are made up of many smaller functions, such as those related to music
     theory.
 
     Args:
       obs: A one-hot encoding of the observed note.
       action: A one-hot encoding of the chosen action.
-      reward_scores: The value for each note output by the reward_rnn.
       verbose: If True, additional logging statements about the reward after
         each function will be printed.
     Returns:
       Float reward value.
     """
-    # Gets and saves log p(a|s) as output by reward_rnn.
-    data_reward = self.reward_from_reward_rnn_scores(action, reward_scores)
-    self.data_reward_last_n += data_reward
 
     if self.reward_mode == 'scale':
       # Makes the model play a scale (defaults to c major).
@@ -358,8 +354,6 @@ class RLTuner(RLTutor):
       reward = self.reward_key(action)
       reward += self.reward_tonic(action)
       reward += self.reward_penalize_repeating(action)
-
-      return reward * self.reward_scaler + data_reward
     elif self.reward_mode == 'music_theory_basic_plus_variety':
       # Uses the same reward function as above, but adds a penalty for
       # compositions with a high autocorrelation (aka those that don't have
@@ -368,30 +362,14 @@ class RLTuner(RLTutor):
       reward += self.reward_tonic(action)
       reward += self.reward_penalize_repeating(action)
       reward += self.reward_penalize_autocorrelation(action)
-
-      return reward * self.reward_scaler + data_reward
     elif self.reward_mode == 'preferred_intervals':
       reward = self.reward_preferred_intervals(action)
     elif self.reward_mode == 'music_theory_all':
-      if verbose:
-        print 'Note RNN reward:', data_reward
-
-      reward = self.reward_music_theory(action, verbose=verbose)
-
-      if verbose:
-        print 'Total music theory reward:', self.reward_scaler * reward
-        print 'Total note rnn reward:', data_reward
-        print ""
-      
-      self.domain_reward_last_n += reward * self.reward_scaler
-      return reward * self.reward_scaler + data_reward
-    elif self.reward_mode == 'music_theory_only':
       reward = self.reward_music_theory(action, verbose=verbose)
     else:
       tf.logging.fatal('ERROR! Not a valid reward mode. Cannot compute reward')
 
-    self.domain_reward_last_n += reward * self.reward_scaler
-    return reward * self.reward_scaler
+    return reward
 
 
   def reward_music_theory(self, action, verbose=False):
