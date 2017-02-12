@@ -309,6 +309,8 @@ class RLTuner(RLTutor):
   def render_sequence(self, generated_seq, title='rltuner_sample'):
     """Renders a generated melody sequence into an audio MIDI file. 
 
+    The resulting MIDI file is saved to the model's output_dir directory. 
+    
     Args:
       generated_seq: A list of integer note/action values.
       title: A title to use in the sequence filename.

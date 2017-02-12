@@ -96,7 +96,7 @@ def main(_):
   tf.logging.info('\nFinished training. Saving output figures and composition.')
   rlt.plot_rewards(image_name='Rewards-' + FLAGS.algorithm + '.eps')
 
-  rlt.generate_music_sequence(visualize_probs=True, title=FLAGS.algorithm,
+  rlt.generate_sample(visualize_probs=True, title=FLAGS.algorithm,
                                  prob_image_name=FLAGS.algorithm + '.png')
 
   rlt.save_model_and_figs(FLAGS.algorithm)
