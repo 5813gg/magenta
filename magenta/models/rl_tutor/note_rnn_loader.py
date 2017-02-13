@@ -178,12 +178,12 @@ class NoteRNNLoader(object):
           # hparams.
           self.cell = rl_tutor_ops.make_cell(self.hparams, self.note_rnn_type)
 
-          # Shape of melody_sequence is batch size, melody length, number of
+          # Shape of input_sequence is batch size, melody length, number of
           # output note actions.
-          self.melody_sequence = tf.placeholder(tf.float32,
+          self.input_sequence = tf.placeholder(tf.float32,
                                                 [None, None,
                                                  self.hparams.one_hot_length],
-                                                name='melody_sequence')
+                                                name='input_sequence')
           self.lengths = tf.placeholder(tf.int32, [None], name='lengths')
           self.initial_state = tf.placeholder(tf.float32,
                                               [None, self.cell.state_size],
@@ -208,7 +208,7 @@ class NoteRNNLoader(object):
 
             Args:
               m_seq: A batch of melody sequences of one-hot notes.
-              lens: Lengths of the melody_sequences.
+              lens: Lengths of the input_sequence.
               initial_state: Vector representing the initial state of the RNN.
               swap_memory: Uses more memory and is faster.
               parallel_iterations: Argument to tf.nn.dynamic_rnn.
@@ -235,10 +235,10 @@ class NoteRNNLoader(object):
 
           if self.softmax_within_graph:
             (self.softmax, self.state_tensor) = run_network_on_melody(
-                self.melody_sequence, self.lengths, self.initial_state)
+                self.input_sequence, self.lengths, self.initial_state)
           else:
             (self.logits, self.state_tensor) = run_network_on_melody(
-                self.melody_sequence, self.lengths, self.initial_state)
+                self.input_sequence, self.lengths, self.initial_state)
             self.softmax = tf.nn.softmax(self.logits)
 
           self.run_network_on_melody = run_network_on_melody
@@ -321,7 +321,7 @@ class NoteRNNLoader(object):
       self.state_value, softmax = self.session.run(
           [self.state_tensor, self.softmax],
           feed_dict={self.initial_state: self.state_value,
-                     self.melody_sequence: primer_input_batch,
+                     self.input_sequence: primer_input_batch,
                      self.lengths: np.full(self.batch_size,
                                            len(self.primer),
                                            dtype=int)})
@@ -350,7 +350,7 @@ class NoteRNNLoader(object):
     The q_network() operation can then be placed into a larger graph as a tf op.
 
     Note that to get actual values from call, must do session.run and feed in
-    melody_sequence, lengths, and initial_state in the feed dict.
+    input_sequence, lengths, and initial_state in the feed dict.
 
     Returns:
       Either softmax probabilities over notes, or raw logit scores.
@@ -359,11 +359,11 @@ class NoteRNNLoader(object):
       with tf.variable_scope(self.scope, reuse=True):
         if self.softmax_within_graph:
           softmax, self.state_tensor = self.run_network_on_melody(
-              self.melody_sequence, self.lengths, self.initial_state)
+              self.input_sequence, self.lengths, self.initial_state)
           return softmax
         else:
           logits, self.state_tensor = self.run_network_on_melody(
-              self.melody_sequence, self.lengths, self.initial_state)
+              self.input_sequence, self.lengths, self.initial_state)
           return logits
 
   def run_training_batch(self):
@@ -408,7 +408,7 @@ class NoteRNNLoader(object):
 
         softmax, self.state_value = self.session.run(
             [self.softmax, self.state_tensor],
-            {self.melody_sequence: input_batch,
+            {self.input_sequence: input_batch,
              self.initial_state: self.state_value,
              self.lengths: singleton_lengths})
 

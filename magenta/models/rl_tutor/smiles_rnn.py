@@ -197,12 +197,12 @@ class SmilesRNN(object):
         # hparams.
         self.cell = rl_tutor_ops.make_cell(self.hparams, self.rnn_type)
 
-        # Shape of smiles_sequence is batch size, seq length, number of
+        # Shape of input sequence is batch size, seq length, number of
         # output token actions.
-        self.smiles_sequence = tf.placeholder(tf.float32,
+        self.input_sequence = tf.placeholder(tf.float32,
                                               [None, None,
                                                self.hparams.one_hot_length],
-                                              name='smiles_sequence')
+                                              name='input_sequence')
         self.lengths = tf.placeholder(tf.int32, [None], name='lengths')
         self.initial_state = tf.placeholder(tf.float32,
                                             [None, self.cell.state_size],
@@ -219,7 +219,7 @@ class SmilesRNN(object):
 
           Args:
             smiles_seq: A batch of smiles sequences of one-hot tokens
-            lens: Lengths of the smiles_sequences.
+            lens: Lengths of the input_sequence.
             initial_state: Vector representing the initial state of the RNN.
             swap_memory: Uses more memory and is faster.
             parallel_iterations: Argument to tf.nn.dynamic_rnn.
@@ -243,7 +243,7 @@ class SmilesRNN(object):
         self.run_network = run_network
 
         (self.logits, self.state_tensor) = run_network(
-              self.smiles_sequence, self.lengths, self.initial_state)
+              self.input_sequence, self.lengths, self.initial_state)
         self.softmax = tf.nn.softmax(self.logits)
 
         # Code for training the model
@@ -304,7 +304,7 @@ class SmilesRNN(object):
       self.state_value, softmax = self.session.run(
           [self.state_tensor, self.softmax],
           feed_dict={self.initial_state: self.state_value,
-                     self.smiles_sequence: primer_input_batch,
+                     self.input_sequence: primer_input_batch,
                      self.lengths: lengths})
       priming_output = softmax[-1, :]
       self.priming_token = self.get_token_from_softmax(priming_output)
@@ -331,14 +331,14 @@ class SmilesRNN(object):
     The q_network() operation can then be placed into a larger graph as a tf op.
 
     Note that to get actual values from call, must do session.run and feed in
-    smiles_sequence, lengths, and initial_state in the feed dict.
+    input_sequence, lengths, and initial_state in the feed dict.
 
     Returns:
       Either softmax probabilities over tokens, or raw logit scores.
     """
     with self.graph.as_default():
       with tf.variable_scope(self.scope, reuse=True):
-        logits, self.state_tensor = self.run_network(self.smiles_sequence, 
+        logits, self.state_tensor = self.run_network(self.input_sequence, 
           self.lengths, self.initial_state)
         return logits
 
@@ -364,7 +364,7 @@ class SmilesRNN(object):
       step = 0
       while step < num_steps:
         X, Y, lens = self.data_loader.next_batch()
-        feed_dict = {self.smiles_sequence: X,
+        feed_dict = {self.input_sequence: X,
                    self.train_labels: Y,
                    self.lengths: lens, 
                    self.initial_state: zero_state}
@@ -374,7 +374,7 @@ class SmilesRNN(object):
                                                               self.accuracy,
                                                               self.perplexity], feed_dict)
           X, Y, lens = self.data_loader.next_batch(dataset='val')
-          feed_dict = {self.smiles_sequence: X,
+          feed_dict = {self.input_sequence: X,
                      self.train_labels: Y,
                      self.lengths: lens, 
                      self.initial_state: zero_state}
@@ -408,7 +408,7 @@ class SmilesRNN(object):
 
         softmax, self.state_value = self.session.run(
             [self.softmax, self.state_tensor],
-            {self.smiles_sequence: input_batch,
+            {self.input_sequence: input_batch,
              self.initial_state: self.state_value,
              self.lengths: singleton_lengths})
 
