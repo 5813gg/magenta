@@ -161,7 +161,7 @@ class RLTuner(RLTutor):
       rnn_checkpoint_dir=note_rnn_checkpoint_dir, 
       rnn_checkpoint_file=note_rnn_checkpoint_file, 
       rnn_type=note_rnn_type, rnn_hparams=note_rnn_hparams, input_size=input_size,
-      num_actions=num_actions, midi_primer=midi_primer, save_name=save_name,
+      num_actions=num_actions, save_name=save_name,
       output_every_nth=output_every_nth, summary_writer=summary_writer, 
       initialize_immediately=initialize_immediately)
 

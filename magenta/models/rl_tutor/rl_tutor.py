@@ -59,7 +59,6 @@ class RLTutor(object):
                # Logistics.
                input_size=rl_tutor_ops.NUM_CLASSES,
                num_actions=rl_tutor_ops.NUM_CLASSES,
-               midi_primer=None,
                save_name='rl_tuner.ckpt',
                output_every_nth=1000,
                summary_writer=None,
