@@ -53,7 +53,7 @@ def main(_):
                               load_training_data=True, data_file=FLAGS.data_file, 
                               vocab_file=FLAGS.vocab_file, pickle_file=FLAGS.pickle_file,
                               output_every=FLAGS.output_every_nth)
-  print 'Will save models to: %s', srnn.output_dir
+  print 'Will save models to:', srnn.checkpoint_dir
 
   print '\nTraining...'
   srnn.train(num_steps=FLAGS.training_steps)
