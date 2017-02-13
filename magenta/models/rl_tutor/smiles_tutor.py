@@ -14,6 +14,7 @@ from os import makedirs
 from os.path import exists
 import urllib
 import random
+import sys
 
 import matplotlib.pyplot as plt
 
@@ -39,6 +40,7 @@ class SmilesTutor(RLTutor):
   """Implements a recurrent DQN designed to produce SMILES sequences."""
 
   def __init__(self, output_dir,
+               vocab_file='/home/natasha/Dropbox (MIT)/Google/SMILES-Project/data/zinc_char_list.json'
 
                # Hyperparameters
                dqn_hparams=None,
@@ -66,6 +68,8 @@ class SmilesTutor(RLTutor):
 
     Args:
       output_dir: Where the model will save its compositions (midi files).
+      vocab_file: A JSON file containing a list of the characters in the 
+        SMILES vocabulary.
       dqn_hparams: A tf_lib.hparams() object containing the hyperparameters of 
         the DQN algorithm, including minibatch size, exploration probability, 
         etc.
@@ -123,6 +127,19 @@ class SmilesTutor(RLTutor):
       num_actions=num_actions, save_name=save_name, 
       output_every_nth=output_every_nth, summary_writer=summary_writer, 
       initialize_immediately=initialize_immediately)
+
+    self.vocab_file=vocab_file
+    self.load_vocab()
+
+  def load_vocab(self):
+    print "Loading vocabulary from file", self.vocab_file
+    if not os.path.exists(self.vocab_file):
+        print "ERROR! Vocab file", self.vocab_file, "does not exist!"
+        sys.exit()
+    self.char_list = json.load(open(self.vocab_file))
+    self.vocab_size = len(self.char_list)
+    self.char_to_index = dict((c, i) for i, c in enumerate(self.char_list))
+    self.index_to_char = dict((i, c) for i, c in enumerate(self.char_list))
 
   def initialize_internal_models(self, ):
     """Initializes internal RNN models: q_network, target_q_network, reward_rnn.
@@ -219,6 +236,7 @@ class SmilesTutor(RLTutor):
     """
     return 0
 
+  # TODO: change this
   def evaluate_music_theory_metrics(self, num_compositions=10000, key=None,
                                     tonic_note=rl_tutor_ops.C_MAJOR_TONIC):
     """Computes statistics about music theory rule adherence.
@@ -242,3 +260,17 @@ class SmilesTutor(RLTutor):
     print rl_tuner_eval_metrics.get_stat_dict_string(stat_dict)
 
     return stat_dict
+
+  def render_sequence(self, generated_seq, title='smiles_seq'):
+    """Renders a generated SMILES sequence its string version.
+
+    Args:
+      generated_seq: A list of integer note/action values.
+      title: A title to use in the sequence filename.
+    """
+    print self.convert_seq_to_chars(generated_seq)
+
+  def convert_seq_to_chars(self, seq):
+      return [self.index_to_char[s] for s in seq]
+
+  # The following functions evaluate molecule sequences for quality
