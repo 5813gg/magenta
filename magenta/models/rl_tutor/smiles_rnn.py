@@ -421,4 +421,4 @@ class SmilesRNN(object):
       List of variable names.
     """
     with self.graph.as_default():
-      return [v for v in tf.all_variables() if v.name.startswith(self.scope)]
+      return [v for v in tf.all_variables() if v.name.startswith(self.scope) and 'global_step' not in v.name and 'Adam' not in v.name]
