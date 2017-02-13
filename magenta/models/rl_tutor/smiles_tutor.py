@@ -41,7 +41,7 @@ class SmilesTutor(RLTutor):
   """Implements a recurrent DQN designed to produce SMILES sequences."""
 
   def __init__(self, output_dir,
-               vocab_file='/home/natasha/Dropbox (MIT)/Google/SMILES-Project/data/zinc_char_list.json'
+               vocab_file='/home/natasha/Dropbox (MIT)/Google/SMILES-Project/data/zinc_char_list.json',
 
                # Hyperparameters
                dqn_hparams=None,
