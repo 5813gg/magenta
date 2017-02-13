@@ -49,3 +49,21 @@ py_test(
         ":rl_tuner_ops",
     ],
 )
+
+py_binary(
+    name = "smiles_rnn_train",
+    srcs = ["smiles_rnn_train.py"],
+    deps = [
+        ":smiles_rnn"
+        "//magenta/common:tf_lib",
+    ],
+)
+
+py_binary(
+    name = "smiles_rnn",
+    srcs = ["smiles_rnn.py"],
+    deps = [
+        ":rl_tutor_ops",
+        # tensorflow dep
+    ],
+)
