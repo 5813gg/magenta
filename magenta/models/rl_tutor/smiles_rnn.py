@@ -22,6 +22,7 @@ import os
 
 import numpy as np
 import tensorflow as tf
+import matplotlib.pyplot as plt
 
 import magenta
 from magenta.music import melodies_lib
@@ -52,7 +53,7 @@ class SmilesRNN(object):
                hparams=None, rnn_type='default', checkpoint_scope='smiles_rnn', 
                load_training_data=False, data_file=SMILES_DATA+'250k_drugs_clean.smi', 
                vocab_file=SMILES_DATA+'zinc_char_list.json', pickle_file=SMILES_DATA+'smiles.p',
-               vocab_size=rl_tutor_ops.NUM_CLASSES_SMILE):
+               output_every=1000, vocab_size=rl_tutor_ops.NUM_CLASSES_SMILE):
     """Initialize by building the graph and loading a previous checkpoint.
 
     Args:
@@ -85,6 +86,7 @@ class SmilesRNN(object):
     self.checkpoint_dir = checkpoint_dir
     self.checkpoint_file = checkpoint_file
     self.load_training_data = load_training_data
+    self.output_every=output_every
     self.vocab_size = vocab_size
 
     if graph is None:
@@ -107,6 +109,10 @@ class SmilesRNN(object):
       self.data_loader = smiles_data_loader.SmilesLoader(vocab_file, data_file, 
                                                          pickle_file, self.hparams.batch_size)
       self.vocab_size = self.data_loader.vocab_size
+      self.train_accuracies = []
+      self.val_accuracies = []
+      self.train_perplexities = []
+      self.val_perplexities = []
 
     self.build_graph()
     self.state_value = self.get_zero_state()
@@ -352,7 +358,7 @@ class SmilesRNN(object):
           self.lengths, self.initial_state)
         return logits
 
-  def train(self, num_steps=30000, output_every=1000):
+  def train(self, num_steps=30000):
     """Runs one batch of training data through the model.
 
     Uses a queue runner to pull one batch of data from the training files
@@ -378,7 +384,7 @@ class SmilesRNN(object):
                    self.train_labels: Y,
                    self.lengths: lens, 
                    self.initial_state: zero_state}
-        if step % output_every == 0:
+        if step % self.output_every == 0:
           _, step, train_acc, train_pplex = self.session.run([self.train_op, 
                                                               self.global_step,
                                                               self.accuracy,
@@ -397,9 +403,56 @@ class SmilesRNN(object):
           print "\t Validation accuracy", val_acc, "perplexity", val_pplex
           self.saver.save(self.session, self.checkpoint_dir+self.scope, 
                           global_step=step)
+
+          self.train_perplexities.append(train_pplex)
+          self.train_accuracies.append(train_acc)
+          self.val_perplexities.append(val_pplex)
+          self.val_accuracies.append(val_acc)
         else:
           _, step = self.session.run([self.train_op, self.global_step], feed_dict)
 
+
+  def plot_training_progress(self, save_fig=False, directory=None):
+    """Plots the cumulative rewards received as the model was trained.
+
+    If image_name is None, should be used in jupyter notebook. If 
+    called outside of jupyter, execution of the program will halt and 
+    a pop-up with the graph will appear. Execution will not continue 
+    until the pop-up is closed.
+
+    Args:
+      image_name: Name to use when saving the plot to a file. If not
+        provided, image will be shown immediately.
+      directory: Path to directory where figure should be saved. If
+        None, defaults to self.output_dir.
+    """
+    if directory is None:
+      directory = self.checkpoint_dir
+
+    reward_batch = self.output_every
+    x = [reward_batch * i for i in np.arange(len(self.train_accuracies))]
+    
+    plt.figure()
+    plt.plot(x, self.train_accuracies)
+    plt.plot(x, self.val_accuracies)
+    plt.xlabel('Training epoch')
+    plt.ylabel('Accuracy')
+    plt.legend(['Train', 'Validation'], loc='best')
+    if save_fig:
+      plt.savefig(directory + '/' + self.scope + '_training_accuracies.png')
+    else:
+      plt.show()
+
+    plt.figure()
+    plt.plot(x, self.train_perplexities)
+    plt.plot(x, self.val_perplexities)
+    plt.xlabel('Training epoch')
+    plt.ylabel('Perplexity')
+    plt.legend(['Train', 'Validation'], loc='best')
+    if save_fig:
+      plt.savefig(directory + '/' + self.scope + '_training_perplexities.png')
+    else:
+      plt.show()
 
   def get_next_token_from_token(self, token):
     """Given a token, uses the model to predict the most probable next token.
