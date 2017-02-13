@@ -571,9 +571,8 @@ class RLTutor(object):
       sample_next_obs = True
 
     # Run the observation through the q_network.
-    input_batch = np.reshape(observation,
-                             (self.q_network.hparams.batch_size, 1, self.input_size))
-    lengths = np.full(self.q_network.hparams.batch_size, 1, dtype=int)
+    input_batch = np.reshape(observation, (1, 1, self.input_size))
+    lengths = np.full(1, 1, dtype=int)
 
     (action, action_softmax, self.q_network.state_value, 
     reward_scores, self.reward_rnn.state_value) = self.session.run(
@@ -883,15 +882,14 @@ class RLTutor(object):
     next_obs = self.prime_internal_models()
     tf.logging.info('Priming with observation %s', np.argmax(next_obs))
 
-    lengths = np.full(self.q_network.hparams.batch_size, 1, dtype=int)
+    lengths = np.full(1, 1, dtype=int)
 
     if visualize_probs:
       prob_image = np.zeros((self.input_size, length))
     
     i = 0
     while not self.is_end_of_sequence():
-      input_batch = np.reshape(next_obs, (self.q_network.hparams.batch_size, 1,
-                                          self.num_actions))
+      input_batch = np.reshape(next_obs, (1, 1, self.num_actions))
       if self.algorithm == 'g':
         (softmax, self.q_network.state_value, 
           self.reward_rnn.state_value) = self.session.run(
