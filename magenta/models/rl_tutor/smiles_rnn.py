@@ -24,12 +24,6 @@ import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
 
-import magenta
-from magenta.music import melodies_lib
-from magenta.music import midi_io
-from magenta.music import sequences_lib
-from magenta.common import sequence_example_lib
-
 import rl_tutor_ops
 import smiles_data_loader
 
@@ -67,8 +61,7 @@ class SmilesRNN(object):
       hparams: A tf_lib.HParams object. Must match the hparams used to create 
         the checkpoint file.
       rnn_type: If 'default', will use the basic LSTM described in the 
-        research paper. If 'basic_rnn', will assume the checkpoint is from a
-        Magenta basic_rnn model.
+        research paper. 
       checkpoint_scope: The scope in lstm which the model was originally defined
         when it was first trained.
       load_training_data: A bool that should be true if the model is going to load
@@ -145,8 +138,6 @@ class SmilesRNN(object):
 
   def restore_initialize_prime(self, session):
     """Saves the session, restores variables from checkpoint, primes model.
-
-    Model is primed with its default midi file.
 
     Args:
       session: A tensorflow session.
