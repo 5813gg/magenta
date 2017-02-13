@@ -118,7 +118,17 @@ class SmilesRNN(object):
     self.saver = None
 
   def get_zero_state(self):
-    """Gets an initial state of zeros of the appropriate size.
+    """Gets an initial state of zeros appropriate for a single input.
+
+    Required size is based on the model's internal RNN cell.
+
+    Returns:
+      A matrix of 1 x cell size zeros.
+    """
+    return np.zeros((1, self.cell.state_size))
+  
+  def get_zero_state_batch(self):
+    """Gets an initial state of zeros of the appropriate size for a batch.
 
     Required size is based on the model's internal RNN cell.
 
@@ -359,7 +369,7 @@ class SmilesRNN(object):
     with self.graph.as_default():
       self.saver = tf.train.Saver()
 
-      zero_state = self.get_zero_state()
+      zero_state = self.get_zero_state_batch()
 
       step = 0
       while step < num_steps:
