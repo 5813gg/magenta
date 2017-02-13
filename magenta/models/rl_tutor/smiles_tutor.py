@@ -21,6 +21,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.misc import logsumexp
 import tensorflow as tf
+import rdkit
 
 import smiles_rnn
 import rl_tutor_ops
@@ -268,9 +269,17 @@ class SmilesTutor(RLTutor):
       generated_seq: A list of integer note/action values.
       title: A title to use in the sequence filename.
     """
-    print self.convert_seq_to_chars(generated_seq)
+    print str(self.convert_seq_to_chars(generated_seq))
+    if self.is_valid_molecule(generated_seq):
+        print "VALID molecule"
+    else:
+        print "Invalid molecule :("
 
   def convert_seq_to_chars(self, seq):
       return [self.index_to_char[s] for s in seq]
+
+  def is_valid_molecule(self, seq):
+      char_seq = self.convert_seq_to_chars(seq)
+      return MolFromSmiles(smile_string)
 
   # The following functions evaluate molecule sequences for quality
