@@ -188,7 +188,7 @@ class SmilesTutor(RLTutor):
 
     Should be overwritten by child class.
     """
-    if self.generated_seq[-1] == EOS:
+    if len(self.generated_seq) > 0 and self.generated_seq[-1] == EOS:
       return True
     return False
 
