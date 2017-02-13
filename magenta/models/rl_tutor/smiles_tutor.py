@@ -270,17 +270,18 @@ class SmilesTutor(RLTutor):
       generated_seq: A list of integer note/action values.
       title: A title to use in the sequence filename.
     """
-    print str(self.convert_seq_to_chars(generated_seq))
+    print self.convert_seq_to_chars(generated_seq)
     if self.is_valid_molecule(generated_seq):
         print "VALID molecule"
     else:
         print "Invalid molecule :("
 
   def convert_seq_to_chars(self, seq):
-      return [str(self.index_to_char[s]) for s in seq]
+      char_list = [str(self.index_to_char[s]) for s in seq]
+      return ''.join(char_list)
 
   def is_valid_molecule(self, seq):
-      char_seq = self.convert_seq_to_chars(seq)
-      return rdkit.MolFromSmiles(smile_string)
+      smiles_string = self.convert_seq_to_chars(seq)
+      return rdkit.Chem.MolFromSmiles(smiles_string)
 
   # The following functions evaluate molecule sequences for quality
