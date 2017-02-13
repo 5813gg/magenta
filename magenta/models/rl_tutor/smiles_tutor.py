@@ -277,10 +277,10 @@ class SmilesTutor(RLTutor):
         print "Invalid molecule :("
 
   def convert_seq_to_chars(self, seq):
-      return [self.index_to_char[s] for s in seq]
+      return [str(self.index_to_char[s]) for s in seq]
 
   def is_valid_molecule(self, seq):
       char_seq = self.convert_seq_to_chars(seq)
-      return MolFromSmiles(smile_string)
+      return rdkit.MolFromSmiles(smile_string)
 
   # The following functions evaluate molecule sequences for quality
