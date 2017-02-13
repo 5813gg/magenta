@@ -33,8 +33,8 @@ py_binary(
 )
 
 py_binary(
-    name = "rl_tuner_ops",
-    srcs = ["rl_tuner_ops.py"],
+    name = "rl_tutor_ops",
+    srcs = ["rl_tutor_ops.py"],
     deps = [
         "//magenta/common:tf_lib",
         # tensorflow dep
