@@ -35,12 +35,6 @@ tf.app.flags.DEFINE_integer('output_every_nth', 50000,
                             'The number of steps before the model will evaluate'
                             'itself and store a checkpoint')
 
-checkpoint_dir, graph=None, scope='smiles_rnn', checkpoint_file=None, 
-               hparams=None, rnn_type='default', checkpoint_scope='smiles_rnn', 
-               load_training_data=False, data_file=SMILES_DATA+'250k_drugs_clean.smi', 
-               vocab_file=SMILES_DATA+'zinc_char_list.json', pickle_file=SMILES_DATA+'smiles.p',
-               vocab_size=rl_tutor_ops.NUM_CLASSES_SMILE)
-
 def main(_):
   tf.logging.info('Initializing SMILES RNN')
   smiles_params = tf_lib.HParams(use_dynamic_rnn=True,
