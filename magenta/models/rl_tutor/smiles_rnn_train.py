@@ -36,7 +36,7 @@ tf.app.flags.DEFINE_integer('output_every_nth', 50000,
                             'itself and store a checkpoint')
 
 def main(_):
-  tf.logging.info('Initializing SMILES RNN')
+  print 'Initializing SMILES RNN'
   smiles_params = tf_lib.HParams(use_dynamic_rnn=True,
                                  batch_size=128,
                                  lr=0.0002,
@@ -49,13 +49,13 @@ def main(_):
                                  one_hot_length=35,
                                  exponentially_decay_learning_rate=True)
 
-  srnn = smiles_rnn.SmilesRNN(output_dir, hparams=smiles_params, 
+  srnn = smiles_rnn.SmilesRNN(FLAGS.output_dir, hparams=smiles_params, 
                               load_training_data=True, data_file=FLAGS.data_file, 
                               vocab_file=FLAGS.vocab_file, pickle_file=FLAGS.pickle_file,
                               output_every=FLAGS.output_every_nth)
-  tf.logging.info('Will save models to: %s', srnn.output_dir)
+  print 'Will save models to: %s', srnn.output_dir
 
-  tf.logging.info('\nTraining...')
+  print '\nTraining...'
   srnn.train(num_steps=FLAGS.training_steps)
 
   print '\nFinished training. Saving output figures'
