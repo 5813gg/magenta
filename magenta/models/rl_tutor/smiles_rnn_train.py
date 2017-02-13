@@ -42,7 +42,7 @@ checkpoint_dir, graph=None, scope='smiles_rnn', checkpoint_file=None,
                vocab_size=rl_tutor_ops.NUM_CLASSES_SMILE)
 
 def main(_):
-
+  tf.logging.info('Initializing SMILES RNN')
   smiles_params = tf_lib.HParams(use_dynamic_rnn=True,
                                  batch_size=128,
                                  lr=0.0002,
@@ -59,18 +59,19 @@ def main(_):
                               load_training_data=True, data_file=FLAGS.data_file, 
                               vocab_file=FLAGS.vocab_file, pickle_file=FLAGS.pickle_file,
                               output_every=FLAGS.output_every_nth):
-  tf.logging.info('Saving models to: %s', srnn.output_dir)
+  tf.logging.info('Will save models to: %s', srnn.output_dir)
 
   tf.logging.info('\nTraining...')
   srnn.train(num_steps=FLAGS.training_steps)
 
-  tf.logging.info('\nFinished training. Saving output figures and composition.')
-  rlt.plot_rewards(image_name='Rewards-' + FLAGS.algorithm + '.eps')
+  print '\nFinished training. Saving output figures'
+  srnn.plot_training_progress(save_fig=True)
 
-  rlt.generate_sample(visualize_probs=True, title='trained_smiles_rnn',
-                                 prob_image_name='trained_smiles_rnn.png')
-
-  rlt.save_model_and_figs(FLAGS.algorithm)
+  print '\nFINAL STATS:'
+  print '\tFinal training accuracy:', srnn.training_accuracies[-1]
+  print '\tFinal training perplexity:', srnn.training_perplexities[-1]
+  print '\tFinal validation accuracy:', srnn.val_accuracies[-1]
+  print '\tFinal validation perplexity:', srnn.val_perplexities[-1]
 
 
 if __name__ == '__main__':
