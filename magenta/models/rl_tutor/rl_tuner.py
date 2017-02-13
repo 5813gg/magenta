@@ -222,7 +222,7 @@ class RLTuner(RLTutor):
     tf.logging.info('Q network cell: %s', self.q_network.cell)
 
   def get_priming_melodies(self):
-    """Runs a batch of training data through MelodyRNN model.
+    """Runs a batch of training data through NoteRNN model.
 
     If the priming mode is 'random_midi', priming the q-network requires a
     random training melody. Therefore this function runs a batch of data from

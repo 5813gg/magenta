@@ -1,20 +1,21 @@
-"""Defines a class and operations for the MelodyRNN model.
+"""Defines a class and operations for the SmilesRNN model.
 
-Note RNN Loader allows a basic melody prediction LSTM RNN model to be loaded 
-from a checkpoint file, primed, and used to predict next notes.
+Can create a train a basic RNN to predict the next character in a SMILES 
+molecule sequence, or allow such a model to be loaded from a checkpoint file, 
+primed, and used to predict next tokens.
 
-This class can be used as the q_network and target_q_network for the RLTuner
+This class can be used as the q_network and target_q_network for the RLTutor
 class.
 
 The graph structure of this model is similar to basic_rnn, but more flexible.
-It allows you to either train it with data from a queue, or just 'call' it to
-produce the next action.
+It allows you to either train it with data from a SmilesLoader object, or 
+just 'call' it to produce the next action.
 
 It also provides the ability to add the model's graph to an existing graph as a
 subcomponent, and then load variables from a checkpoint file into only that
 piece of the overall graph.
 
-These functions are necessary for use with the RL Tuner class.
+These functions are necessary for use with the RL Tutor class.
 """
 
 import os
@@ -41,32 +42,30 @@ def reload_files():
 
 
 class SmilesRNN(object):
-  """Builds graph for a Note RNN and instantiates weights from a checkpoint.
+  """Builds graph for a Smiles RNN and instantiates weights from a checkpoint.
 
-  Loads weights from a previously saved checkpoint file corresponding to a pre-
-  trained basic_rnn model. Has functions that allow it to be primed with a MIDI
-  melody, and allow it to be called to produce its predictions for the next
-  note in a sequence.
-
-  Used as part of the RLTuner class.
+  Can either train an RNN on SMILES molecule data for scratch, or load a pre-
+  trained version to be included as part of an RL Tutor graph.
   """
 
   def __init__(self, checkpoint_dir, graph=None, scope='smiles_rnn', checkpoint_file=None, 
-               hparams=None, note_rnn_type='default', checkpoint_scope='smiles_rnn', 
+               hparams=None, rnn_type='default', checkpoint_scope='smiles_rnn', 
                load_training_data=False, data_file=SMILES_DATA+'250k_drugs_clean.smi', 
-               vocab_file=SMILES_DATA+'zinc_char_list.json', pickle_file=SMILES_DATA+'smiles.p'):
+               vocab_file=SMILES_DATA+'zinc_char_list.json', pickle_file=SMILES_DATA+'smiles.p',
+               vocab_size=rl_tutor_ops.NUM_CLASSES_SMILE):
     """Initialize by building the graph and loading a previous checkpoint.
 
     Args:
       checkpoint_dir: Path to the directory where the checkpoint file is saved or 
         will be saved.
-      graph: A tensorflow graph where the MelodyRNN's graph will be added.
+      graph: A tensorflow graph where the SmilesRNN's graph will be added. If 
+        None, class will create its own graph.
       scope: The tensorflow scope where this network will be saved.
       checkpoint_file: Path to a backup checkpoint file to be used if none can 
         be found in the checkpoint_dir
       hparams: A tf_lib.HParams object. Must match the hparams used to create 
         the checkpoint file.
-      note_rnn_type: If 'default', will use the basic LSTM described in the 
+      rnn_type: If 'default', will use the basic LSTM described in the 
         research paper. If 'basic_rnn', will assume the checkpoint is from a
         Magenta basic_rnn model.
       checkpoint_scope: The scope in lstm which the model was originally defined
@@ -82,10 +81,11 @@ class SmilesRNN(object):
     self.session = None
     self.scope = scope
     self.checkpoint_scope = checkpoint_scope
-    self.note_rnn_type = note_rnn_type
+    self.rnn_type = rnn_type
     self.checkpoint_dir = checkpoint_dir
     self.checkpoint_file = checkpoint_file
     self.load_training_data = load_training_data
+    self.vocab_size = vocab_size
 
     if graph is None:
       self.graph = tf.Graph()
@@ -106,6 +106,7 @@ class SmilesRNN(object):
 
       self.data_loader = smiles_data_loader.SmilesLoader(vocab_file, data_file, 
                                                          pickle_file, self.hparams.batch_size)
+      self.vocab_size = self.data_loader.vocab_size
 
     self.build_graph()
     self.state_value = self.get_zero_state()
@@ -173,7 +174,7 @@ class SmilesRNN(object):
     for var in self.variables():
       inner_name = rl_tutor_ops.get_inner_scope(var.name)
       inner_name = rl_tutor_ops.trim_variable_postfixes(inner_name)
-      if self.note_rnn_type == 'basic_rnn':
+      if self.rnn_type == 'basic_rnn':
         if 'fully_connected' in inner_name and 'bias' in inner_name:
           # 'fully_connected/bias' has been changed to 'fully_connected/biases'
           # in newest checkpoints.
@@ -188,20 +189,20 @@ class SmilesRNN(object):
   def build_graph(self):
     """Constructs the portion of the graph that belongs to this model."""
 
-    tf.logging.info('Initializing melody RNN graph for scope %s', self.scope)
+    tf.logging.info('Initializing smiles RNN graph for scope %s', self.scope)
 
     with self.graph.as_default():
       with tf.variable_scope(self.scope):
         # Make an LSTM cell with the number and size of layers specified in
         # hparams.
-        self.cell = rl_tutor_ops.make_cell(self.hparams, self.note_rnn_type)
+        self.cell = rl_tutor_ops.make_cell(self.hparams, self.rnn_type)
 
-        # Shape of melody_sequence is batch size, melody length, number of
-        # output note actions.
-        self.melody_sequence = tf.placeholder(tf.float32,
+        # Shape of smiles_sequence is batch size, seq length, number of
+        # output token actions.
+        self.smiles_sequence = tf.placeholder(tf.float32,
                                               [None, None,
                                                self.hparams.one_hot_length],
-                                              name='melody_sequence')
+                                              name='smiles_sequence')
         self.lengths = tf.placeholder(tf.int32, [None], name='lengths')
         self.initial_state = tf.placeholder(tf.float32,
                                             [None, self.cell.state_size],
@@ -212,16 +213,13 @@ class SmilesRNN(object):
 
         # Closure function is used so that this part of the graph can be
         # re-run in multiple places, such as __call__.
-        def run_network_on_melody(m_seq,
-                                  lens,
-                                  initial_state,
-                                  swap_memory=True,
-                                  parallel_iterations=1):
+        def run_network(smiles_seq, lens, initial_state, swap_memory=True,
+                        parallel_iterations=1):
           """Internal function that defines the RNN network structure.
 
           Args:
-            m_seq: A batch of melody sequences of one-hot notes.
-            lens: Lengths of the melody_sequences.
+            smiles_seq: A batch of smiles sequences of one-hot tokens
+            lens: Lengths of the smiles_sequences.
             initial_state: Vector representing the initial state of the RNN.
             swap_memory: Uses more memory and is faster.
             parallel_iterations: Argument to tf.nn.dynamic_rnn.
@@ -230,7 +228,7 @@ class SmilesRNN(object):
           """
           outputs, final_state = tf.nn.dynamic_rnn(
               self.cell,
-              m_seq,
+              smiles_seq,
               sequence_length=lens,
               initial_state=initial_state,
               swap_memory=swap_memory,
@@ -242,10 +240,10 @@ class SmilesRNN(object):
               outputs_flat, self.hparams.one_hot_length)
           return logits_flat, final_state
 
-        self.run_network_on_melody = run_network_on_melody
+        self.run_network = run_network
 
-        (self.logits, self.state_tensor) = run_network_on_melody(
-              self.melody_sequence, self.lengths, self.initial_state)
+        (self.logits, self.state_tensor) = run_network(
+              self.smiles_sequence, self.lengths, self.initial_state)
         self.softmax = tf.nn.softmax(self.logits)
 
         # Code for training the model
@@ -299,51 +297,49 @@ class SmilesRNN(object):
   def prime_model(self, primer_input):
     """Primes the model with a sequence that has already been correctly encoded."""
     with self.graph.as_default():
-
-      features = seq.feature_lists.feature_list['inputs'].feature
       # Run model over primer sequence.
       primer_input_batch = np.tile([primer_input], (self.hparams.batch_size, 1, 1))
+      lengths = np.full(self.hparams.batch_size, len(self.primer), dtype=int)
+
       self.state_value, softmax = self.session.run(
           [self.state_tensor, self.softmax],
           feed_dict={self.initial_state: self.state_value,
-                     self.melody_sequence: primer_input_batch,
-                     self.lengths: np.full(self.hparams.batch_size,
-                                           len(self.primer),
-                                           dtype=int)})
+                     self.smiles_sequence: primer_input_batch,
+                     self.lengths: lengths})
       priming_output = softmax[-1, :]
-      self.priming_note = self.get_note_from_softmax(priming_output)
+      self.priming_token = self.get_token_from_softmax(priming_output)
 
-  def get_note_from_softmax(self, softmax):
-    """Extracts a one-hot encoding of the most probable note.
+  def get_token_from_softmax(self, softmax):
+    """Extracts a one-hot encoding of the most probable token.
 
     Args:
-      softmax: Softmax probabilities over possible next notes.
+      softmax: Softmax probabilities over possible next tokens.
     Returns:
-      One-hot encoding of most probable note.
+      One-hot encoding of most probable token.
     """
 
-    note_idx = np.argmax(softmax)
-    note_enc = rl_tutor_ops.make_onehot([note_idx], rl_tutor_ops.NUM_CLASSES)
-    return np.reshape(note_enc, (rl_tutor_ops.NUM_CLASSES))
+    token_idx = np.argmax(softmax)
+    encoding = rl_tutor_ops.make_onehot([token_idx], self.vocab_size)
+    return np.reshape(encoding, (self.vocab_size))
 
   def __call__(self):
     """Allows the network to be called, as in the following code snippet!
 
-        q_network = MelodyRNN(...)
+        q_network = SmilesRNN(...)
         q_network()
 
     The q_network() operation can then be placed into a larger graph as a tf op.
 
     Note that to get actual values from call, must do session.run and feed in
-    melody_sequence, lengths, and initial_state in the feed dict.
+    smiles_sequence, lengths, and initial_state in the feed dict.
 
     Returns:
-      Either softmax probabilities over notes, or raw logit scores.
+      Either softmax probabilities over tokens, or raw logit scores.
     """
     with self.graph.as_default():
       with tf.variable_scope(self.scope, reuse=True):
-        logits, self.state_tensor = self.run_network_on_melody(
-              self.melody_sequence, self.lengths, self.initial_state)
+        logits, self.state_tensor = self.run_network(self.smiles_sequence, 
+          self.lengths, self.initial_state)
         return logits
 
   def train(self, num_steps=30000, output_every=1000):
@@ -368,7 +364,7 @@ class SmilesRNN(object):
       step = 0
       while step < num_steps:
         X, Y, lens = self.data_loader.next_batch()
-        feed_dict = {self.melody_sequence: X,
+        feed_dict = {self.smiles_sequence: X,
                    self.train_labels: Y,
                    self.lengths: lens, 
                    self.initial_state: zero_state}
@@ -378,7 +374,7 @@ class SmilesRNN(object):
                                                               self.accuracy,
                                                               self.perplexity], feed_dict)
           X, Y, lens = self.data_loader.next_batch(dataset='val')
-          feed_dict = {self.melody_sequence: X,
+          feed_dict = {self.smiles_sequence: X,
                      self.train_labels: Y,
                      self.lengths: lens, 
                      self.initial_state: zero_state}
@@ -395,28 +391,28 @@ class SmilesRNN(object):
           _, step = self.session.run([self.train_op, self.global_step], feed_dict)
 
 
-  def get_next_note_from_note(self, note):
-    """Given a note, uses the model to predict the most probable next note.
+  def get_next_token_from_token(self, token):
+    """Given a token, uses the model to predict the most probable next token.
 
     Args:
-      note: A one-hot encoding of the note.
+      token: A one-hot encoding of the token.
     Returns:
-      Next note in the same format.
+      Next token in the same format.
     """
     with self.graph.as_default():
       with tf.variable_scope(self.scope, reuse=True):
         singleton_lengths = np.full(self.hparams.batch_size, 1, dtype=int)
 
-        input_batch = np.reshape(note,
-                                 (self.hparams.batch_size, 1, rl_tutor_ops.NUM_CLASSES))
+        input_batch = np.reshape(token, 
+                                 (self.hparams.batch_size, 1, self.vocab_size))
 
         softmax, self.state_value = self.session.run(
             [self.softmax, self.state_tensor],
-            {self.melody_sequence: input_batch,
+            {self.smiles_sequence: input_batch,
              self.initial_state: self.state_value,
              self.lengths: singleton_lengths})
 
-        return self.get_note_from_softmax(softmax)
+        return self.get_token_from_softmax(softmax)
 
   def variables(self):
     """Gets names of all the variables in the graph belonging to this model.
