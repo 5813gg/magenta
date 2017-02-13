@@ -1,6 +1,6 @@
-"""Defines a Deep Q Network (DQN) with augmented reward to create melodies 
-by using reinforcement learning to fine-tune a trained Note RNN according
-to some music theory rewards. 
+"""Defines a Deep Q Network (DQN) with augmented reward to create SMILES 
+molecule sequences by using reinforcement learning to fine-tune a pre-trained 
+SMILES RNN according to rewards based on desirable molecular properties.
 
 Also implements two alternatives to Q learning: Psi and G learning. The 
 algorithm can be switched using the 'algorithm' hyperparameter. 
@@ -21,63 +21,45 @@ import numpy as np
 from scipy.misc import logsumexp
 import tensorflow as tf
 
-from magenta.music import melodies_lib as mlib
-from magenta.music import midi_io
-
-import note_rnn_loader
+import smiles_rnn
 import rl_tutor_ops
-import rl_tuner_eval_metrics
 from rl_tutor import RLTutor
-
-# Note values of pecial actions.
-NOTE_OFF = 0
-NO_EVENT = 1
-
-# Training data sequences are limited to this length, so the padding queue pads
-# to this length.
-TRAIN_SEQUENCE_LENGTH = 192
 
 def reload_files():
   """Used to reload the imported dependency files (necessary for jupyter 
   notebooks).
   """
-  reload(note_rnn_loader)
+  reload(smiles_rnn)
   reload(rl_tutor_ops)
-  reload(rl_tuner_eval_metrics)
 
 
-class RLTuner(RLTutor):
-  """Implements a recurrent DQN designed to produce melody sequences."""
+class SmilesTutor(RLTutor):
+  """Implements a recurrent DQN designed to produce SMILES sequences."""
 
   def __init__(self, output_dir,
 
                # Hyperparameters
                dqn_hparams=None,
-               reward_mode='music_theory_all',
+               reward_mode='default',
                reward_scaler=1.0,
-               exploration_mode='egreedy',
-               priming_mode='random_note',
+               exploration_mode='boltzmann',
+               priming_mode='random',
                stochastic_observations=False,
                algorithm='q',      
 
                # Pre-trained RNN to load and tune
-               note_rnn_checkpoint_dir=None,
-               note_rnn_checkpoint_file=None,
-               note_rnn_type='default',
-               note_rnn_hparams=None,
+               rnn_checkpoint_dir=None,
+               rnn_checkpoint_file=None,
+               rnn_type='default',
+               rnn_hparams=None,
 
                # Logistics.
-               input_size=rl_tutor_ops.NUM_CLASSES,
-               num_actions=rl_tutor_ops.NUM_CLASSES,
-               save_name='rl_tuner.ckpt',
+               input_size=rl_tutor_ops.NUM_CLASSES_SMILE,
+               num_actions=rl_tutor_ops.NUM_CLASSES_SMILE,
+               save_name='smiles_rnn.ckpt',
                output_every_nth=1000,
                summary_writer=None,
-               initialize_immediately=True,
-
-               # Settings specific to RLTuner
-               num_notes_in_melody=32,
-               midi_primer=None,
-               training_file_list=None):
+               initialize_immediately=True):
     """Initializes the MelodyQNetwork class.
 
     Args:
@@ -104,14 +86,14 @@ class RLTuner(RLTutor):
         will be sampled from the model's softmax output.
       algorithm: can be 'default', 'psi', 'g' or 'pure_rl', for different 
         learning algorithms
-      note_rnn_checkpoint_dir: The directory from which the internal 
+      rnn_checkpoint_dir: The directory from which the internal 
         NoteRNNLoader will load its checkpointed LSTM.
-      note_rnn_checkpoint_file: A checkpoint file to use in case one cannot be
+      rnn_checkpoint_file: A checkpoint file to use in case one cannot be
         found in the note_rnn_checkpoint_dir.
-      note_rnn_type: If 'default', will use the basic LSTM described in the 
+      rnn_type: If 'default', will use the basic LSTM described in the 
         research paper. If 'basic_rnn', will assume the checkpoint is from a
         Magenta basic_rnn model.
-      note_rnn_hparams: A tf.HParams object which defines the hyper parameters
+      rnn_hparams: A tf.HParams object which defines the hyper parameters
         used to train the MelodyRNN model that will be loaded from a checkpoint.
       input_size: the size of the one-hot vector encoding a note that is input
         to the model.
@@ -123,56 +105,22 @@ class RLTuner(RLTutor):
       summary_writer: A tf.train.SummaryWriter used to log metrics.
       initialize_immediately: if True, the class will instantiate its component
         MelodyRNN networks and build the graph in the constructor.
-      num_notes_in_melody: The length of a composition of the model
-      midi_primer: A midi file that can be used to prime the model if
-        priming_mode is set to 'single_midi'.
-      training_file_list: A list of paths to tfrecord files containing melody 
-        training data. This is necessary to use the 'random_midi' priming mode.
     """
-    print "In child class RL Tuner"
+    print "In child class Smiles RNN"
 
-    self.num_notes_in_melody = num_notes_in_melody
-    self.midi_primer = midi_primer
-    self.training_file_list = training_file_list
-
-    if priming_mode == 'single_midi' and midi_primer is None:
-      tf.logging.fatal('A midi primer file is required when using'
-                       'the single_midi priming mode.')
-
-    if note_rnn_checkpoint_dir is None or note_rnn_checkpoint_dir == '':
-      print 'Retrieving checkpoint of Note RNN from Magenta download server.'
-      urllib.urlretrieve(
-        'http://download.magenta.tensorflow.org/models/rl_tuner_note_rnn.ckpt', 
-        'note_rnn.ckpt')
-      note_rnn_checkpoint_dir = os.getcwd()
-      note_rnn_checkpoint_file = os.path.join(os.getcwd(), 
-                                                  'note_rnn.ckpt')
-
-    if note_rnn_hparams is None:
-      if note_rnn_type == 'basic_rnn':
-        note_rnn_hparams = rl_tutor_ops.basic_rnn_hparams()
-      else:
-        note_rnn_hparams = rl_tutor_ops.default_hparams()
+    if rnn_hparams is None:
+      rnn_hparams = rl_tutor_ops.smiles_hparams()
 
     RLTutor.__init__(self, output_dir, dqn_hparams=dqn_hparams, 
       reward_mode=reward_mode, reward_scaler=reward_scaler, 
       exploration_mode=exploration_mode, priming_mode=priming_mode,
       stochastic_observations=stochastic_observations, algorithm=algorithm,
-      rnn_checkpoint_dir=note_rnn_checkpoint_dir, 
-      rnn_checkpoint_file=note_rnn_checkpoint_file, 
-      rnn_type=note_rnn_type, rnn_hparams=note_rnn_hparams, input_size=input_size,
+      rnn_checkpoint_dir=rnn_checkpoint_dir, 
+      rnn_checkpoint_file=rnn_checkpoint_file, 
+      rnn_type=rnn_type, rnn_hparams=rnn_hparams, input_size=input_size,
       num_actions=num_actions, midi_primer=midi_primer, save_name=save_name,
       output_every_nth=output_every_nth, summary_writer=summary_writer, 
       initialize_immediately=initialize_immediately)
-
-    # State variables needed by reward functions.
-    self.composition_direction = 0
-    self.leapt_from = None  # stores the note at which composition leapt
-    self.steps_since_last_leap = 0
-
-    if self.priming_mode == 'random_midi':
-      tf.logging.info('Getting priming melodies')
-      self.get_priming_melodies()
 
   def initialize_internal_models(self, ):
     """Initializes internal RNN models: q_network, target_q_network, reward_rnn.
@@ -183,7 +131,7 @@ class RLTuner(RLTutor):
     """
     # Add internal networks to the graph.
     tf.logging.info('Initializing q network')
-    self.q_network = note_rnn_loader.NoteRNNLoader(
+    self.q_network = smiles_rnn.SmilesRNN(
       self.graph, 'q_network',
       self.rnn_checkpoint_dir,
       midi_primer=self.midi_primer,

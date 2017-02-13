@@ -62,7 +62,6 @@ class RLTutor(object):
                midi_primer=None,
                save_name='rl_tuner.ckpt',
                output_every_nth=1000,
-               training_file_list=None,
                summary_writer=None,
                initialize_immediately=True):
     """Initializes the RLTutor class.
@@ -105,8 +104,6 @@ class RLTutor(object):
       save_name: Name the model will use to save checkpoints.
       output_every_nth: How many training steps before the model will print
         an output saying the cumulative reward, and save a checkpoint.
-      training_file_list: A list of paths to tfrecord files containing melody 
-        training data. This is necessary to use the 'random_midi' priming mode.
       summary_writer: A tf.train.SummaryWriter used to log metrics.
       initialize_immediately: if True, the class will instantiate its component
         MelodyRNN networks and build the graph in the constructor.
