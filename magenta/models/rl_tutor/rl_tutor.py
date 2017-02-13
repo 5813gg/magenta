@@ -579,10 +579,10 @@ class RLTutor(object):
       [self.predicted_actions, self.action_softmax,
        self.q_network.state_tensor, self.reward_scores, 
        self.reward_rnn.state_tensor],
-      {self.q_network.melody_sequence: input_batch,
+      {self.q_network.input_sequence: input_batch,
        self.q_network.initial_state: self.q_network.state_value,
        self.q_network.lengths: lengths,
-       self.reward_rnn.melody_sequence: input_batch,
+       self.reward_rnn.input_sequence: input_batch,
        self.reward_rnn.initial_state: self.reward_rnn.state_value,
        self.reward_rnn.lengths: lengths})
 
@@ -687,13 +687,13 @@ class RLTutor(object):
             self.target_vals,
             self.summarize if calc_summaries else self.no_op1,
         ], {
-            self.reward_rnn.melody_sequence: new_observations,
+            self.reward_rnn.input_sequence: new_observations,
             self.reward_rnn.initial_state: reward_new_states,
             self.reward_rnn.lengths: lengths,
-            self.q_network.melody_sequence: observations,
+            self.q_network.input_sequence: observations,
             self.q_network.initial_state: states,
             self.q_network.lengths: lengths,
-            self.target_q_network.melody_sequence: new_observations,
+            self.target_q_network.input_sequence: new_observations,
             self.target_q_network.initial_state: new_states,
             self.target_q_network.lengths: lengths,
             self.action_mask: action_mask,
@@ -706,10 +706,10 @@ class RLTutor(object):
             self.target_vals,
             self.summarize if calc_summaries else self.no_op1,
         ], {
-            self.q_network.melody_sequence: observations,
+            self.q_network.input_sequence: observations,
             self.q_network.initial_state: states,
             self.q_network.lengths: lengths,
-            self.target_q_network.melody_sequence: new_observations,
+            self.target_q_network.input_sequence: new_observations,
             self.target_q_network.initial_state: new_states,
             self.target_q_network.lengths: lengths,
             self.action_mask: action_mask,
@@ -854,7 +854,7 @@ class RLTutor(object):
 
     rewards, = self.session.run(
         self.reward_scores,
-        {self.reward_rnn.melody_sequence: input_batch,
+        {self.reward_rnn.input_sequence: input_batch,
          self.reward_rnn.initial_state: state,
          self.reward_rnn.lengths: lengths})
     return rewards
@@ -895,16 +895,16 @@ class RLTutor(object):
           self.reward_rnn.state_value) = self.session.run(
           [self.action_softmax, self.q_network.state_tensor, 
           self.reward_rnn.state_tensor],
-          {self.q_network.melody_sequence: input_batch,
+          {self.q_network.input_sequence: input_batch,
            self.q_network.initial_state: self.q_network.state_value,
            self.q_network.lengths: lengths,
-           self.reward_rnn.melody_sequence: input_batch,
+           self.reward_rnn.input_sequence: input_batch,
            self.reward_rnn.initial_state: self.reward_rnn.state_value,
            self.reward_rnn.lengths: lengths})
       else:
         softmax, self.q_network.state_value = self.session.run(
             [self.action_softmax, self.q_network.state_tensor],
-            {self.q_network.melody_sequence: input_batch,
+            {self.q_network.input_sequence: input_batch,
              self.q_network.initial_state: self.q_network.state_value,
              self.q_network.lengths: lengths})
       softmax = np.reshape(softmax, (self.num_actions))
