@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.misc import logsumexp
 import tensorflow as tf
-import rdkit
+from rdkit.Chem import MolFromSmiles
 
 import smiles_rnn
 import rl_tutor_ops
@@ -282,6 +282,6 @@ class SmilesTutor(RLTutor):
 
   def is_valid_molecule(self, seq):
       smiles_string = self.convert_seq_to_chars(seq)
-      return rdkit.Chem.MolFromSmiles(smiles_string)
+      return MolFromSmiles(smiles_string)
 
   # The following functions evaluate molecule sequences for quality
