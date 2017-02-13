@@ -54,7 +54,7 @@ py_binary(
     name = "smiles_rnn_train",
     srcs = ["smiles_rnn_train.py"],
     deps = [
-        ":smiles_rnn"
+        ":smiles_rnn",
         "//magenta/common:tf_lib",
     ],
 )
