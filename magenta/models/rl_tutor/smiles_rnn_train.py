@@ -52,7 +52,7 @@ def main(_):
   srnn = smiles_rnn.SmilesRNN(output_dir, hparams=smiles_params, 
                               load_training_data=True, data_file=FLAGS.data_file, 
                               vocab_file=FLAGS.vocab_file, pickle_file=FLAGS.pickle_file,
-                              output_every=FLAGS.output_every_nth):
+                              output_every=FLAGS.output_every_nth)
   tf.logging.info('Will save models to: %s', srnn.output_dir)
 
   tf.logging.info('\nTraining...')
