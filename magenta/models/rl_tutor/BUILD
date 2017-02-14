@@ -1,6 +1,6 @@
 py_binary(
-    name = "rl_tuner_train",
-    srcs = ["rl_tuner_train.py"],
+    name = "rl_tutor_train",
+    srcs = ["rl_tutor_train.py"],
     deps = [
         ":rl_tuner",
         ":rl_tutor_ops",
