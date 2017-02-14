@@ -23,11 +23,13 @@ import numpy as np
 from scipy.misc import logsumexp
 import tensorflow as tf
 
-from rdkit.Chem import MolFromSmiles
-from rdkit.Chem import Descriptors
+from rdkit.Chem import MolFromSmiles, Descriptors, rdMolDescriptors
+from rdkit.six.moves import cPickle
+from rdkit.six import iteritems
 
 import smiles_rnn
 import rl_tutor_ops
+import sascorer
 from rl_tutor import RLTutor
 
 def reload_files():
@@ -41,7 +43,9 @@ def reload_files():
 EOS = 0
 
 # Reward values for desired molecule properties
-REWARD_VALID_MOLECULE = 100
+REWARD_VALID_MOLECULE = 10
+REWARD_SA_MULTIPLIER = 1
+REWARD_LOGP_MULTIPLIER = 1
 
 class SmilesTutor(RLTutor):
   """Implements a recurrent DQN designed to produce SMILES sequences."""
@@ -246,8 +250,8 @@ class SmilesTutor(RLTutor):
       if not mol:
         return 0
       reward = REWARD_VALID_MOLECULE
-      reward += self.get_sa_score(mol)
-      reward += self.get_logp(mol)
+      reward += REWARD_SA_MULTIPLIER * self.get_sa_score(mol)
+      reward += REWARD_LOGP_MULTIPLIER * self.get_logp(mol)
     return reward
 
   def convert_seq_to_chars(self, seq):
@@ -283,7 +287,7 @@ class SmilesTutor(RLTutor):
     Returns:
       A float SA score
     """
-    return Descriptors.MolLogP(mol)
+    return -1 * sascorer.calculateScore(mol)
 
   def get_logp(self, mol):
     """Gets water-octanol partition coefficient (logP) score mol.
