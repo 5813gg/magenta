@@ -279,7 +279,6 @@ class SmilesTutor(RLTutor):
 
     for i in range(num_sequences):
       stat_dict = self.generate_and_evaluate_sequence(stat_dict)
-      stat_dict['num_sequences'] += 1
 
     print self.get_stat_dict_string(stat_dict)
     return stat_dict
