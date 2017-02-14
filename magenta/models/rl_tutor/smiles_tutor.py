@@ -24,7 +24,6 @@ from scipy.misc import logsumexp
 import tensorflow as tf
 
 from rdkit.Chem import MolFromSmiles, Descriptors, rdMolDescriptors
-from rdkit.six.moves import cPickle
 from rdkit.six import iteritems
 
 import smiles_rnn
