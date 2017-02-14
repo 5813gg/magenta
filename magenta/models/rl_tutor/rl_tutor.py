@@ -769,7 +769,8 @@ class RLTutor(object):
 
         data_reward = self.reward_from_reward_rnn_scores(new_observation, 
                                                          reward_scores)
-        domain_reward = self.collect_domain_reward(obs, action)
+        domain_reward = self.collect_domain_reward(last_observation, 
+                                                   new_observation)
         adjusted_domain_reward = self.reward_scaler * domain_reward
         total_reward = data_reward + adjusted_domain_reward
 
