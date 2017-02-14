@@ -239,7 +239,10 @@ class SmilesTutor(RLTutor):
     Returns:
       Float reward value.
     """
-    return 0
+    if self.is_end_of_sequence():
+      if self.is_valid_molecule(self.generated_seq):
+        return REWARD_VALID_MOLECULE
+    return 0 
 
   def render_sequence(self, generated_seq, title='smiles_seq'):
     """Renders a generated SMILES sequence its string version.
