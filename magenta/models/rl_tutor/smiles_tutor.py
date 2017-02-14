@@ -367,6 +367,7 @@ class SmilesTutor(RLTutor):
     stat_dict['num_tokens'] = 0
     stat_dict['num_valid_sequences'] = 0
     stat_dict['sum_logp'] = 0
+    stat_dict['sum_ring_penalty'] = 0
     stat_dict['sum_sa'] = 0
     stat_dict['sum_qed'] = 0
     stat_dict['best_logp'] = None
@@ -396,23 +397,23 @@ class SmilesTutor(RLTutor):
     return_str += '\tPercent valid molecules:'
     return_str += str(stat_dict['num_valid_sequences'] / tot_seqs) + '\n'
 
-    """
     return_str += '\tPercent with no carbon rings larger than six:'
     return_str += str(stat_dict['num_seqs_w_no_ring_penalty'] / tot_seqs) + '\n'
     return_str += '\tAverage logP:'
     return_str += str(float(stat_dict['sum_logp']) / tot_seqs) + '\n'
-    return_str += '\tAverage SA:'
-    return_str += str(float(stat_dict['sum_sa']) / tot_seqs) + '\n'
-    return_str += '\tAverage QED:'
-    return_str += str(float(stat_dict['sum_qed']) / tot_seqs) + '\n'
+    return_str += '\tAverage ring penalty:'
+    return_str += str(float(stat_dict['sum_ring_penalty']) / tot_seqs) + '\n'
+    #return_str += '\tAverage SA:'
+    #return_str += str(float(stat_dict['sum_sa']) / tot_seqs) + '\n'
+    #return_str += '\tAverage QED:'
+    #return_str += str(float(stat_dict['sum_qed']) / tot_seqs) + '\n'
     
     return_str += '\tBest logP:' + str(stat_dict['best_logp']) + '\n'
     return_str += '\tSequence with best logP:' + str(stat_dict['best_logp_seq']) + '\n'
-    return_str += '\tBest SA:' + str(stat_dict['best_sa']) + '\n'
-    return_str += '\tSequence with best SA:' + str(stat_dict['best_sa_seq']) + '\n'
-    return_str += '\tBest QED:' + str(stat_dict['best_qed']) + '\n'
-    return_str += '\tSequence with best QED:' + str(stat_dict['best_qed_seq']) + '\n'
-    """
+    #return_str += '\tBest SA:' + str(stat_dict['best_sa']) + '\n'
+    #return_str += '\tSequence with best SA:' + str(stat_dict['best_sa_seq']) + '\n'
+    #return_str += '\tBest QED:' + str(stat_dict['best_qed']) + '\n'
+    #return_str += '\tSequence with best QED:' + str(stat_dict['best_qed_seq']) + '\n'
 
     return_str += '\n'
 
@@ -469,9 +470,34 @@ class SmilesTutor(RLTutor):
     """
     stat_dict['num_sequences'] += 1
     stat_dict['num_tokens'] += len(self.generated_seq)
-    if self.is_valid_molecule(self.generated_seq):
-      stat_dict['num_valid_sequences'] += 1
+    mol = self.is_valid_molecule(self.generated_seq):
+    
+    if not mol:
+      return stat_dict
+    
+    stat_dict['num_valid_sequences'] += 1
+    
+    logp = self.get_logp(mol)
+    stat_dict['sum_logp'] += logp
+    stat_dict = self._replace_stat_if_best(stat_dict, 'best_logp', logp):
 
-    # TODO: finish for other stats
+    ring_penalty = self.get_ring_penalty(mol)
+    stat_dict['sum_ring_penalty'] += ring_penalty
+    if ring_penalty == 0:
+      stat_dict['num_seqs_w_no_ring_penalty'] += 1
+    
+    #stat_dict['sum_sa'] += self.get_sa_score(mol)
+    #stat_dict['sum_qed'] += 
+    #stat_dict['best_sa'] = None
+    #stat_dict['best_qed'] = None
+    #stat_dict['best_sa_seq'] = None
+    #stat_dict['best_qed_seq'] = None
+
+    return stat_dict
+
+  def _replace_stat_if_best(self, stat_dict, stat_name, stat):
+    if stat_dict[stat_name] is None or stat > stat_dict[stat_name]:
+      stat_dict[stat_name] = stat
+      stat_dict[stat_name + '_seq'] = self.convert_seq_to_chars(self.generated_seq)
 
     return stat_dict
