@@ -479,7 +479,7 @@ class SmilesTutor(RLTutor):
     
     logp = self.get_logp(mol)
     stat_dict['sum_logp'] += logp
-    stat_dict = self._replace_stat_if_best(stat_dict, 'best_logp', logp):
+    stat_dict = self._replace_stat_if_best(stat_dict, 'best_logp', logp)
 
     ring_penalty = self.get_ring_penalty(mol)
     stat_dict['sum_ring_penalty'] += ring_penalty
