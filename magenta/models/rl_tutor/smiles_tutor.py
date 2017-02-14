@@ -258,12 +258,14 @@ class SmilesTutor(RLTutor):
         print "Invalid molecule :("
 
   def convert_seq_to_chars(self, seq):
-      char_list = [str(self.index_to_char[s]) for s in seq]
-      return ''.join(char_list)
+    char_list = [str(self.index_to_char[s]) for s in seq]
+    return ''.join(char_list)
 
   def is_valid_molecule(self, seq):
-      smiles_string = self.convert_seq_to_chars(seq)
-      return MolFromSmiles(smiles_string)
+    if len(seq) == 1 and seq[0] == EOS:
+      return False
+    smiles_string = self.convert_seq_to_chars(seq)
+    return MolFromSmiles(smiles_string)
 
   # The following functions evaluate generated molecules for quality.
   # TODO: clean up since there is code repeated from rl_tuner_eval_metric
