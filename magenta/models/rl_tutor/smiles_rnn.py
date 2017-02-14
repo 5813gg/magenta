@@ -27,7 +27,7 @@ import matplotlib.pyplot as plt
 import rl_tutor_ops
 import smiles_data_loader
 
-SMILES_DATA = '/home/natasha/Dropbox (MIT)/Google/SMILES-Project/data/'
+SMILES_DATA = '/home/natasha/Dropbox/Google/SMILES-Project/data/'
 
 def reload_files():
   """Used to reload the imported dependency files (necessary for jupyter 

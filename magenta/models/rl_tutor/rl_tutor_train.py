@@ -23,10 +23,10 @@ FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_string('domain_application', 'smiles',
                            'Application for which you are training model. Can either '
                            'be smiles (for molecule generation) or melody (for music).')
-tf.app.flags.DEFINE_string('output_dir', '/home/natasha/Dropbox (MIT)/Google/SMILES-Project/output/',
+tf.app.flags.DEFINE_string('output_dir', '/home/natasha/Dropbox/Google/SMILES-Project/output/',
                            'Directory where the model will save its'
                            'compositions and checkpoints (midi files)')
-tf.app.flags.DEFINE_string('rnn_checkpoint_dir', '/home/natasha/Dropbox (MIT)/Google/SMILES-Project/models/',
+tf.app.flags.DEFINE_string('rnn_checkpoint_dir', '/home/natasha/Dropbox/Google/SMILES-Project/models/',
                            'Path to directory holding checkpoints for pre-trained rnn'
                            'model. These will be loaded into the NoteRNNLoader class '
                            'object. The directory should contain a train subdirectory')
@@ -58,7 +58,7 @@ tf.app.flags.DEFINE_string('training_data_path', '',
                            'examples')
 tf.app.flags.DEFINE_integer('num_notes_in_melody', 32,
                             'The number of notes in each composition')
-tf.app.flags.DEFINE_string('midi_primer', '/home/natasha/Dropbox (MIT)/Google/code/testdata/primer.mid',
+tf.app.flags.DEFINE_string('midi_primer', '/home/natasha/Dropbox/Google/code/testdata/primer.mid',
                            'A midi file that can be used to prime the model')
 
 

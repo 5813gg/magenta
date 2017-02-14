@@ -17,16 +17,16 @@ from magenta.common import tf_lib
 import smiles_rnn
 
 FLAGS = tf.app.flags.FLAGS
-tf.app.flags.DEFINE_string('output_dir', '/home/natasha/Dropbox (MIT)/Google/SMILES-Project/output/',
+tf.app.flags.DEFINE_string('output_dir', '/home/natasha/Dropbox/Google/SMILES-Project/output/',
                            'Directory where the model will save its'
                            'compositions and checkpoints (midi files)')
-tf.app.flags.DEFINE_string('data_file', '/home/natasha/Dropbox (MIT)/Google/SMILES-Project/data/250k_drugs_clean.smi',
+tf.app.flags.DEFINE_string('data_file', '/home/natasha/Dropbox/Google/SMILES-Project/data/250k_drugs_clean.smi',
                            'Filename of a file containing text strings of '
                            'SMILES encodings.')
-tf.app.flags.DEFINE_string('vocab_file', '/home/natasha/Dropbox (MIT)/Google/SMILES-Project/data/zinc_char_list.json',
+tf.app.flags.DEFINE_string('vocab_file', '/home/natasha/Dropbox/Google/SMILES-Project/data/zinc_char_list.json',
                            'Filename of a JSON file containing character '
                            'vocabulary for SMILES encodings.')
-tf.app.flags.DEFINE_string('pickle_file', '/home/natasha/Dropbox (MIT)/Google/SMILES-Project/data/smiles.p',
+tf.app.flags.DEFINE_string('pickle_file', '/home/natasha/Dropbox/Google/SMILES-Project/data/smiles.p',
                            'Filename of a pickle file containing pre-processed '
                            'SMILES training batches.')
 tf.app.flags.DEFINE_integer('training_steps', 1000000,
