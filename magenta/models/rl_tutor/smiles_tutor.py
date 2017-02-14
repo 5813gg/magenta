@@ -390,30 +390,32 @@ class SmilesTutor(RLTutor):
     """
     tot_seqs = float(stat_dict['num_sequences'])
     tot_toks = float(stat_dict['num_tokens'])
+    avg_seq_len = tot_seqs / tot_toks
 
     return_str = 'Total sequences: ' + str(tot_seqs) + '\n'
-    return_str += 'Total tokens:' + str(tot_toks) + '\n\n'
+    return_str += 'Total tokens: ' + str(tot_toks) + '\n'
+    return_str += 'Average sequence length: ' + str(avg_seq_len) + '\n'
 
-    return_str += '\tPercent valid molecules:'
-    return_str += str(stat_dict['num_valid_sequences'] / tot_seqs) + '\n'
+    return_str += '\tPercent valid molecules: '
+    return_str += str((stat_dict['num_valid_sequences'] / tot_seqs)*100.0) + '\n'
 
-    return_str += '\tPercent with no carbon rings larger than six:'
-    return_str += str(stat_dict['num_seqs_w_no_ring_penalty'] / tot_seqs) + '\n'
-    return_str += '\tAverage logP:'
-    return_str += str(float(stat_dict['sum_logp']) / tot_seqs) + '\n'
-    return_str += '\tAverage ring penalty:'
-    return_str += str(float(stat_dict['sum_ring_penalty']) / tot_seqs) + '\n'
-    #return_str += '\tAverage SA:'
-    #return_str += str(float(stat_dict['sum_sa']) / tot_seqs) + '\n'
-    #return_str += '\tAverage QED:'
-    #return_str += str(float(stat_dict['sum_qed']) / tot_seqs) + '\n'
+    return_str += '\tPercent with no carbon rings larger than six: '
+    return_str += str((stat_dict['num_seqs_w_no_ring_penalty'] / tot_seqs)*100.0) + '\n'
+    return_str += '\tAverage logP: '
+    return_str += str((float(stat_dict['sum_logp']) / tot_seqs)*100.0) + '\n'
+    return_str += '\tAverage ring penalty: '
+    return_str += str((float(stat_dict['sum_ring_penalty']) / tot_seqs)*100.0) + '\n'
+    #return_str += '\tAverage SA: '
+    #return_str += str((float(stat_dict['sum_sa']) / tot_seqs)*100.0) + '\n'
+    #return_str += '\tAverage QED: '
+    #return_str += str((float(stat_dict['sum_qed']) / tot_seqs)*100.0) + '\n'
     
-    return_str += '\tBest logP:' + str(stat_dict['best_logp']) + '\n'
-    return_str += '\tSequence with best logP:' + str(stat_dict['best_logp_seq']) + '\n'
-    #return_str += '\tBest SA:' + str(stat_dict['best_sa']) + '\n'
-    #return_str += '\tSequence with best SA:' + str(stat_dict['best_sa_seq']) + '\n'
-    #return_str += '\tBest QED:' + str(stat_dict['best_qed']) + '\n'
-    #return_str += '\tSequence with best QED:' + str(stat_dict['best_qed_seq']) + '\n'
+    return_str += '\tBest logP: ' + str(stat_dict['best_logp']) + '\n'
+    return_str += '\tSequence with best logP: ' + str(stat_dict['best_logp_seq']) + '\n'
+    #return_str += '\tBest SA: ' + str(stat_dict['best_sa']) + '\n'
+    #return_str += '\tSequence with best SA: ' + str(stat_dict['best_sa_seq']) + '\n'
+    #return_str += '\tBest QED: ' + str(stat_dict['best_qed']) + '\n'
+    #return_str += '\tSequence with best QED:'  + str(stat_dict['best_qed_seq']) + '\n'
 
     return_str += '\n'
 
