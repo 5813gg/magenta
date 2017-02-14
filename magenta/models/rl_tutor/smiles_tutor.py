@@ -250,13 +250,21 @@ class SmilesTutor(RLTutor):
 
     mol = self.is_valid_molecule(self.generated_seq)
     if not mol:
+      if verbose: print "Not a valid molecule, 0 reward."
       return 0
 
-    reward = REWARD_VALID_MOLECULE
+    valid_reward = REWARD_VALID_MOLECULE
     #reward += REWARD_SA_MULTIPLIER * self.get_sa_score(mol)
-    reward += REWARD_LOGP_MULTIPLIER * self.get_logp(mol)
-    reward += REWARD_RINGP_MULTIPLIER * self.get_ring_penalty(mol)
-    return reward
+    logp = REWARD_LOGP_MULTIPLIER * self.get_logp(mol)
+    ringp = REWARD_RINGP_MULTIPLIER * self.get_ring_penalty(mol)
+    
+    if verbose:
+      print "Valid reward:", valid_reward
+      print "logP reward:", logp
+      print "ring penalty reward:", ringp
+      print "Total:", valid_reward + logp + ringp
+
+    return valid_reward + logp + ringp
 
   def convert_seq_to_chars(self, seq):
     """Converts a list of ints to a SMILES string
