@@ -470,7 +470,7 @@ class SmilesTutor(RLTutor):
     """
     stat_dict['num_sequences'] += 1
     stat_dict['num_tokens'] += len(self.generated_seq)
-    mol = self.is_valid_molecule(self.generated_seq):
+    mol = self.is_valid_molecule(self.generated_seq)
     
     if not mol:
       return stat_dict
