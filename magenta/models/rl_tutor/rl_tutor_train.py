@@ -80,31 +80,31 @@ def main(_):
   if FLAGS.domain_application == 'melody':
     hparams = rl_tutor_ops.default_hparams()
 
-    rlt = smiles_tutor.SmilesTutor(output_dir,
-                                    midi_primer=FLAGS.midi_primer, 
-                                    dqn_hparams=dqn_hparams, 
-                                    reward_scaler=FLAGS.reward_scaler,
-                                    save_name = output_ckpt,
-                                    output_every_nth=FLAGS.output_every_nth, 
-                                    note_rnn_checkpoint_dir=FLAGS.rnn_checkpoint_dir,
-                                    note_rnn_checkpoint_file=backup_checkpoint_file,
-                                    note_rnn_hparams=hparams, 
-                                    num_notes_in_melody=FLAGS.num_notes_in_melody,
-                                    exploration_mode=FLAGS.exploration_mode,
-                                    algorithm=FLAGS.algorithm)
+    rlt = rl_tuner.RLTuner(output_dir,
+                          midi_primer=FLAGS.midi_primer, 
+                          dqn_hparams=dqn_hparams, 
+                          reward_scaler=FLAGS.reward_scaler,
+                          save_name = output_ckpt,
+                          output_every_nth=FLAGS.output_every_nth, 
+                          note_rnn_checkpoint_dir=FLAGS.rnn_checkpoint_dir,
+                          note_rnn_checkpoint_file=backup_checkpoint_file,
+                          note_rnn_hparams=hparams, 
+                          num_notes_in_melody=FLAGS.num_notes_in_melody,
+                          exploration_mode=FLAGS.exploration_mode,
+                          algorithm=FLAGS.algorithm)
   elif FLAGS.domain_application == 'smiles':
     hparams = rl_tutor_ops.smiles_hparams()
 
-    rlt = rl_tuner.RLTuner(output_dir,
-                           dqn_hparams=dqn_hparams, 
-                           reward_scaler=FLAGS.reward_scaler,
-                           save_name = output_ckpt,
-                           output_every_nth=FLAGS.output_every_nth, 
-                           rnn_checkpoint_dir=FLAGS.rnn_checkpoint_dir,
-                           rnn_checkpoint_file=backup_checkpoint_file,
-                           rnn_hparams=hparams,
-                           exploration_mode=FLAGS.exploration_mode,
-                           algorithm=FLAGS.algorithm) 
+    rlt = smiles_tutor.SmilesTutor(output_dir,
+                                  dqn_hparams=dqn_hparams, 
+                                  reward_scaler=FLAGS.reward_scaler,
+                                  save_name = output_ckpt,
+                                  output_every_nth=FLAGS.output_every_nth, 
+                                  rnn_checkpoint_dir=FLAGS.rnn_checkpoint_dir,
+                                  rnn_checkpoint_file=backup_checkpoint_file,
+                                  rnn_hparams=hparams,
+                                  exploration_mode=FLAGS.exploration_mode,
+                                  algorithm=FLAGS.algorithm) 
 
   tf.logging.info('Saving images and melodies to: %s', rlt.output_dir)
 
