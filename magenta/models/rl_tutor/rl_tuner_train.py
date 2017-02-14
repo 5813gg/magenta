@@ -16,9 +16,13 @@ import tensorflow as tf
 from magenta.common import tf_lib
 
 import rl_tuner
+import smiles_tutor
 import rl_tutor_ops
 
 FLAGS = tf.app.flags.FLAGS
+tf.app.flags.DEFINE_string('domain_application', 'smiles',
+                           'Application for which you are training model. Can either '
+                           'be smiles (for molecule generation) or melody (for music).')
 tf.app.flags.DEFINE_string('output_dir', '/home/natasha/Dropbox (MIT)/Google/RL-RNN-Project/rl-rnn-output/',
                            'Directory where the model will save its'
                            'compositions and checkpoints (midi files)')
@@ -29,8 +33,11 @@ tf.app.flags.DEFINE_string('rnn_checkpoint_dir', '/home/natasha/Dropbox (MIT)/Go
 tf.app.flags.DEFINE_string('rnn_checkpoint_name', 'note_rnn.ckpt',
                            'Filename of a checkpoint within the '
                            'rnn_checkpoint_dir directory.')
-tf.app.flags.DEFINE_string('midi_primer', '/home/natasha/Dropbox (MIT)/Google/code/testdata/primer.mid',
-                           'A midi file that can be used to prime the model')
+tf.app.flags.DEFINE_float('reward_scaler', 2,
+                          'The weight placed on music theory rewards')
+tf.app.flags.DEFINE_string('algorithm', 'q',
+                           'The name of the algorithm to use for training the'
+                           'model. Can be q, psi, or g')
 tf.app.flags.DEFINE_integer('training_steps', 1000000,
                             'The number of steps used to train the model')
 tf.app.flags.DEFINE_integer('exploration_steps', 500000,
@@ -46,21 +53,17 @@ tf.app.flags.DEFINE_string('exploration_mode', 'boltzmann',
 tf.app.flags.DEFINE_integer('output_every_nth', 50000,
                             'The number of steps before the model will evaluate'
                             'itself and store a checkpoint')
-tf.app.flags.DEFINE_integer('num_notes_in_melody', 32,
-                            'The number of notes in each composition')
-tf.app.flags.DEFINE_float('reward_scaler', 2,
-                          'The weight placed on music theory rewards')
 tf.app.flags.DEFINE_string('training_data_path', '',
                            'Directory where the model will get melody training'
                            'examples')
-tf.app.flags.DEFINE_string('algorithm', 'q',
-                           'The name of the algorithm to use for training the'
-                           'model. Can be q, psi, or g')
+tf.app.flags.DEFINE_integer('num_notes_in_melody', 32,
+                            'The number of notes in each composition')
+tf.app.flags.DEFINE_string('midi_primer', '/home/natasha/Dropbox (MIT)/Google/code/testdata/primer.mid',
+                           'A midi file that can be used to prime the model')
+
 
 
 def main(_):
-  hparams = rl_tutor_ops.default_hparams()
-
   dqn_hparams = tf_lib.HParams(random_action_probability=0.1,
                                store_every_nth=1,
                                train_every_nth=5,
@@ -74,18 +77,45 @@ def main(_):
   backup_checkpoint_file = os.path.join(FLAGS.rnn_checkpoint_dir, 
                                         FLAGS.rnn_checkpoint_name)
 
-  rlt = rl_tuner.RLTuner(output_dir,
-                         midi_primer=FLAGS.midi_primer, 
-                         dqn_hparams=dqn_hparams, 
-                         reward_scaler=FLAGS.reward_scaler,
-                         save_name = output_ckpt,
-                         output_every_nth=FLAGS.output_every_nth, 
-                         note_rnn_checkpoint_dir=FLAGS.rnn_checkpoint_dir,
-                         note_rnn_checkpoint_file=backup_checkpoint_file,
-                         note_rnn_hparams=hparams, 
-                         num_notes_in_melody=FLAGS.num_notes_in_melody,
-                         exploration_mode=FLAGS.exploration_mode,
-                         algorithm=FLAGS.algorithm)
+  if FLAGS.domain_application == 'melody':
+    hparams = rl_tutor_ops.default_hparams()
+
+    rlt = smiles_tutor.SmilesTutor(output_dir,
+                          midi_primer=FLAGS.midi_primer, 
+                          dqn_hparams=dqn_hparams, 
+                          reward_scaler=FLAGS.reward_scaler,
+                          save_name = output_ckpt,
+                          output_every_nth=FLAGS.output_every_nth, 
+                          note_rnn_checkpoint_dir=FLAGS.rnn_checkpoint_dir,
+                          note_rnn_checkpoint_file=backup_checkpoint_file,
+                          note_rnn_hparams=hparams, 
+                          num_notes_in_melody=FLAGS.num_notes_in_melody,
+                          exploration_mode=FLAGS.exploration_mode,
+                          algorithm=FLAGS.algorithm)
+  elif FLAGS.domain_application == 'smiles':
+    hparams = rl_tutor_ops.smiles_hparams()
+
+    rlt = rl_tuner.RLTuner(output_dir,
+                          midi_primer=FLAGS.midi_primer, 
+                          dqn_hparams=dqn_hparams, 
+                          reward_scaler=FLAGS.reward_scaler,
+                          save_name = output_ckpt,
+                          output_every_nth=FLAGS.output_every_nth, 
+                          note_rnn_checkpoint_dir=FLAGS.rnn_checkpoint_dir,
+                          note_rnn_checkpoint_file=backup_checkpoint_file,
+                          note_rnn_hparams=hparams, 
+                          num_notes_in_melody=FLAGS.num_notes_in_melody,
+                          exploration_mode=FLAGS.exploration_mode,
+                          algorithm=FLAGS.algorithm)
+
+                          SAVE_PATH, 
+                                  dqn_hparams=rl_tutor_hparams, 
+                                  algorithm=ALGORITHM,
+                                  reward_scaler=REWARD_SCALER,
+                                  output_every_nth=OUTPUT_EVERY_NTH,
+                                  rnn_checkpoint_dir=RNN_PATH,
+                                  rnn_checkpoint_file=RNN_FILE,
+                                  rnn_hparams=rnn_hparams
 
   tf.logging.info('Saving images and melodies to: %s', rlt.output_dir)
 

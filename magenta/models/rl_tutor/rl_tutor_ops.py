@@ -105,8 +105,7 @@ def smiles_hparams():
                         initial_learning_rate=0.01,
                         decay_steps=1000,
                         decay_rate=0.85,
-                        rnn_layer_sizes=[512],
-                        one_hot_length=NUM_CLASSES_SMILE,
+                        rnn_layer_sizes=[100],
                         exponentially_decay_learning_rate=True)
 
 
