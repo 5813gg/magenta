@@ -406,9 +406,9 @@ class SmilesTutor(RLTutor):
     return_str += 'Average ring penalty: '
     return_str += str(float(stat_dict['sum_ring_penalty']) / tot_seqs) + '\n'
     #return_str += 'Average SA: '
-    #return_str += str((float(stat_dict['sum_sa']) / tot_seqs)*100.0) + '\n'
+    #return_str += str(float(stat_dict['sum_sa']) / tot_seqs) + '\n'
     #return_str += 'Average QED: '
-    #return_str += str((float(stat_dict['sum_qed']) / tot_seqs)*100.0) + '\n'
+    #return_str += str(float(stat_dict['sum_qed']) / tot_seqs) + '\n'
     
     return_str += '\n'
     return_str += 'Best logP: ' + str(stat_dict['best_logp']) + '\n'

@@ -33,7 +33,7 @@ tf.app.flags.DEFINE_string('rnn_checkpoint_dir', '/home/natasha/Dropbox/Google/S
 tf.app.flags.DEFINE_string('rnn_checkpoint_name', 'smiles_rnn_100_350001.ckpt',
                            'Filename of a checkpoint within the '
                            'rnn_checkpoint_dir directory.')
-tf.app.flags.DEFINE_float('reward_scaler', 2,
+tf.app.flags.DEFINE_float('reward_scaler', 1,
                           'The weight placed on music theory rewards')
 tf.app.flags.DEFINE_string('algorithm', 'q',
                            'The name of the algorithm to use for training the'
