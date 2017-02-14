@@ -282,8 +282,8 @@ class SmilesTutor(RLTutor):
       mol: An rdkit molecule object
     Returns:
       A float SA score
-   """
-   return Descriptors.MolLogP(mol)
+    """
+    return Descriptors.MolLogP(mol)
 
   def get_logp(self, mol):
     """Gets water-octanol partition coefficient (logP) score mol.
@@ -292,8 +292,8 @@ class SmilesTutor(RLTutor):
       mol: An rdkit molecule object
     Returns:
       A float logP
-   """
-   return Descriptors.MolLogP(mol)
+    """
+    return Descriptors.MolLogP(mol)
 
   def render_sequence(self, generated_seq, title='smiles_seq'):
     """Renders a generated SMILES sequence its string version.
