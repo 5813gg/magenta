@@ -309,7 +309,7 @@ class SmilesTutor(RLTutor):
 
     return stat_dict
 
-  def get_stat_dict_string(stat_dict):
+  def get_stat_dict_string(self, stat_dict):
     """Makes string of interesting statistics from a composition stat_dict.
 
     Args:
