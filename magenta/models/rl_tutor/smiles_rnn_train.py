@@ -31,7 +31,7 @@ tf.app.flags.DEFINE_string('pickle_file', '/home/natasha/Dropbox (MIT)/Google/SM
                            'SMILES training batches.')
 tf.app.flags.DEFINE_integer('training_steps', 1000000,
                             'The number of steps used to train the model')
-tf.app.flags.DEFINE_integer('output_every_nth', 50000,
+tf.app.flags.DEFINE_integer('output_every_nth', 10000,
                             'The number of steps before the model will evaluate'
                             'itself and store a checkpoint')
 

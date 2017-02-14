@@ -1141,3 +1141,5 @@ class RLTutor(object):
       self.eval_avg_domain_reward = npz_file['eval_domain_rewards']
       self.eval_avg_data_reward = npz_file['eval_data_rewards']
       self.target_val_list = npz_file['target_val_list']
+
+  

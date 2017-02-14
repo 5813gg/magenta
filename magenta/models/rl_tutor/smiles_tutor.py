@@ -38,6 +38,9 @@ def reload_files():
 # Special token indicating EOS
 EOS = 0
 
+# Reward values for desired molecule properties
+REWARD_VALID_MOLECULE = 100
+
 class SmilesTutor(RLTutor):
   """Implements a recurrent DQN designed to produce SMILES sequences."""
 
@@ -238,31 +241,6 @@ class SmilesTutor(RLTutor):
     """
     return 0
 
-  # TODO: change this
-  def evaluate_music_theory_metrics(self, num_compositions=10000, key=None,
-                                    tonic_note=rl_tutor_ops.C_MAJOR_TONIC):
-    """Computes statistics about music theory rule adherence.
-
-    Args: 
-      num_compositions: How many compositions should be randomly generated
-        for computing the statistics.
-      key: The numeric values of notes belonging to this key. Defaults to C
-        Major if not provided.
-      tonic_note: The tonic/1st note of the desired key.
-
-    Returns: A dictionary containing the statistics.
-    """
-    stat_dict = rl_tuner_eval_metrics.compute_composition_stats(
-      self,
-      num_compositions=num_compositions,
-      composition_length=self.num_notes_in_melody,
-      key=key,
-      tonic_note=tonic_note)
-
-    print rl_tuner_eval_metrics.get_stat_dict_string(stat_dict)
-
-    return stat_dict
-
   def render_sequence(self, generated_seq, title='smiles_seq'):
     """Renders a generated SMILES sequence its string version.
 
@@ -284,4 +262,146 @@ class SmilesTutor(RLTutor):
       smiles_string = self.convert_seq_to_chars(seq)
       return MolFromSmiles(smiles_string)
 
-  # The following functions evaluate molecule sequences for quality
+  # The following functions evaluate generated molecules for quality.
+  # TODO: clean up since there is code repeated from rl_tuner_eval_metric
+  def evaluate_domain_metrics(self, num_sequences=10000, sample_next=True):
+    """Computes statistics about music theory rule adherence.
+
+    Args: 
+      num_sequences: How many molecules should be randomly generated
+        for computing the statistics.
+      sample_next: If True, generated tokens are sampled from the output
+        distribution. If False, the token with maximum value is selected.
+
+    Returns: A dictionary containing the statistics.
+    """
+    stat_dict = self.initialize_stat_dict()
+
+    for i in range(num_sequences):
+      stat_dict = self.generate_and_evaluate_sequence(stat_dict))
+      stat_dict['num_sequences'] += 1
+
+    print rl_tuner_eval_metrics.get_stat_dict_string(stat_dict)
+    return stat_dict
+
+def initialize_stat_dict(self):
+  """Initializes a dictionary which will hold statistics about molecules.
+
+  Returns:
+    A dictionary containing the appropriate fields initialized to 0 or an
+    empty list.
+  """
+  stat_dict = dict()
+
+  stat_dict['num_sequences'] = 0
+  stat_dict['num_tokens'] = 0
+  stat_dict['num_valid_sequences'] = 0
+  stat_dict['sum_logp'] = 0
+  stat_dict['sum_sa'] = 0
+  stat_dict['sum_qed'] = 0
+  stat_dict['best_logp'] = None
+  stat_dict['best_sa'] = None
+  stat_dict['best_qed'] = None
+  stat_dict['best_logp_seq'] = None
+  stat_dict['best_sa_seq'] = None
+  stat_dict['best_qed_seq'] = None
+  stat_dict['num_seqs_w_no_ring_penalty'] = 0
+
+  return stat_dict
+
+def get_stat_dict_string(stat_dict):
+  """Makes string of interesting statistics from a composition stat_dict.
+
+  Args:
+    stat_dict: A dictionary storing statistics about a series of compositions.
+  Returns:
+    String containing several lines of formatted stats.
+  """
+  tot_seqs = float(stat_dict['num_sequences'])
+  tot_toks = float(stat_dict['num_tokens'])
+
+  return_str = 'Total sequences: ' + str(tot_seqs) + '\n'
+  return_str += 'Total tokens:' + str(tot_toks) + '\n\n'
+
+  return_str += '\tPercent valid molecules:'
+  return_str += str(stat_dict['num_valid_sequences'] / tot_seqs) + '\n'
+
+  """
+  return_str += '\tPercent with no carbon rings larger than six:'
+  return_str += str(stat_dict['num_seqs_w_no_ring_penalty'] / tot_seqs) + '\n'
+  return_str += '\tAverage logP:'
+  return_str += str(float(stat_dict['sum_logp']) / tot_seqs) + '\n'
+  return_str += '\tAverage SA:'
+  return_str += str(float(stat_dict['sum_sa']) / tot_seqs) + '\n'
+  return_str += '\tAverage QED:'
+  return_str += str(float(stat_dict['sum_qed']) / tot_seqs) + '\n'
+  
+  return_str += '\tBest logP:' + str(stat_dict['best_logp']) + '\n'
+  return_str += '\tSequence with best logP:' + str(stat_dict['best_logp_seq']) + '\n'
+  return_str += '\tBest SA:' + str(stat_dict['best_sa']) + '\n'
+  return_str += '\tSequence with best SA:' + str(stat_dict['best_sa_seq']) + '\n'
+  return_str += '\tBest QED:' + str(stat_dict['best_qed']) + '\n'
+  return_str += '\tSequence with best QED:' + str(stat_dict['best_qed_seq']) + '\n'
+  """
+
+  return_str += '\n'
+
+  return return_str
+
+def generate_and_evaluate_sequence(self, stat_dict, sample_next_obs=True):
+  """Generates a sequence using the model, stores statistics about it in a dict.
+
+  Args:
+    stat_dict: A dictionary storing statistics about a series of sequences.
+    sample_next_obs: If True, each note will be sampled from the model's
+      output distribution. If False, each note will be the one with maximum
+      value according to the model.
+  Returns:
+    A dictionary updated to include statistics about the composition just
+    created.
+  """
+  last_observation = self.prime_internal_models()
+  self.reset_for_new_sequence()
+
+  i = 0
+  while not self.is_end_of_sequence():
+    if sample_next_obs:
+      action, new_observation, reward_scores = self.action(
+          last_observation,
+          enable_random=False,
+          sample_next_obs=sample_next_obs)
+    else:
+      action, reward_scores = self.action(
+          last_observation,
+          enable_random=False,
+          sample_next_obs=sample_next_obs)
+      new_observation = action
+
+    action_note = np.argmax(action)
+    obs_note = np.argmax(new_observation)
+
+    self.generated_seq.append(np.argmax(new_observation))
+    self.generated_seq_step += 1
+    last_observation = new_observation
+
+  self.add_sequence_stats(stat_dict)
+
+  return stat_dict
+
+def add_sequence_stats(self, stat_dict):
+  """Updates stat dict based on self.generated_seq and desired metrics
+
+  Args:
+    stat_dict: A dictionary containing fields for statistics about
+      sequences.
+  Returns:
+    A dictionary of sequence statistics with fields updated.
+  """
+  stat_dict['num_sequences'] += 1
+  stat_dict['num_tokens'] += len(self.generated_seq)
+  if self.is_valid_molecule(self.generated_seq):
+    stat_dict['num_valid_sequences'] += 1
+
+  # TODO: finish for other stats
+
+  return stat_dict
