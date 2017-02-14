@@ -22,7 +22,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.misc import logsumexp
 import tensorflow as tf
+
 from rdkit.Chem import MolFromSmiles
+from rdkit.Chem import Descriptors
 
 import smiles_rnn
 import rl_tutor_ops
@@ -240,9 +242,58 @@ class SmilesTutor(RLTutor):
       Float reward value.
     """
     if np.argmax(action) == EOS:
-      if self.is_valid_molecule(self.generated_seq):
-        return REWARD_VALID_MOLECULE
-    return 0 
+      mol = self.is_valid_molecule(self.generated_seq)
+      if not mol:
+        return 0
+      reward = REWARD_VALID_MOLECULE
+      reward += self.get_sa_score(mol)
+      reward += self.get_logp(mol)
+    return reward
+
+  def convert_seq_to_chars(self, seq):
+    """Converts a list of ints to a SMILES string
+
+    Args:
+      seq: A list of ints
+    Returns:
+      A string representing the SMILES encoding.
+    """
+    char_list = [str(self.index_to_char[s]) for s in seq]
+    return ''.join(char_list)
+
+  def is_valid_molecule(self, seq):
+    """Checks if a sequence is a valid SMILES encoding.
+
+    Args:
+      seq: A list of ints.
+    Returns:
+      An rdkit Molecule object if the sequence is valid, nothing
+      otherwise.
+    """
+    if len(seq) == 1 and seq[0] == EOS:
+      return False
+    smiles_string = self.convert_seq_to_chars(seq)
+    return MolFromSmiles(smiles_string)
+
+  def get_sa_score(self, mol):
+    """Gets the Synthetic Accessibility score of an rdkit molecule.
+
+    Args:
+      mol: An rdkit molecule object
+    Returns:
+      A float SA score
+   """
+   return Descriptors.MolLogP(mol)
+
+  def get_logp(self, mol):
+    """Gets water-octanol partition coefficient (logP) score mol.
+
+    Args:
+      mol: An rdkit molecule object
+    Returns:
+      A float logP
+   """
+   return Descriptors.MolLogP(mol)
 
   def render_sequence(self, generated_seq, title='smiles_seq'):
     """Renders a generated SMILES sequence its string version.
@@ -256,17 +307,6 @@ class SmilesTutor(RLTutor):
         print "VALID molecule"
     else:
         print "Invalid molecule :("
-
-  def convert_seq_to_chars(self, seq):
-    char_list = [str(self.index_to_char[s]) for s in seq]
-    return ''.join(char_list)
-
-  def is_valid_molecule(self, seq):
-    if len(seq) == 1 and seq[0] == EOS:
-      return False
-    smiles_string = self.convert_seq_to_chars(seq)
-    return MolFromSmiles(smiles_string)
-
   # The following functions evaluate generated molecules for quality.
   # TODO: clean up since there is code repeated from rl_tuner_eval_metric
   def evaluate_domain_metrics(self, num_sequences=10000, sample_next=True):
