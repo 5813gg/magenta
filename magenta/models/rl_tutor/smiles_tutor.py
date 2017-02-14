@@ -239,7 +239,7 @@ class SmilesTutor(RLTutor):
     Returns:
       Float reward value.
     """
-    if self.is_end_of_sequence():
+    if np.argmax(action) == EOS:
       if self.is_valid_molecule(self.generated_seq):
         return REWARD_VALID_MOLECULE
     return 0 
