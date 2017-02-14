@@ -35,7 +35,7 @@ tf.app.flags.DEFINE_string('rnn_checkpoint_name', 'smiles_rnn_100_350001.ckpt',
                            'rnn_checkpoint_dir directory.')
 tf.app.flags.DEFINE_float('reward_scaler', 1,
                           'The weight placed on music theory rewards')
-tf.app.flags.DEFINE_string('algorithm', 'q',
+tf.app.flags.DEFINE_string('algorithm', 'psi',
                            'The name of the algorithm to use for training the'
                            'model. Can be q, psi, or g')
 tf.app.flags.DEFINE_integer('training_steps', 1000000,
