@@ -22,9 +22,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.misc import logsumexp
 import tensorflow as tf
+import networkx as nx
 
-from rdkit.Chem import MolFromSmiles, Descriptors, rdMolDescriptors
-from rdkit.six import iteritems
+from rdkit.Chem import MolFromSmiles, Descriptors, rdmolops
 
 import smiles_rnn
 import rl_tutor_ops
@@ -45,6 +45,7 @@ EOS = 0
 REWARD_VALID_MOLECULE = 10
 REWARD_SA_MULTIPLIER = 1
 REWARD_LOGP_MULTIPLIER = 1
+REWARD_RINGP_MULTIPLIER = 1
 
 class SmilesTutor(RLTutor):
   """Implements a recurrent DQN designed to produce SMILES sequences."""
@@ -244,13 +245,17 @@ class SmilesTutor(RLTutor):
     Returns:
       Float reward value.
     """
-    if np.argmax(action) == EOS:
-      mol = self.is_valid_molecule(self.generated_seq)
-      if not mol:
-        return 0
-      reward = REWARD_VALID_MOLECULE
-      reward += REWARD_SA_MULTIPLIER * self.get_sa_score(mol)
-      reward += REWARD_LOGP_MULTIPLIER * self.get_logp(mol)
+    if not np.argmax(action) == EOS:
+      return 0
+
+    mol = self.is_valid_molecule(self.generated_seq)
+    if not mol:
+      return 0
+
+    reward = REWARD_VALID_MOLECULE
+    #reward += REWARD_SA_MULTIPLIER * self.get_sa_score(mol)
+    reward += REWARD_LOGP_MULTIPLIER * self.get_logp(mol)
+    reward += REWARD_RINGP_MULTIPLIER * self.get_ring_penalty(mol)
     return reward
 
   def convert_seq_to_chars(self, seq):
@@ -297,6 +302,24 @@ class SmilesTutor(RLTutor):
       A float logP
     """
     return Descriptors.MolLogP(mol)
+
+  def get_ring_penalty(self, mol):
+    """Calculates a penalty based on carbon rings larger than 6.
+
+    Args:
+      mol: An rdkit molecule object
+    Returns:
+      A float penalty.
+    """
+    cycle_list = nx.cycle_basis(nx.Graph(rdmolops.GetAdjacencyMatrix(mol)))
+    if len(cycle_list) == 0:
+        return 0
+    
+    cycle_length = max([ len(j) for j in cycle_list ])
+    
+    if cycle_length <= 6:
+        return 0
+    return -1* (cycle_length - 6)
 
   def render_sequence(self, generated_seq, title='smiles_seq'):
     """Renders a generated SMILES sequence its string version.
