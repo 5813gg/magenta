@@ -23,14 +23,14 @@ FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_string('domain_application', 'smiles',
                            'Application for which you are training model. Can either '
                            'be smiles (for molecule generation) or melody (for music).')
-tf.app.flags.DEFINE_string('output_dir', '/home/natasha/Dropbox (MIT)/Google/RL-RNN-Project/rl-rnn-output/',
+tf.app.flags.DEFINE_string('output_dir', '/home/natasha/Dropbox (MIT)/Google/SMILES-Project/output/',
                            'Directory where the model will save its'
                            'compositions and checkpoints (midi files)')
-tf.app.flags.DEFINE_string('rnn_checkpoint_dir', '/home/natasha/Dropbox (MIT)/Google/code/note_rnn_checkpoint/',
+tf.app.flags.DEFINE_string('rnn_checkpoint_dir', '/home/natasha/Dropbox (MIT)/Google/SMILES-Project/models/',
                            'Path to directory holding checkpoints for pre-trained rnn'
                            'model. These will be loaded into the NoteRNNLoader class '
                            'object. The directory should contain a train subdirectory')
-tf.app.flags.DEFINE_string('rnn_checkpoint_name', 'note_rnn.ckpt',
+tf.app.flags.DEFINE_string('rnn_checkpoint_name', 'smiles_rnn_100_350001.ckpt',
                            'Filename of a checkpoint within the '
                            'rnn_checkpoint_dir directory.')
 tf.app.flags.DEFINE_float('reward_scaler', 2,

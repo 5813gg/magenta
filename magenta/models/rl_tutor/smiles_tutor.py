@@ -117,7 +117,7 @@ class SmilesTutor(RLTutor):
       initialize_immediately: if True, the class will instantiate its component
         MelodyRNN networks and build the graph in the constructor.
     """
-    print "In child class Smiles RNN"
+    print "In child class SmilesTutor"
 
     if rnn_hparams is None:
       rnn_hparams = rl_tutor_ops.smiles_hparams()
