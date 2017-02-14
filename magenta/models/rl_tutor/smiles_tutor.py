@@ -268,7 +268,7 @@ class SmilesTutor(RLTutor):
   # The following functions evaluate generated molecules for quality.
   # TODO: clean up since there is code repeated from rl_tuner_eval_metric
   def evaluate_domain_metrics(self, num_sequences=10000, sample_next=True):
-    """Computes statistics about music theory rule adherence.
+    """Computes statistics about domain rule adherence.
 
     Args: 
       num_sequences: How many molecules should be randomly generated

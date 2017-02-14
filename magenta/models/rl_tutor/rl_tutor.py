@@ -479,8 +479,8 @@ class RLTutor(object):
       # Used to keep track of how the reward is changing over time.
       self.reward_last_n += reward
 
-      # Used to keep track of the current musical composition and beat for
-      # the reward functions.
+      # Used to keep track of the current generated sequence and step 
+      # for the reward functions.
       self.generated_seq.append(np.argmax(new_observation))
       self.generated_seq_step += 1
 
@@ -769,7 +769,7 @@ class RLTutor(object):
 
         data_reward = self.reward_from_reward_rnn_scores(new_observation, 
                                                          reward_scores)
-        domain_reward = self.reward_music_theory(new_observation)
+        domain_reward = self.collect_domain_reward(new_observation)
         adjusted_domain_reward = self.reward_scaler * domain_reward
         total_reward = data_reward + adjusted_domain_reward
 
