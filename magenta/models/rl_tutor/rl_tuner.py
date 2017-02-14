@@ -1122,7 +1122,7 @@ class RLTuner(RLTutor):
     # reward_preferred_intervals function.
     pass
 
-  def evaluate_music_theory_metrics(self, num_compositions=10000, key=None,
+  def evaluate_domain_metrics(self, num_compositions=10000, key=None,
                                     tonic_note=rl_tutor_ops.C_MAJOR_TONIC):
     """Computes statistics about music theory rule adherence.
 

@@ -81,41 +81,30 @@ def main(_):
     hparams = rl_tutor_ops.default_hparams()
 
     rlt = smiles_tutor.SmilesTutor(output_dir,
-                          midi_primer=FLAGS.midi_primer, 
-                          dqn_hparams=dqn_hparams, 
-                          reward_scaler=FLAGS.reward_scaler,
-                          save_name = output_ckpt,
-                          output_every_nth=FLAGS.output_every_nth, 
-                          note_rnn_checkpoint_dir=FLAGS.rnn_checkpoint_dir,
-                          note_rnn_checkpoint_file=backup_checkpoint_file,
-                          note_rnn_hparams=hparams, 
-                          num_notes_in_melody=FLAGS.num_notes_in_melody,
-                          exploration_mode=FLAGS.exploration_mode,
-                          algorithm=FLAGS.algorithm)
+                                    midi_primer=FLAGS.midi_primer, 
+                                    dqn_hparams=dqn_hparams, 
+                                    reward_scaler=FLAGS.reward_scaler,
+                                    save_name = output_ckpt,
+                                    output_every_nth=FLAGS.output_every_nth, 
+                                    note_rnn_checkpoint_dir=FLAGS.rnn_checkpoint_dir,
+                                    note_rnn_checkpoint_file=backup_checkpoint_file,
+                                    note_rnn_hparams=hparams, 
+                                    num_notes_in_melody=FLAGS.num_notes_in_melody,
+                                    exploration_mode=FLAGS.exploration_mode,
+                                    algorithm=FLAGS.algorithm)
   elif FLAGS.domain_application == 'smiles':
     hparams = rl_tutor_ops.smiles_hparams()
 
     rlt = rl_tuner.RLTuner(output_dir,
-                          midi_primer=FLAGS.midi_primer, 
-                          dqn_hparams=dqn_hparams, 
-                          reward_scaler=FLAGS.reward_scaler,
-                          save_name = output_ckpt,
-                          output_every_nth=FLAGS.output_every_nth, 
-                          note_rnn_checkpoint_dir=FLAGS.rnn_checkpoint_dir,
-                          note_rnn_checkpoint_file=backup_checkpoint_file,
-                          note_rnn_hparams=hparams, 
-                          num_notes_in_melody=FLAGS.num_notes_in_melody,
-                          exploration_mode=FLAGS.exploration_mode,
-                          algorithm=FLAGS.algorithm)
-
-                          SAVE_PATH, 
-                                  dqn_hparams=rl_tutor_hparams, 
-                                  algorithm=ALGORITHM,
-                                  reward_scaler=REWARD_SCALER,
-                                  output_every_nth=OUTPUT_EVERY_NTH,
-                                  rnn_checkpoint_dir=RNN_PATH,
-                                  rnn_checkpoint_file=RNN_FILE,
-                                  rnn_hparams=rnn_hparams
+                           dqn_hparams=dqn_hparams, 
+                           reward_scaler=FLAGS.reward_scaler,
+                           save_name = output_ckpt,
+                           output_every_nth=FLAGS.output_every_nth, 
+                           rnn_checkpoint_dir=FLAGS.rnn_checkpoint_dir,
+                           rnn_checkpoint_file=backup_checkpoint_file,
+                           rnn_hparams=hparams,
+                           exploration_mode=FLAGS.exploration_mode,
+                           algorithm=FLAGS.algorithm) 
 
   tf.logging.info('Saving images and melodies to: %s', rlt.output_dir)
 
@@ -123,7 +112,7 @@ def main(_):
   rlt.train(num_steps=FLAGS.training_steps,
                exploration_period=FLAGS.exploration_steps)
 
-  tf.logging.info('\nFinished training. Saving output figures and composition.')
+  tf.logging.info('\nFinished training. Saving output figures and renders.')
   rlt.plot_rewards(image_name='Rewards-' + FLAGS.algorithm + '.eps')
 
   rlt.generate_sample(visualize_probs=True, title=FLAGS.algorithm,
@@ -131,9 +120,9 @@ def main(_):
 
   rlt.save_model_and_figs(FLAGS.algorithm)
 
-  tf.logging.info('\nCalculating music theory metric stats for 1000 '
+  tf.logging.info('\nCalculating domain metric stats for 1000 '
                   'compositions')
-  rlt.evaluate_music_theory_metrics(num_compositions=1000)
+  rlt.evaluate_domain_metrics(num_compositions=1000)
 
 
 if __name__ == '__main__':
