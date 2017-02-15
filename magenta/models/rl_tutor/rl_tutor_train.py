@@ -13,10 +13,6 @@ import os
 
 import tensorflow as tf
 
-from magenta.common import tf_lib
-
-import rl_tuner
-import smiles_tutor
 import rl_tutor_ops
 
 FLAGS = tf.app.flags.FLAGS
@@ -64,7 +60,7 @@ tf.app.flags.DEFINE_string('midi_primer', '/home/natasha/Dropbox/Google/code/tes
 
 
 def main(_):
-  dqn_hparams = tf_lib.HParams(random_action_probability=0.1,
+  dqn_hparams = rl_tutor_ops.HParams(random_action_probability=0.1,
                                store_every_nth=1,
                                train_every_nth=5,
                                minibatch_size=32,
@@ -78,6 +74,7 @@ def main(_):
                                         FLAGS.rnn_checkpoint_name)
 
   if FLAGS.domain_application == 'melody':
+    import rl_tuner
     hparams = rl_tutor_ops.default_hparams()
 
     rlt = rl_tuner.RLTuner(output_dir,
@@ -93,6 +90,7 @@ def main(_):
                           exploration_mode=FLAGS.exploration_mode,
                           algorithm=FLAGS.algorithm)
   elif FLAGS.domain_application == 'smiles':
+    import smiles_tutor
     hparams = rl_tutor_ops.smiles_hparams()
 
     rlt = smiles_tutor.SmilesTutor(output_dir,

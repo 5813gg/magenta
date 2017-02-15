@@ -3,8 +3,6 @@
 import os
 import random
 
-from magenta.common import tf_lib
-
 import numpy as np
 import tensorflow as tf
 
@@ -60,9 +58,40 @@ LEAP_RESOLVED = 1
 LEAP_DOUBLED = -1
 
 
+class HParams(object):
+  """Creates an object for passing around hyperparameter values.
+
+  Use the parse method to overwrite the default hyperparameters with values
+  passed in as a string representation of a Python dictionary mapping
+  hyperparameters to values.
+
+  Ex.
+  hparams = magenta.common.HParams(batch_size=128, hidden_size=256)
+  hparams.parse('{"hidden_size":512}')
+  assert hparams.batch_size == 128
+  assert hparams.hidden_size == 512
+  """
+
+  def __init__(self, **init_hparams):
+    object.__setattr__(self, 'keyvals', init_hparams)
+
+  def __getattr__(self, key):
+    return self.keyvals.get(key)
+
+  def __setattr__(self, key, value):
+    """Returns None if key does not exist."""
+    self.keyvals[key] = value
+
+  def parse(self, string):
+    new_hparams = ast.literal_eval(string)
+    return HParams(**dict(self.keyvals, **new_hparams))
+
+  def values(self):
+    return self.keyvals
+
 def default_hparams():
   """Generates the hparams used to train note rnn used in paper."""
-  return tf_lib.HParams(use_dynamic_rnn=True,
+  return HParams(use_dynamic_rnn=True,
                         batch_size=BATCH_SIZE,
                         lr=0.0002,
                         l2_reg=2.5e-5,
@@ -84,7 +113,7 @@ def basic_rnn_hparams():
   """
   #TODO(natashajaques): ability to restore basic_rnn from any .mag 
   # file.
-  return tf_lib.HParams(batch_size=128,
+  return HParams(batch_size=128,
                         dropout_keep_prob=0.5,
                         clip_norm=5,
                         initial_learning_rate=0.01,
@@ -97,7 +126,7 @@ def basic_rnn_hparams():
 
 def smiles_hparams():
   """Generates the hparams used to train note rnn used in paper."""
-  return tf_lib.HParams(use_dynamic_rnn=True,
+  return HParams(use_dynamic_rnn=True,
                         batch_size=BATCH_SIZE,
                         lr=0.0002,
                         l2_reg=2.5e-5,
@@ -112,7 +141,7 @@ def smiles_hparams():
 
 def default_dqn_hparams():
   """Generates the default hparams for RLTuner DQN model."""
-  return tf_lib.HParams(random_action_probability=0.1,
+  return HParams(random_action_probability=0.1,
                         store_every_nth=1,
                         train_every_nth=5,
                         minibatch_size=32,
