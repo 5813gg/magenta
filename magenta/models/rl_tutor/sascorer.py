@@ -61,7 +61,7 @@ def calculateScore(m):
   if nf != 0:
     score1 /= nf
   else:
-    print("nf in sascorer is 0 for some reason??")
+    raise ValueError('Division by zero where nf is 0 (line 64)')
 
   # features score
   nAtoms = m.GetNumAtoms()
