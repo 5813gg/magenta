@@ -445,7 +445,7 @@ class SmilesTutor(RLTutor):
     return_str += 'Best SA: ' + str(stat_dict['best_sa']) + '\n'
     return_str += 'Sequence with best SA: ' + str(stat_dict['best_sa_seq']) + '\n'
     return_str += 'Best QED: ' + str(stat_dict['best_qed']) + '\n'
-    return_str += 'Sequence with best QED:'  + str(stat_dict['best_qed_seq']) + '\n'
+    return_str += 'Sequence with best QED: '  + str(stat_dict['best_qed_seq']) + '\n'
 
     return_str += '\n'
 
