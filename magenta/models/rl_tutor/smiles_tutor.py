@@ -298,7 +298,7 @@ class SmilesTutor(RLTutor):
       An rdkit Molecule object if the sequence is valid, nothing
       otherwise.
     """
-    if len(seq) == 1 and seq[0] == EOS:
+    if len(seq) == 0 or (len(seq) == 1 and seq[0] == EOS):
       return False
     smiles_string = self.convert_seq_to_chars(seq)
     return MolFromSmiles(smiles_string)
