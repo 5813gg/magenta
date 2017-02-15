@@ -25,6 +25,7 @@ import tensorflow as tf
 import networkx as nx
 
 from rdkit.Chem import MolFromSmiles, Descriptors, rdmolops
+from silicos_it.descriptors import qed
 
 import smiles_rnn
 import rl_tutor_ops
@@ -44,14 +45,16 @@ EOS = 0
 # Reward values for desired molecule properties
 REWARD_VALID_MOLECULE = 100
 REWARD_SA_MULTIPLIER = 1
-REWARD_LOGP_MULTIPLIER = 5
-REWARD_RINGP_MULTIPLIER = 3
+REWARD_LOGP_MULTIPLIER = 1
+REWARD_RINGP_MULTIPLIER = 1
+REWARD_QED_MULTIPLIER = 1
 
 class SmilesTutor(RLTutor):
   """Implements a recurrent DQN designed to produce SMILES sequences."""
 
   def __init__(self, output_dir,
                vocab_file='/home/natasha/Dropbox/Google/SMILES-Project/data/zinc_char_list.json',
+               max_seq_len=120,
 
                # Hyperparameters
                dqn_hparams=None,
@@ -139,7 +142,8 @@ class SmilesTutor(RLTutor):
       output_every_nth=output_every_nth, summary_writer=summary_writer, 
       initialize_immediately=initialize_immediately)
 
-    self.vocab_file=vocab_file
+    self.vocab_file = vocab_file
+    self.max_seq_len = max_seq_len
     self.load_vocab()
 
   def load_vocab(self):
@@ -228,6 +232,8 @@ class SmilesTutor(RLTutor):
     """
     if len(self.generated_seq) > 0 and self.generated_seq[-1] == EOS:
       return True
+    if len(self.generated_seq) >= self.max_seq_len:
+      return True
     return False
 
   def collect_domain_reward(self, obs, action, verbose=False):
@@ -254,17 +260,21 @@ class SmilesTutor(RLTutor):
       return 0
 
     valid_reward = REWARD_VALID_MOLECULE
-    #reward += REWARD_SA_MULTIPLIER * self.get_sa_score(mol)
+    sa = REWARD_SA_MULTIPLIER * self.get_sa_score(mol)
     logp = REWARD_LOGP_MULTIPLIER * self.get_logp(mol)
     ringp = REWARD_RINGP_MULTIPLIER * self.get_ring_penalty(mol)
+    qed = REWARD_QED_MULTIPLIER * self.get_qed(mol)
     
     if verbose:
       print "Valid reward:", valid_reward
       print "logP reward:", logp
+      print "SA reward:", sa
+      print "QED reward:", qed
       print "ring penalty reward:", ringp
-      print "Total:", valid_reward + logp + ringp
+      
+      print "Total:", valid_reward + logp + ringp + qed + sa
 
-    return valid_reward + logp + ringp
+    return valid_reward + logp + ringp + qed + sa
 
   def convert_seq_to_chars(self, seq):
     """Converts a list of ints to a SMILES string
@@ -311,6 +321,16 @@ class SmilesTutor(RLTutor):
     """
     return Descriptors.MolLogP(mol)
 
+  def get_qed(self, mol):
+    """Gets the Quantitative Estimation of Drug-likeness of mol.
+
+    Args:
+      mol: An rdkit molecule object
+    Returns:
+      A float QED score
+    """
+    return qed.default(mol)
+
   def get_ring_penalty(self, mol):
     """Calculates a penalty based on carbon rings larger than 6.
 
@@ -341,6 +361,7 @@ class SmilesTutor(RLTutor):
         print "VALID molecule"
     else:
         print "Invalid molecule :("
+  
   # The following functions evaluate generated molecules for quality.
   # TODO: clean up since there is code repeated from rl_tuner_eval_metric
   def evaluate_domain_metrics(self, num_sequences=10000, sample_next=True):
@@ -413,18 +434,18 @@ class SmilesTutor(RLTutor):
     return_str += str(float(stat_dict['sum_logp']) / tot_seqs) + '\n'
     return_str += 'Average ring penalty: '
     return_str += str(float(stat_dict['sum_ring_penalty']) / tot_seqs) + '\n'
-    #return_str += 'Average SA: '
-    #return_str += str(float(stat_dict['sum_sa']) / tot_seqs) + '\n'
-    #return_str += 'Average QED: '
-    #return_str += str(float(stat_dict['sum_qed']) / tot_seqs) + '\n'
+    return_str += 'Average SA: '
+    return_str += str(float(stat_dict['sum_sa']) / tot_seqs) + '\n'
+    return_str += 'Average QED: '
+    return_str += str(float(stat_dict['sum_qed']) / tot_seqs) + '\n'
     
     return_str += '\n'
     return_str += 'Best logP: ' + str(stat_dict['best_logp']) + '\n'
     return_str += 'Sequence with best logP: ' + str(stat_dict['best_logp_seq']) + '\n'
-    #return_str += 'Best SA: ' + str(stat_dict['best_sa']) + '\n'
-    #return_str += 'Sequence with best SA: ' + str(stat_dict['best_sa_seq']) + '\n'
-    #return_str += 'Best QED: ' + str(stat_dict['best_qed']) + '\n'
-    #return_str += 'Sequence with best QED:'  + str(stat_dict['best_qed_seq']) + '\n'
+    return_str += 'Best SA: ' + str(stat_dict['best_sa']) + '\n'
+    return_str += 'Sequence with best SA: ' + str(stat_dict['best_sa_seq']) + '\n'
+    return_str += 'Best QED: ' + str(stat_dict['best_qed']) + '\n'
+    return_str += 'Sequence with best QED:'  + str(stat_dict['best_qed_seq']) + '\n'
 
     return_str += '\n'
 
@@ -492,17 +513,18 @@ class SmilesTutor(RLTutor):
     stat_dict['sum_logp'] += logp
     stat_dict = self._replace_stat_if_best(stat_dict, 'best_logp', logp)
 
+    sa = self.get_sa_score(mol)
+    stat_dict['sum_sa'] += sa
+    stat_dict = self._replace_stat_if_best(stat_dict, 'best_sa', sa)
+
+    qed = self.get_qed(mol)
+    stat_dict['sum_qed'] += qed
+    stat_dict = self._replace_stat_if_best(stat_dict, 'best_qed', logp)
+
     ring_penalty = self.get_ring_penalty(mol)
     stat_dict['sum_ring_penalty'] += ring_penalty
     if ring_penalty == 0:
       stat_dict['num_seqs_w_no_ring_penalty'] += 1
-    
-    #stat_dict['sum_sa'] += self.get_sa_score(mol)
-    #stat_dict['sum_qed'] += 
-    #stat_dict['best_sa'] = None
-    #stat_dict['best_qed'] = None
-    #stat_dict['best_sa_seq'] = None
-    #stat_dict['best_qed_seq'] = None
 
     return stat_dict
 
