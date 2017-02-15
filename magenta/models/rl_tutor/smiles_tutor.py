@@ -38,6 +38,8 @@ def reload_files():
   """
   reload(smiles_rnn)
   reload(rl_tutor_ops)
+  reload(sascorer)
+  reload(qed)
 
 # Special token indicating EOS
 EOS = 0
