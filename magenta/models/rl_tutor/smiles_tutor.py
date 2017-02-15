@@ -519,7 +519,7 @@ class SmilesTutor(RLTutor):
 
     qed = self.get_qed(mol)
     stat_dict['sum_qed'] += qed
-    stat_dict = self._replace_stat_if_best(stat_dict, 'best_qed', logp)
+    stat_dict = self._replace_stat_if_best(stat_dict, 'best_qed', qed)
 
     ring_penalty = self.get_ring_penalty(mol)
     stat_dict['sum_ring_penalty'] += ring_penalty
