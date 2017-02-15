@@ -25,8 +25,8 @@ import tensorflow as tf
 import networkx as nx
 
 from rdkit.Chem import MolFromSmiles, Descriptors, rdmolops
-from silicos_it.descriptors import qed
 
+import qed
 import smiles_rnn
 import rl_tutor_ops
 import sascorer
