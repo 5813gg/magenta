@@ -45,11 +45,13 @@ def reload_files():
 EOS = 0
 
 # Reward values for desired molecule properties
-REWARD_VALID_MOLECULE = 100
+REWARD_INVALID_MOLECULE = -50
 REWARD_SA_MULTIPLIER = 2
 REWARD_LOGP_MULTIPLIER = 10
-REWARD_RINGP_MULTIPLIER = 2
-REWARD_QED_MULTIPLIER = 10
+REWARD_RINGP_MULTIPLIER = 1
+REWARD_QED_MULTIPLIER = 5
+REWARD_SHORTISH_SEQ = -10
+REWARD_SHORT_SEQ = -50
 
 class SmilesTutor(RLTutor):
   """Implements a recurrent DQN designed to produce SMILES sequences."""
@@ -258,25 +260,25 @@ class SmilesTutor(RLTutor):
 
     mol = self.is_valid_molecule(self.generated_seq)
     if not mol:
-      if verbose: print "Not a valid molecule, 0 reward."
-      return 0
+      if verbose: print "Not a valid molecule. Reward:", REWARD_INVALID_MOLECULE
+      return REWARD_INVALID_MOLECULE
 
-    valid_reward = REWARD_VALID_MOLECULE
     sa = REWARD_SA_MULTIPLIER * self.get_sa_score(mol)
     logp = REWARD_LOGP_MULTIPLIER * self.get_logp(mol)
     ringp = REWARD_RINGP_MULTIPLIER * self.get_ring_penalty(mol)
     qed = REWARD_QED_MULTIPLIER * self.get_qed(mol)
+    length = REWARD_LENGTH_MULTIPLIER * self.get_length_reward()
     
     if verbose:
-      print "Valid reward:", valid_reward
       print "logP reward:", logp
       print "SA reward:", sa
       print "QED reward:", qed
       print "ring penalty reward:", ringp
+      print "length reward:", length
       
-      print "Total:", valid_reward + logp + ringp + qed + sa
+      print "Total:", length + logp + ringp + qed + sa
 
-    return valid_reward + logp + ringp + qed + sa
+    return length + logp + ringp + qed + sa
 
   def convert_seq_to_chars(self, seq):
     """Converts a list of ints to a SMILES string
@@ -356,6 +358,25 @@ class SmilesTutor(RLTutor):
         return 0
     return -1* (cycle_length - 6)
 
+  def get_length_reward(self):
+    """Calculates a penalty based on unusually short or long seqs.
+
+    Args:
+      mol: An rdkit molecule object
+    Returns:
+      A float penalty.
+    """
+    training_data_average=45.82
+    training_data_std=9.37
+    training_data_min=19
+
+    if len(self.generated_seq) < training_data_min:
+      return REWARD_SHORT_SEQ
+    elif len(self.generated_seq) < training_data_average - 2 * training_data_std:
+      return REWARD_SHORTISH_SEQ
+    else:
+      return 0
+    å
   def render_sequence(self, generated_seq, title='smiles_seq'):
     """Renders a generated SMILES sequence its string version.
 
