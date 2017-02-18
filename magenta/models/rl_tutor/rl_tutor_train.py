@@ -64,7 +64,7 @@ def main(_):
                                store_every_nth=1,
                                train_every_nth=5,
                                minibatch_size=32,
-                               discount_rate=0.5,
+                               discount_rate=0.99,
                                max_experience=100000,
                                target_network_update_rate=0.01)
 
