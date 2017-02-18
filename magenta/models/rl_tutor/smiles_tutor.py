@@ -376,7 +376,7 @@ class SmilesTutor(RLTutor):
       return REWARD_SHORTISH_SEQ
     else:
       return 0
-    å
+      
   def render_sequence(self, generated_seq, title='smiles_seq'):
     """Renders a generated SMILES sequence its string version.
 
