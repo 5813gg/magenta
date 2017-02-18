@@ -50,6 +50,7 @@ REWARD_SA_MULTIPLIER = 2
 REWARD_LOGP_MULTIPLIER = 10
 REWARD_RINGP_MULTIPLIER = 1
 REWARD_QED_MULTIPLIER = 5
+REWARD_LENGTH_MULTIPLIER = 1
 REWARD_SHORTISH_SEQ = -10
 REWARD_SHORT_SEQ = -50
 
@@ -376,7 +377,7 @@ class SmilesTutor(RLTutor):
       return REWARD_SHORTISH_SEQ
     else:
       return 0
-      
+
   def render_sequence(self, generated_seq, title='smiles_seq'):
     """Renders a generated SMILES sequence its string version.
 
