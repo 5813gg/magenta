@@ -271,8 +271,8 @@ class SmilesTutor(RLTutor):
     self.data_reward_this_sequence += data_reward
     self.data_reward_last_n += data_reward
 
-    reward = self.collect_domain_reward(obs, action, verbose=verbose)
-    self.domain_reward_last_n += reward * self.reward_scaler
+    domain_reward = self.collect_domain_reward(obs, action, verbose=verbose)
+    self.domain_reward_last_n += domain_reward * self.reward_scaler
 
     if domain_reward != 0 and verbose:
       print 'Cumulative Reward RNN reward:', self.data_reward_this_sequence
@@ -280,9 +280,9 @@ class SmilesTutor(RLTutor):
       print ""
       
     if not self.domain_rewards_only:
-      return reward * self.reward_scaler + data_reward
+      return domain_reward * self.reward_scaler + data_reward
     else:
-      return reward * self.reward_scaler 
+      return domain_reward * self.reward_scaler 
 
     """if self.is_valid_molecule(self.generated_seq):
       self.data_reward_last_n += self.data_reward_this_sequence
