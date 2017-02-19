@@ -407,7 +407,8 @@ class SmilesTutor(RLTutor):
     stat_dict = self.initialize_stat_dict()
 
     for i in range(num_sequences):
-      stat_dict = self.generate_and_evaluate_sequence(stat_dict)
+      self.generate_and_evaluate_sequence()
+      stat_dict = self.add_sequence_stats(stat_dict)
 
     print self.get_stat_dict_string(stat_dict)
     return stat_dict
@@ -480,11 +481,10 @@ class SmilesTutor(RLTutor):
 
     return return_str
 
-  def generate_and_evaluate_sequence(self, stat_dict, sample_next_obs=True):
+  def generate_sequence(self, sample_next_obs=True):
     """Generates a sequence using the model, stores statistics about it in a dict.
 
     Args:
-      stat_dict: A dictionary storing statistics about a series of sequences.
       sample_next_obs: If True, each note will be sampled from the model's
         output distribution. If False, each note will be the one with maximum
         value according to the model.
@@ -494,6 +494,7 @@ class SmilesTutor(RLTutor):
     """
     last_observation = self.prime_internal_models()
     self.reset_for_new_sequence()
+    reward_rnn_sum = 0
 
     i = 0
     while not self.is_end_of_sequence():
@@ -509,16 +510,15 @@ class SmilesTutor(RLTutor):
             sample_next_obs=sample_next_obs)
         new_observation = action
 
-      action_note = np.argmax(action)
-      obs_note = np.argmax(new_observation)
+      action_idx = np.argmax(action)
+      obs_idx = np.argmax(new_observation)
+      reward_rnn_sum += reward_scores[action_idx]
 
       self.generated_seq.append(np.argmax(new_observation))
       self.generated_seq_step += 1
       last_observation = new_observation
 
-    self.add_sequence_stats(stat_dict)
-
-    return stat_dict
+    return reward_rnn_sum
 
   def add_sequence_stats(self, stat_dict):
     """Updates stat dict based on self.generated_seq and desired metrics
@@ -567,12 +567,13 @@ class SmilesTutor(RLTutor):
   def debug_reward(self, num_times=10):
     stat_dict = self.initialize_stat_dict()
     for i in range(num_times):
-      self.generate_and_evaluate_sequence(stat_dict)
+      total_data_reward = self.generate_sequence(stat_dict)
       print "Generated sequence:", self.generated_seq
       print self.convert_seq_to_chars(self.generated_seq), '\n'
 
       if len(self.generated_seq) >= 2:
         self.collect_domain_reward(self.generated_seq[-2], self.generated_seq[-1], verbose=True)
+      print "Total data reward:", total_data_reward
 
       print '\n\n'
 
