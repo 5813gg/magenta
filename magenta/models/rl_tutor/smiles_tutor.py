@@ -46,11 +46,11 @@ EOS = 0
 
 # Reward values for desired molecule properties
 REWARD_VALID_LENGTH_MULTIPLIER = 1
-REWARD_INVALID_LENGTH_MULTIPLIER = 1
-REWARD_SA_MULTIPLIER = 1
-REWARD_LOGP_MULTIPLIER = 1
-REWARD_RINGP_MULTIPLIER = 1
-REWARD_QED_MULTIPLIER = 1
+REWARD_INVALID_LENGTH_MULTIPLIER = 0
+REWARD_SA_MULTIPLIER = 0
+REWARD_LOGP_MULTIPLIER = 0
+REWARD_RINGP_MULTIPLIER = 0
+REWARD_QED_MULTIPLIER = 0
 REWARD_SHORTISH_SEQ = -1
 REWARD_SHORT_SEQ = -2
 
@@ -344,7 +344,6 @@ class SmilesTutor(RLTutor):
       print "SA reward:", sa * self.reward_scaler
       print "QED reward:", qed * self.reward_scaler
       print "ring penalty reward:", ringp * self.reward_scaler
-      print "length reward:", length * self.reward_scaler
       
       print "Total:", (bonus + length_penalties + logp + ringp + qed + sa) * self.reward_scaler
 
