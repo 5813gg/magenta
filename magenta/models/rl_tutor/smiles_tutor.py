@@ -329,7 +329,7 @@ class SmilesTutor(RLTutor):
 
     length_penalties = self.get_length_penalty()
     if verbose and length_penalties != 0:
-      print "Sequence is too short. Penalty:", length_penalties
+      print "Sequence is weird length. Penalty:", length_penalties
 
     mol = self.is_valid_molecule(self.generated_seq)
     if not mol:
