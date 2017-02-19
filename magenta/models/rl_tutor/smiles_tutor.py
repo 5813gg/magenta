@@ -578,7 +578,7 @@ class SmilesTutor(RLTutor):
       if len(self.generated_seq) >= 2:
         reward = self.collect_domain_reward(self.generated_seq[-2], self.generated_seq[-1], verbose=True)
       print "Total data reward:", total_data_reward
-      print "Total domain reward:", reward
+      print "Total domain reward:", reward * self.reward_scaler
 
       print '\n\n'
 
