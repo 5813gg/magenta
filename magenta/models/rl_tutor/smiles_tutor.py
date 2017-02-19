@@ -53,6 +53,8 @@ REWARD_RINGP_MULTIPLIER = 0
 REWARD_QED_MULTIPLIER = 0
 REWARD_SHORTISH_SEQ = -5
 REWARD_SHORT_SEQ = -15
+REWARD_LONGISH_SEQ = -5
+REWARD_LONG_SEQ = -15
 
 class SmilesTutor(RLTutor):
   """Implements a recurrent DQN designed to produce SMILES sequences."""
@@ -441,13 +443,20 @@ class SmilesTutor(RLTutor):
     training_data_average=45.82
     training_data_std=9.37
     training_data_min=19
+    training_data_max=78
 
+    penalty = 0
     if len(self.generated_seq) < training_data_min:
-      return REWARD_SHORT_SEQ
+      penalty += REWARD_SHORT_SEQ
     elif len(self.generated_seq) < training_data_average - 2 * training_data_std:
-      return REWARD_SHORTISH_SEQ
-    else:
-      return 0
+      penalty +=  REWARD_SHORTISH_SEQ
+  
+    if len(self.generated_seq) > training_data_max:
+      penalty += REWARD_LONG_SEQ
+    elif len(self.generated_seq) > training_data_average + 2 * training_data_std:
+      penalty +=  REWARD_LONGISH_SEQ
+
+    return penalty
 
   def render_sequence(self, generated_seq, title='smiles_seq'):
     """Renders a generated SMILES sequence its string version.
