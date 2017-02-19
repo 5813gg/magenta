@@ -45,7 +45,7 @@ def reload_files():
 EOS = 0
 
 # Reward values for desired molecule properties
-REWARD_INVALID_MOLECULE = -25
+REWARD_INVALID_MOLECULE = -50
 REWARD_SA_MULTIPLIER = 1
 REWARD_LOGP_MULTIPLIER = 1
 REWARD_RINGP_MULTIPLIER = 1
