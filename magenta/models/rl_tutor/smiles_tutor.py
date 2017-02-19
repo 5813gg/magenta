@@ -46,6 +46,7 @@ EOS = 0
 
 # Reward values for desired molecule properties
 REWARD_INVALID_LENGTH_MULTIPLIER = -1.2
+REWARD_VALID_BONUS = 50
 REWARD_SA_MULTIPLIER = 1
 REWARD_LOGP_MULTIPLIER = 1
 REWARD_RINGP_MULTIPLIER = 1
@@ -265,6 +266,7 @@ class SmilesTutor(RLTutor):
       if verbose: print "Not a valid molecule. Reward:", penalty * self.reward_scaler
       return penalty
 
+    bonus = REWARD_VALID_BONUS
     sa = REWARD_SA_MULTIPLIER * self.get_sa_score(mol)
     logp = REWARD_LOGP_MULTIPLIER * self.get_logp(mol)
     ringp = REWARD_RINGP_MULTIPLIER * self.get_ring_penalty(mol)
@@ -272,15 +274,16 @@ class SmilesTutor(RLTutor):
     length = REWARD_LENGTH_MULTIPLIER * self.get_length_reward()
     
     if verbose:
+      print "VALID SEQUENCE! Bonus:", bonus * self.reward_scaler
       print "logP reward:", logp * self.reward_scaler
       print "SA reward:", sa * self.reward_scaler
       print "QED reward:", qed * self.reward_scaler
       print "ring penalty reward:", ringp * self.reward_scaler
       print "length reward:", length * self.reward_scaler
       
-      print "Total:", (length + logp + ringp + qed + sa) * self.reward_scaler
+      print "Total:", (bonus + length + logp + ringp + qed + sa) * self.reward_scaler
 
-    return length + logp + ringp + qed + sa
+    return bonus + length + logp + ringp + qed + sa
 
   def convert_seq_to_chars(self, seq):
     """Converts a list of ints to a SMILES string
@@ -573,8 +576,9 @@ class SmilesTutor(RLTutor):
       print self.convert_seq_to_chars(self.generated_seq), '\n'
 
       if len(self.generated_seq) >= 2:
-        self.collect_domain_reward(self.generated_seq[-2], self.generated_seq[-1], verbose=True)
+        reward = self.collect_domain_reward(self.generated_seq[-2], self.generated_seq[-1], verbose=True)
       print "Total data reward:", total_data_reward
+      print "Total domain reward:", reward
 
       print '\n\n'
 
