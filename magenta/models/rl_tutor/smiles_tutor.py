@@ -45,14 +45,14 @@ def reload_files():
 EOS = 0
 
 # Reward values for desired molecule properties
-REWARD_VALID_LENGTH_MULTIPLIER = 10
+REWARD_VALID_LENGTH_MULTIPLIER = 2
 REWARD_INVALID_LENGTH_MULTIPLIER = 0
 REWARD_SA_MULTIPLIER = 0
 REWARD_LOGP_MULTIPLIER = 0
 REWARD_RINGP_MULTIPLIER = 0
 REWARD_QED_MULTIPLIER = 0
-REWARD_SHORTISH_SEQ = -20
-REWARD_SHORT_SEQ = -50
+REWARD_SHORTISH_SEQ = -5
+REWARD_SHORT_SEQ = -15
 
 class SmilesTutor(RLTutor):
   """Implements a recurrent DQN designed to produce SMILES sequences."""
@@ -276,7 +276,7 @@ class SmilesTutor(RLTutor):
 
     if domain_reward != 0 and verbose:
       print 'Cumulative Reward RNN reward:', self.data_reward_this_sequence
-      print 'Total domain reward:', self.reward_scaler * reward
+      print 'Total domain reward:', self.reward_scaler * domain_reward
       print ""
       
     if not self.domain_rewards_only:
