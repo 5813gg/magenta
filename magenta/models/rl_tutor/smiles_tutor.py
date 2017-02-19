@@ -45,7 +45,7 @@ def reload_files():
 EOS = 0
 
 # Reward values for desired molecule properties
-REWARD_INVALID_MOLECULE = -50
+REWARD_INVALID_LENGTH_MULTIPLIER = -12
 REWARD_SA_MULTIPLIER = 1
 REWARD_LOGP_MULTIPLIER = 1
 REWARD_RINGP_MULTIPLIER = 1
@@ -262,7 +262,7 @@ class SmilesTutor(RLTutor):
     mol = self.is_valid_molecule(self.generated_seq)
     if not mol:
       if verbose: print "Not a valid molecule. Reward:", REWARD_INVALID_MOLECULE
-      return REWARD_INVALID_MOLECULE
+      return REWARD_INVALID_LENGTH_MULTIPLIER * len(self.generated_seq)
 
     sa = REWARD_SA_MULTIPLIER * self.get_sa_score(mol)
     logp = REWARD_LOGP_MULTIPLIER * self.get_logp(mol)
