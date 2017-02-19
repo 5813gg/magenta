@@ -569,6 +569,10 @@ class SmilesTutor(RLTutor):
     for i in range(num_times):
       self.generate_and_evaluate_sequence(stat_dict)
       print "Generated sequence:", self.generated_seq
+      print self.convert_seq_to_chars(self.generated_seq), '\n'
+
       self.collect_domain_reward(self.generated_seq[-2], self.generated_seq[-1], verbose=True)
+
+      print '\n\n'
 
     print self.get_stat_dict_string(stat_dict)
