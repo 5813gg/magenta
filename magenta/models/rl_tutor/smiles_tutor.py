@@ -633,12 +633,9 @@ class SmilesTutor(RLTutor):
     return stat_dict
 
   def debug_reward(self, num_times=10):
-    stat_dict = self.initialize_stat_dict()
     for i in range(num_times):
       print "Starting a new sequence"
       self.generate_sequence(verbose=True)
       print "Generated sequence:", self.generated_seq
       print self.convert_seq_to_chars(self.generated_seq), '\n'
       print '\n'
-
-    print self.get_stat_dict_string(stat_dict)
