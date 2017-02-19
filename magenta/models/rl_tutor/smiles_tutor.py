@@ -574,8 +574,6 @@ class SmilesTutor(RLTutor):
       self.generated_seq_step += 1
       last_observation = new_observation
 
-    return reward_rnn_sum
-
   def add_sequence_stats(self, stat_dict):
     """Updates stat dict based on self.generated_seq and desired metrics
 
