@@ -277,7 +277,7 @@ class SmilesTutor(RLTutor):
     domain_reward = self.collect_domain_reward(obs, action, verbose=verbose)
     self.domain_reward_last_n += domain_reward * self.reward_scaler
     
-    if self.is_valid_molecule(self.generated_seq)
+    if self.is_valid_molecule(self.generated_seq):
       self.data_reward_last_n += self.data_reward_this_sequence
       if verbose:
         print 'Sequence is valid! Awarding data reward of', self.data_reward_this_sequence
