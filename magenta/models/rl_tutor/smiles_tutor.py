@@ -262,7 +262,7 @@ class SmilesTutor(RLTutor):
     mol = self.is_valid_molecule(self.generated_seq)
     if not mol:
       penalty = REWARD_INVALID_LENGTH_MULTIPLIER * len(self.generated_seq)
-      if verbose: print "Not a valid molecule. Reward:", penalty
+      if verbose: print "Not a valid molecule. Reward:", penalty * self.reward_scaler
       return penalty
 
     sa = REWARD_SA_MULTIPLIER * self.get_sa_score(mol)
@@ -272,13 +272,13 @@ class SmilesTutor(RLTutor):
     length = REWARD_LENGTH_MULTIPLIER * self.get_length_reward()
     
     if verbose:
-      print "logP reward:", logp
-      print "SA reward:", sa
-      print "QED reward:", qed
-      print "ring penalty reward:", ringp
-      print "length reward:", length
+      print "logP reward:", logp * self.reward_scaler
+      print "SA reward:", sa * self.reward_scaler
+      print "QED reward:", qed * self.reward_scaler
+      print "ring penalty reward:", ringp * self.reward_scaler
+      print "length reward:", length * self.reward_scaler
       
-      print "Total:", length + logp + ringp + qed + sa
+      print "Total:", (length + logp + ringp + qed + sa) * self.reward_scaler
 
     return length + logp + ringp + qed + sa
 
