@@ -45,13 +45,12 @@ def reload_files():
 EOS = 0
 
 # Reward values for desired molecule properties
-REWARD_INVALID_LENGTH_MULTIPLIER = 0
-REWARD_VALID_BONUS = 1
+REWARD_VALID_LENGTH_MULTIPLIER = 1
+REWARD_INVALID_LENGTH_MULTIPLIER = 1
 REWARD_SA_MULTIPLIER = 1
 REWARD_LOGP_MULTIPLIER = 1
 REWARD_RINGP_MULTIPLIER = 1
 REWARD_QED_MULTIPLIER = 1
-REWARD_LENGTH_MULTIPLIER = 1
 REWARD_SHORTISH_SEQ = -1
 REWARD_SHORT_SEQ = -2
 
@@ -270,14 +269,22 @@ class SmilesTutor(RLTutor):
     # Gets and saves log p(a|s) as output by reward_rnn.
     data_reward = self.reward_from_reward_rnn_scores(action, reward_scores)
     self.data_reward_this_sequence += data_reward
+    self.data_reward_last_n += data_reward
 
-    domain_reward = self.collect_domain_reward(obs, action, verbose=verbose)
-    self.domain_reward_last_n += domain_reward * self.reward_scaler
-    
-    if domain_reward == 0: # not end of sequence
-      return 0
+    reward = self.collect_domain_reward(obs, action, verbose=verbose)
+    self.domain_reward_last_n += reward * self.reward_scaler
 
-    if self.is_valid_molecule(self.generated_seq):
+    if domain_reward != 0 and verbose:
+      print 'Cumulative Reward RNN reward:', self.data_reward_this_sequence
+      print 'Total domain reward:', self.reward_scaler * reward
+      print ""
+      
+    if not self.domain_rewards_only:
+      return reward * self.reward_scaler + data_reward
+    else:
+      return reward * self.reward_scaler 
+
+    """if self.is_valid_molecule(self.generated_seq):
       self.data_reward_last_n += self.data_reward_this_sequence
       if verbose:
         print 'Sequence is valid! Awarding data reward of', self.data_reward_this_sequence
@@ -294,6 +301,7 @@ class SmilesTutor(RLTutor):
       print ""
 
     return domain_reward * self.reward_scaler 
+  """
 
 
   def collect_domain_reward(self, obs, action, verbose=False):
@@ -314,18 +322,21 @@ class SmilesTutor(RLTutor):
     if not np.argmax(action) == EOS and len(self.generated_seq) + 1 < self.max_seq_len:
       return 0
 
+    length_penalties = self.get_length_penalty()
+    if verbose and length_penalties != 0:
+      print "Sequence is too short. Penalty:", length_penalties
+
     mol = self.is_valid_molecule(self.generated_seq)
     if not mol:
       penalty = REWARD_INVALID_LENGTH_MULTIPLIER * len(self.generated_seq)
-      if verbose: print "Not a valid molecule. Reward:", penalty * self.reward_scaler
-      return penalty
+      if verbose: print "Not a valid molecule. Penalty:", penalty * self.reward_scaler
+      return penalty + length_penalties
 
-    bonus = REWARD_VALID_BONUS
+    bonus = REWARD_VALID_LENGTH_MULTIPLIER * len(self.generated_seq)
     sa = REWARD_SA_MULTIPLIER * self.get_sa_score(mol)
     logp = REWARD_LOGP_MULTIPLIER * self.get_logp(mol)
     ringp = REWARD_RINGP_MULTIPLIER * self.get_ring_penalty(mol)
     qed = REWARD_QED_MULTIPLIER * self.get_qed(mol)
-    length = REWARD_LENGTH_MULTIPLIER * self.get_length_reward()
     
     if verbose:
       print "VALID SEQUENCE! Bonus:", bonus * self.reward_scaler
@@ -335,9 +346,9 @@ class SmilesTutor(RLTutor):
       print "ring penalty reward:", ringp * self.reward_scaler
       print "length reward:", length * self.reward_scaler
       
-      print "Total:", (bonus + length + logp + ringp + qed + sa) * self.reward_scaler
+      print "Total:", (bonus + length_penalties + logp + ringp + qed + sa) * self.reward_scaler
 
-    return bonus + length + logp + ringp + qed + sa
+    return bonus + length_penalties + logp + ringp + qed + sa
 
   def convert_seq_to_chars(self, seq):
     """Converts a list of ints to a SMILES string
@@ -417,7 +428,7 @@ class SmilesTutor(RLTutor):
         return 0
     return -1* (cycle_length - 6)
 
-  def get_length_reward(self):
+  def get_length_penalty(self):
     """Calculates a penalty based on unusually short or long seqs.
 
     Args:
