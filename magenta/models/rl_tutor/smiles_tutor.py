@@ -53,8 +53,8 @@ REWARD_RINGP_MULTIPLIER = 0
 REWARD_QED_MULTIPLIER = 0
 REWARD_SHORTISH_SEQ = -5
 REWARD_SHORT_SEQ = -15
-REWARD_LONGISH_SEQ = -5
-REWARD_LONG_SEQ = -15
+REWARD_LONGISH_SEQ = -30
+REWARD_LONG_SEQ = -90
 
 class SmilesTutor(RLTutor):
   """Implements a recurrent DQN designed to produce SMILES sequences."""
