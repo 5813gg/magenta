@@ -17,7 +17,7 @@ from magenta.common import tf_lib
 import smiles_rnn
 
 FLAGS = tf.app.flags.FLAGS
-tf.app.flags.DEFINE_string('output_dir', '/home/natasha/Dropbox/Google/SMILES-Project/output/',
+tf.app.flags.DEFINE_string('output_dir', '/home/natasha/Dropbox/Google/SMILES-Project/output/smiles_rnn_512/',
                            'Directory where the model will save its'
                            'compositions and checkpoints (midi files)')
 tf.app.flags.DEFINE_string('data_file', '/home/natasha/Dropbox/Google/SMILES-Project/data/250k_drugs_clean.smi',
@@ -29,9 +29,9 @@ tf.app.flags.DEFINE_string('vocab_file', '/home/natasha/Dropbox/Google/SMILES-Pr
 tf.app.flags.DEFINE_string('pickle_file', '/home/natasha/Dropbox/Google/SMILES-Project/data/smiles.p',
                            'Filename of a pickle file containing pre-processed '
                            'SMILES training batches.')
-tf.app.flags.DEFINE_integer('training_steps', 1000000,
+tf.app.flags.DEFINE_integer('training_steps', 50000,
                             'The number of steps used to train the model')
-tf.app.flags.DEFINE_integer('output_every_nth', 10000,
+tf.app.flags.DEFINE_integer('output_every_nth', 1000,
                             'The number of steps before the model will evaluate'
                             'itself and store a checkpoint')
 
@@ -45,7 +45,7 @@ def main(_):
                                  initial_learning_rate=0.01,
                                  decay_steps=1000,
                                  decay_rate=0.85,
-                                 rnn_layer_sizes=[100],
+                                 rnn_layer_sizes=[512],
                                  one_hot_length=35,
                                  exponentially_decay_learning_rate=True)
 

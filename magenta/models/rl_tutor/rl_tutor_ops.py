@@ -145,7 +145,7 @@ def smiles_dqn_hparams():
                 train_every_nth=5,
                 minibatch_size=32,
                 discount_rate=0.95,
-                max_experience=100000,
+                max_experience=500000,
                 target_network_update_rate=0.01,
                 initial_learning_rate=0.0001)
 
