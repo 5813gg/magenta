@@ -257,7 +257,7 @@ class SmilesTutor(RLTutor):
     Returns:
       Float reward value.
     """
-    if not np.argmax(action) == EOS:
+    if not np.argmax(action) == EOS and len(self.generated_seq) < self.max_seq_len:
       return 0
 
     mol = self.is_valid_molecule(self.generated_seq)
