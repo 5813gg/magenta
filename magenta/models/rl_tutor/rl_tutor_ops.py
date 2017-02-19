@@ -124,8 +124,20 @@ def basic_rnn_hparams():
                         one_hot_length=NUM_CLASSES,
                         exponentially_decay_learning_rate=True)
 
+def default_dqn_hparams():
+  """Generates the default hparams for RLTuner DQN model."""
+  return HParams(random_action_probability=0.1,
+                        store_every_nth=1,
+                        train_every_nth=5,
+                        minibatch_size=32,
+                        discount_rate=0.95,
+                        max_experience=100000,
+                        target_network_update_rate=0.01,
+                        initial_learning_rate=0.001)
+
+
 def smiles_hparams():
-  """Generates the hparams used to train note rnn used in paper."""
+  """Generates the hparams used to train smiles rnn."""
   return HParams(use_dynamic_rnn=True,
                         batch_size=BATCH_SIZE,
                         lr=0.0002,
@@ -139,7 +151,7 @@ def smiles_hparams():
                         exponentially_decay_learning_rate=True)
 
 def smiles_dqn_hparams():
-  """Generates the default hparams for RLTuner DQN model."""
+  """Generates the default hparams for SmilesTutor DQN model."""
   return HParams(random_action_probability=0.1,
                 store_every_nth=1,
                 train_every_nth=5,
@@ -149,17 +161,18 @@ def smiles_dqn_hparams():
                 target_network_update_rate=0.01,
                 initial_learning_rate=0.0001)
 
-def default_dqn_hparams():
-  """Generates the default hparams for RLTuner DQN model."""
-  return HParams(random_action_probability=0.1,
-                        store_every_nth=1,
-                        train_every_nth=5,
-                        minibatch_size=32,
-                        discount_rate=0.95,
-                        max_experience=100000,
-                        target_network_update_rate=0.01,
-                        initial_learning_rate=0.001)
-
+def smiles_reward_values():
+  """Generates the default reward values for the smiles model."""
+  return HParams(valid_length_multiplier=2,
+                 invalid_length_multiplier=0,
+                 sa_multiplier=1,
+                 logp_multiplier=0.5,
+                 ringp_multiplier=1,
+                 qed_multiplier=5,
+                 shortish_seq=-5,
+                 short_seq=-30,
+                 longish_seq=-50,
+                 long_seq=-100)
 
 def autocorrelate(signal, lag=1):
   """Gives the correlation coefficient for the signal's correlation with itself.

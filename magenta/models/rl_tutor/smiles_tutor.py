@@ -44,24 +44,13 @@ def reload_files():
 # Special token indicating EOS
 EOS = 0
 
-# Reward values for desired molecule properties
-REWARD_VALID_LENGTH_MULTIPLIER = 2
-REWARD_INVALID_LENGTH_MULTIPLIER = 0
-REWARD_SA_MULTIPLIER = 2
-REWARD_LOGP_MULTIPLIER = 1
-REWARD_RINGP_MULTIPLIER = 1
-REWARD_QED_MULTIPLIER = 10
-REWARD_SHORTISH_SEQ = -5
-REWARD_SHORT_SEQ = -15
-REWARD_LONGISH_SEQ = -30
-REWARD_LONG_SEQ = -90
-
 class SmilesTutor(RLTutor):
   """Implements a recurrent DQN designed to produce SMILES sequences."""
 
   def __init__(self, output_dir,
                vocab_file='/home/natasha/Dropbox/Google/SMILES-Project/data/zinc_char_list.json',
                max_seq_len=120,
+               reward_values=None,
 
                # Hyperparameters
                dqn_hparams=None,
@@ -134,6 +123,9 @@ class SmilesTutor(RLTutor):
         MelodyRNN networks and build the graph in the constructor.
     """
     print "In child class SmilesTutor"
+
+    if reward_values is None:
+      self.reward_values = rl_tutor_ops.smiles_reward_values()
 
     if rnn_hparams is None:
       rnn_hparams = rl_tutor_ops.smiles_hparams()
@@ -333,15 +325,15 @@ class SmilesTutor(RLTutor):
 
     mol = self.is_valid_molecule(self.generated_seq)
     if not mol:
-      penalty = REWARD_INVALID_LENGTH_MULTIPLIER * len(self.generated_seq)
+      penalty = self.reward_values.invalid_length_multiplier * len(self.generated_seq)
       if verbose: print "Not a valid molecule. Penalty:", penalty * self.reward_scaler
       return penalty + length_penalties
 
-    bonus = REWARD_VALID_LENGTH_MULTIPLIER * len(self.generated_seq)
-    sa = REWARD_SA_MULTIPLIER * self.get_sa_score(mol)
-    logp = REWARD_LOGP_MULTIPLIER * self.get_logp(mol)
-    ringp = REWARD_RINGP_MULTIPLIER * self.get_ring_penalty(mol)
-    qed = REWARD_QED_MULTIPLIER * self.get_qed(mol)
+    bonus = self.reward_values.valid_length_multiplier * len(self.generated_seq)
+    sa = self.reward_values.sa_multiplier * self.get_sa_score(mol)
+    logp = self.reward_values.logp_multiplier * self.get_logp(mol)
+    ringp = self.reward_values.ringp_multiplier * self.get_ring_penalty(mol)
+    qed = self.reward_values.qed_multiplier * self.get_qed(mol)
     
     if verbose:
       print "VALID SEQUENCE! Bonus:", bonus * self.reward_scaler
@@ -447,14 +439,14 @@ class SmilesTutor(RLTutor):
 
     penalty = 0
     if len(self.generated_seq) < training_data_min:
-      penalty += REWARD_SHORT_SEQ
+      penalty += self.reward_values.short_seq
     elif len(self.generated_seq) < training_data_average - 2 * training_data_std:
-      penalty +=  REWARD_SHORTISH_SEQ
+      penalty +=  self.reward_values.shortish_seq
   
     if len(self.generated_seq) > training_data_max:
-      penalty += REWARD_LONG_SEQ
+      penalty += self.reward_values.long_seq
     elif len(self.generated_seq) > training_data_average + 2 * training_data_std:
-      penalty +=  REWARD_LONGISH_SEQ
+      penalty +=  self.reward_values.longish_seq
 
     return penalty
 
