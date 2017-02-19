@@ -45,8 +45,8 @@ def reload_files():
 EOS = 0
 
 # Reward values for desired molecule properties
-REWARD_INVALID_LENGTH_MULTIPLIER = -2
-REWARD_VALID_BONUS = 50
+REWARD_INVALID_LENGTH_MULTIPLIER = 0
+REWARD_VALID_BONUS = 1
 REWARD_SA_MULTIPLIER = 1
 REWARD_LOGP_MULTIPLIER = 1
 REWARD_RINGP_MULTIPLIER = 1
@@ -152,6 +152,9 @@ class SmilesTutor(RLTutor):
     self.max_seq_len = max_seq_len
     self.load_vocab()
 
+    # State variables needed by reward functions.
+    self.data_reward_this_sequence = 0
+
   def load_vocab(self):
     print "Loading vocabulary from file", self.vocab_file
     if not os.path.exists(self.vocab_file):
@@ -241,6 +244,50 @@ class SmilesTutor(RLTutor):
     if len(self.generated_seq) >= self.max_seq_len:
       return True
     return False
+
+  def reset_for_new_sequence(self):
+    """Starts the models internal composition over at beat 0, with no notes.
+
+    Also resets statistics about whether the composition is in the middle of a
+    melodic leap.
+    """
+    self.generated_seq_step = 0
+    self.generated_seq = []
+    self.data_reward_this_sequence = 0
+
+  def collect_reward(self, obs, action, reward_scores, verbose=False):
+    """Collects reward from pre-trained RNN and domain-specific functions.
+
+    Args:
+      obs: A one-hot encoding of the observed token.
+      action: A one-hot encoding of the chosen action.
+      reward_scores: The value for each token as output by the reward_rnn.
+      verbose: If True, additional logging statements about the reward after
+        each function will be printed.
+    Returns:
+      Float reward value.
+    """
+    # Gets and saves log p(a|s) as output by reward_rnn.
+    data_reward = self.reward_from_reward_rnn_scores(action, reward_scores)
+    self.data_reward_this_sequence += data_reward
+
+    if not self.is_end_of_sequence():
+      return 0
+
+    domain_reward = self.collect_domain_reward(obs, action, verbose=verbose)
+    self.domain_reward_last_n += domain_reward * self.reward_scaler
+    
+    if self.is_valid_molecule(self.generated_seq)
+      self.data_reward_last_n += self.data_reward_this_sequence
+      if verbose:
+        print 'Sequence is valid! Awarding data reward of', self.data_reward_this_sequence
+        print 'Total domain reward:', self.reward_scaler * reward
+        print ""
+      
+    if not self.domain_rewards_only:
+      return domain_reward * self.reward_scaler + self.data_reward_this_sequence
+    else:
+      return domain_reward * self.reward_scaler 
 
   def collect_domain_reward(self, obs, action, verbose=False):
     """Calls whatever reward function is indicated in the reward_mode field.
