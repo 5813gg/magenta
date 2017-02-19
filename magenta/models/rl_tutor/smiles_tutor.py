@@ -566,7 +566,6 @@ class SmilesTutor(RLTutor):
 
       action_idx = np.argmax(action)
       obs_idx = np.argmax(new_observation)
-      reward_rnn_sum += reward_scores[action_idx]
 
       if verbose:
         self.collect_reward(last_observation, new_observation, reward_scores, verbose=True)
