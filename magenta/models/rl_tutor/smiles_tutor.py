@@ -281,7 +281,7 @@ class SmilesTutor(RLTutor):
       self.data_reward_last_n += self.data_reward_this_sequence
       if verbose:
         print 'Sequence is valid! Awarding data reward of', self.data_reward_this_sequence
-        print 'Total domain reward:', self.reward_scaler * reward
+        print 'Total domain reward:', self.reward_scaler * domain_reward
         print ""
       
       # only get data rewards if valid molecule and not pure rl
