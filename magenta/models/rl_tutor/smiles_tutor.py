@@ -47,10 +47,10 @@ EOS = 0
 # Reward values for desired molecule properties
 REWARD_VALID_LENGTH_MULTIPLIER = 2
 REWARD_INVALID_LENGTH_MULTIPLIER = 0
-REWARD_SA_MULTIPLIER = 0
-REWARD_LOGP_MULTIPLIER = 0
-REWARD_RINGP_MULTIPLIER = 0
-REWARD_QED_MULTIPLIER = 0
+REWARD_SA_MULTIPLIER = 2
+REWARD_LOGP_MULTIPLIER = 1
+REWARD_RINGP_MULTIPLIER = 1
+REWARD_QED_MULTIPLIER = 10
 REWARD_SHORTISH_SEQ = -5
 REWARD_SHORT_SEQ = -15
 REWARD_LONGISH_SEQ = -30
@@ -67,7 +67,7 @@ class SmilesTutor(RLTutor):
                dqn_hparams=None,
                reward_mode='default',
                reward_scaler=1.0,
-               exploration_mode='boltzmann',
+               exploration_mode='egreedy',
                priming_mode='random',
                stochastic_observations=False,
                algorithm='q',      

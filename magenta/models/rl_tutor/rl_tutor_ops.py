@@ -138,6 +138,16 @@ def smiles_hparams():
                         one_hot_length=NUM_CLASSES_SMILE,
                         exponentially_decay_learning_rate=True)
 
+def smiles_dqn_hparams():
+  """Generates the default hparams for RLTuner DQN model."""
+  return HParams(random_action_probability=0.1,
+                store_every_nth=1,
+                train_every_nth=5,
+                minibatch_size=32,
+                discount_rate=0.95,
+                max_experience=100000,
+                target_network_update_rate=0.01,
+                initial_learning_rate=0.0001)
 
 def default_dqn_hparams():
   """Generates the default hparams for RLTuner DQN model."""
@@ -147,7 +157,8 @@ def default_dqn_hparams():
                         minibatch_size=32,
                         discount_rate=0.95,
                         max_experience=100000,
-                        target_network_update_rate=0.01)
+                        target_network_update_rate=0.01,
+                        initial_learning_rate=0.001)
 
 
 def autocorrelate(signal, lag=1):

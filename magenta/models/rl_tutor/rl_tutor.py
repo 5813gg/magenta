@@ -142,7 +142,7 @@ class RLTutor(object):
       self.target_network_update_rate = tf.constant(
           self.dqn_hparams.target_network_update_rate)
 
-      self.optimizer = tf.train.AdamOptimizer()
+      self.optimizer = tf.train.AdamOptimizer(learning_rate=dqn_hparams.initial_learning_rate)
 
       # DQN state.
       self.actions_executed_so_far = 0
