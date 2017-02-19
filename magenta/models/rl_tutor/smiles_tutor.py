@@ -571,7 +571,7 @@ class SmilesTutor(RLTutor):
       print "Generated sequence:", self.generated_seq
       print self.convert_seq_to_chars(self.generated_seq), '\n'
 
-      if len(self.generated_seq) < 2:
+      if len(self.generated_seq) >= 2:
         self.collect_domain_reward(self.generated_seq[-2], self.generated_seq[-1], verbose=True)
 
       print '\n\n'
