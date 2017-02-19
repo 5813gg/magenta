@@ -271,12 +271,12 @@ class SmilesTutor(RLTutor):
     data_reward = self.reward_from_reward_rnn_scores(action, reward_scores)
     self.data_reward_this_sequence += data_reward
 
-    if not self.is_end_of_sequence():
-      return 0
-
     domain_reward = self.collect_domain_reward(obs, action, verbose=verbose)
     self.domain_reward_last_n += domain_reward * self.reward_scaler
     
+    if domain_reward == 0: # not end of sequence
+      return 0
+
     if self.is_valid_molecule(self.generated_seq):
       self.data_reward_last_n += self.data_reward_this_sequence
       if verbose:
@@ -284,10 +284,17 @@ class SmilesTutor(RLTutor):
         print 'Total domain reward:', self.reward_scaler * reward
         print ""
       
-    if not self.domain_rewards_only:
-      return domain_reward * self.reward_scaler + self.data_reward_this_sequence
-    else:
-      return domain_reward * self.reward_scaler 
+      # only get data rewards if valid molecule and not pure rl
+      if not self.domain_rewards_only:
+        return domain_reward * self.reward_scaler + self.data_reward_this_sequence
+    
+    if verbose:
+      print 'Invalid seq. No data reward.'
+      print 'Total domain reward:', self.reward_scaler * reward
+      print ""
+
+    return domain_reward * self.reward_scaler 
+
 
   def collect_domain_reward(self, obs, action, verbose=False):
     """Calls whatever reward function is indicated in the reward_mode field.
@@ -532,20 +539,16 @@ class SmilesTutor(RLTutor):
 
     return return_str
 
-  def generate_sequence(self, sample_next_obs=True):
+  def generate_sequence(self, sample_next_obs=True, verbose=False):
     """Generates a sequence using the model, stores statistics about it in a dict.
 
     Args:
       sample_next_obs: If True, each note will be sampled from the model's
         output distribution. If False, each note will be the one with maximum
         value according to the model.
-    Returns:
-      A dictionary updated to include statistics about the composition just
-      created.
     """
     last_observation = self.prime_internal_models()
     self.reset_for_new_sequence()
-    reward_rnn_sum = 0
 
     i = 0
     while not self.is_end_of_sequence():
@@ -564,6 +567,9 @@ class SmilesTutor(RLTutor):
       action_idx = np.argmax(action)
       obs_idx = np.argmax(new_observation)
       reward_rnn_sum += reward_scores[action_idx]
+
+      if verbose:
+        self.collect_reward(last_observation, new_observation, reward_scores, verbose=True)
 
       self.generated_seq.append(np.argmax(new_observation))
       self.generated_seq_step += 1
@@ -618,15 +624,9 @@ class SmilesTutor(RLTutor):
   def debug_reward(self, num_times=10):
     stat_dict = self.initialize_stat_dict()
     for i in range(num_times):
-      total_data_reward = self.generate_sequence(stat_dict)
+      self.generate_sequence(verbose=True)
       print "Generated sequence:", self.generated_seq
       print self.convert_seq_to_chars(self.generated_seq), '\n'
-
-      if len(self.generated_seq) >= 2:
-        reward = self.collect_domain_reward(self.generated_seq[-2], self.generated_seq[-1], verbose=True)
-      print "Total data reward:", total_data_reward
-      print "Total domain reward:", reward * self.reward_scaler
-
       print '\n\n'
 
     print self.get_stat_dict_string(stat_dict)
