@@ -407,7 +407,7 @@ class SmilesTutor(RLTutor):
     stat_dict = self.initialize_stat_dict()
 
     for i in range(num_sequences):
-      self.generate_and_evaluate_sequence()
+      self.generate_sequence()
       stat_dict = self.add_sequence_stats(stat_dict)
 
     print self.get_stat_dict_string(stat_dict)
