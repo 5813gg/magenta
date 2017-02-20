@@ -175,6 +175,7 @@ def smiles_reward_values():
                 long_seq=0,
                 data_scalar=1,
                 any_valid_bonus=1,
+                any_invalid_penalty=1,
                 end_invalid_penalty=-10,
                 end_valid_bonus=10)
 

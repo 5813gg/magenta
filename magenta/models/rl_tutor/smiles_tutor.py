@@ -323,7 +323,7 @@ class SmilesTutor(RLTutor):
     
     # invalid molecule, sequence not over
     if not mol and not np.argmax(action) == EOS and len(self.generated_seq) + 1 < self.max_seq_len:
-      return 0
+      return self.reward_values.any_invalid_penalty
 
     # valid molecule
     if mol:
