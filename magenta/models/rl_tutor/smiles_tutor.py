@@ -538,7 +538,7 @@ class SmilesTutor(RLTutor):
     reward_batch = self.output_every_nth
     num_points = len(self.rewards_batched)
     x = [reward_batch * i for i in np.arange(num_points)]
-    total = [rl_net.avg_train_domain_reward_per_sequence[i] + rl_net.avg_train_data_reward_per_sequence[i] for i in range(num_points)]
+    total = [self.avg_train_domain_reward_per_sequence[i] + self.avg_train_data_reward_per_sequence[i] for i in range(num_points)]
 
     plt.figure()
     plt.plot(x, total)
