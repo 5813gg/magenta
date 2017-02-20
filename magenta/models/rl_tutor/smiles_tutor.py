@@ -153,6 +153,13 @@ class SmilesTutor(RLTutor):
     self.avg_train_data_reward_per_sequence = []
     self.avg_train_domain_reward_per_sequence = []
 
+    # needed for evaluation
+    self.eval_char_frequency = [0] * self.vocab_size
+    self.eval_sum_seq_length = 0
+    self.eval_num_valid = 0 
+    self.eval_avg_seq_length_during_training = []
+    self.eval_num_valid_during_training = []
+
   def load_vocab(self):
     print "Loading vocabulary from file", self.vocab_file
     if not os.path.exists(self.vocab_file):
@@ -551,6 +558,76 @@ class SmilesTutor(RLTutor):
       plt.savefig(directory + '/' + image_name)
     else:
       plt.show()
+
+  def plot_evaluation(self, image_name=None, directory=None, start_at_epoch=0):
+    """Plots the rewards received as the model was evaluated during training.
+
+    If image_name is None, should be used in jupyter notebook. If 
+    called outside of jupyter, execution of the program will halt and 
+    a pop-up with the graph will appear. Execution will not continue 
+    until the pop-up is closed.
+
+    Args:
+      image_name: Name to use when saving the plot to a file. If not
+        provided, image will be shown immediately.
+      directory: Path to directory where figure should be saved. If
+        None, defaults to self.output_dir.
+      start_at_epoch: Training epoch where the plot should begin.
+    """
+    if directory is None:
+      directory = self.output_dir
+
+    RLTutor.plot_evaluation(self, image_name=image_name, directory=directory,
+                            start_at_epoch=start_at_epoch)
+
+    reward_batch = self.output_every_nth
+    num_points = len(self.eval_avg_seq_length_during_training)
+    x = [reward_batch * i for i in np.arange(num_points)]
+    start_index = start_at_epoch / self.output_every_nth
+    plt.figure()
+    plt.plot(x[start_index:], self.eval_avg_seq_length_during_training[start_index:])
+    plt.plot(x[start_index:], self.eval_num_valid_during_training[start_index:])
+    plt.xlabel('Training epoch')
+    plt.ylabel('Sequence statistics')
+    plt.legend(['Avg. length', 'Num valid'], loc='best')
+    if image_name is not None:
+      plt.savefig(directory + '/' + image_name)
+    else:
+      plt.show()
+
+  def initialize_evaluation_stats(self):
+    self.eval_char_frequency = [0] * self.vocab_size
+    self.eval_sum_seq_length = 0
+    self.eval_num_valid = 0 
+  
+  def add_seq_to_evaluation_stats(self, seq):
+    self._add_seq_to_eval_char_frequency(seq)
+    self.eval_sum_seq_length += len(seq)
+    if self.is_valid_molecule(seq):
+      self.eval_num_valid
+  
+  def _add_seq_to_eval_char_frequency(self, seq):
+    for x in seq:
+      self.eval_char_frequency[x] += 1
+  
+  def plot_char_frequency(self):
+    x = np.arange(len(self.eval_char_frequency))
+    tick_labels = rl_net.convert_seq_to_chars(x)
+    plt.figure()
+    plt.bar(x,self.eval_char_frequency)
+    plt.xticks(x, tick_labels)
+    plt.show()
+  
+  def save_evaluation_stats(self, num_trials):
+    avg_seq_length = self.eval_sum_seq_length / float(num_trials)
+
+    print "\tAverage length:", avg_seq_length
+    print "\tNum valid:", self.eval_num_valid
+
+    self.eval_avg_seq_length_during_training.append(avg_seq_length)
+    self.eval_num_valid_during_training.append(self.eval_num_valid)
+
+    self.plot_char_frequency()
   
   # The following functions evaluate generated molecules for quality.
   # TODO: clean up since there is code repeated from rl_tuner_eval_metric

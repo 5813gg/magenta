@@ -227,6 +227,15 @@ class RLTutor(object):
     Should be overwritten in child class.
     """
     pass
+  
+  def initialize_evaluation_stats(self):
+    pass
+  
+  def add_seq_to_evaluation_stats(self, seq):
+    pass
+  
+  def save_evaluation_stats(self, num_trials):
+    pass
 
   def initialize(self, restore_from_checkpoint=True):
     """Initializes internal RNN models, builds the graph, starts the session.
@@ -748,6 +757,8 @@ class RLTutor(object):
     domain_rewards = [0] * num_trials
     total_rewards = [0] * num_trials
 
+    self.initialize_evaluation_stats()
+
     for t in range(num_trials):
 
       last_observation = self.prime_internal_models()
@@ -782,10 +793,14 @@ class RLTutor(object):
         self.generated_seq.append(np.argmax(new_observation))
         self.generated_seq_step += 1
         last_observation = new_observation
+      
+      self.add_seq_to_evaluation_stats(self.generated_seq)
 
     self.eval_avg_reward.append(np.mean(total_rewards))
     self.eval_avg_data_reward.append(np.mean(data_rewards))
     self.eval_avg_domain_reward.append(np.mean(domain_rewards))
+
+    self.save_evaluation_stats(num_trials)
 
   def collect_reward(self, obs, action, reward_scores, verbose=False):
     """Collects reward from pre-trained RNN and domain-specific functions.
