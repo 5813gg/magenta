@@ -264,7 +264,7 @@ class SmilesTutor(RLTutor):
       Float reward value.
     """
     # Gets and saves log p(a|s) as output by reward_rnn.
-    data_reward = self.reward_from_reward_rnn_scores(action, reward_scores)
+    data_reward = self.reward_values.data_scalar * self.reward_from_reward_rnn_scores(action, reward_scores)
     self.data_reward_this_sequence += data_reward
     self.data_reward_last_n += data_reward
 

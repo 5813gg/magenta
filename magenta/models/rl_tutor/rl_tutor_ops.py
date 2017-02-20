@@ -172,7 +172,8 @@ def smiles_reward_values():
                  shortish_seq=-5,
                  short_seq=-30,
                  longish_seq=-50,
-                 long_seq=-100)
+                 long_seq=-100,
+                 data_scalar=1)
 
 def autocorrelate(signal, lag=1):
   """Gives the correlation coefficient for the signal's correlation with itself.
