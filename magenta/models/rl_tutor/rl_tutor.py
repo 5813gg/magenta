@@ -489,7 +489,7 @@ class RLTutor(object):
         print "Evaluating model..."
         self.evaluate_model()
 
-        self.save_rewards_for_last_steps()
+        self.save_rewards_for_last_n_steps()
 
         self.save_model(self.algorithm)
 
@@ -512,7 +512,7 @@ class RLTutor(object):
         self.reset_for_new_sequence()
         last_observation = self.prime_internal_models()
 
-  def save_rewards_for_last_steps(self):
+  def save_rewards_for_last_n_steps(self):
     if self.algorithm == 'g':
       self.rewards_batched.append(
         self.domain_reward_last_n + self.data_reward_last_n)

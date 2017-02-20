@@ -257,8 +257,9 @@ class SmilesTutor(RLTutor):
     self.data_reward_this_sequence = 0
     self.domain_reward_this_sequence = 0
 
-  def save_rewards_for_last_steps(self):
-    super(RLTutor, self).save_rewards_for_last_steps()
+  def save_rewards_for_last_n_steps(self):
+    #super(RLTutor, self).save_rewards_for_last_n_steps()
+    RLTutor.save_rewards_for_last_n_steps(self)
 
     avg_data_reward = float(self.data_reward_last_n) / self.num_sequences_last_n
     self.avg_train_data_reward_per_sequence.append(avg_data_reward)
@@ -531,7 +532,8 @@ class SmilesTutor(RLTutor):
     """
     if directory is None:
       directory = self.output_dir
-    super(RLTutor, self).plot_rewards(image_name=image_name, directory=directory)
+    #super(RLTutor, self).plot_rewards(image_name=image_name, directory=directory)
+    RLTutor.save_rewards_for_last_n_steps(self, image_name=image_name, directory=directory)
 
     reward_batch = self.output_every_nth
     x = [reward_batch * i for i in np.arange(len(self.rewards_batched))]
