@@ -331,19 +331,19 @@ class SmilesTutor(RLTutor):
       logp = self.reward_values.logp_multiplier * self.get_logp(mol)
       ringp = self.reward_values.ringp_multiplier * self.get_ring_penalty(mol)
       qed = self.reward_values.qed_multiplier * self.get_qed(mol)
-      
+      sum_mol_rewards = logp + ringp + qed + sa
+
       if verbose:
-        print "VALID SEQUENCE! Bonus:", bonus * self.reward_scaler
+        print "VALID SEQUENCE!"
         print "logP reward:", logp * self.reward_scaler
         print "SA reward:", sa * self.reward_scaler
         print "QED reward:", qed * self.reward_scaler
         print "ring penalty reward:", ringp * self.reward_scaler
         
-        print "Total:", (bonus + logp + ringp + qed + sa) * self.reward_scaler
+        print "Total:", sum_mol_rewards * self.reward_scaler
 
     # valid molecule, sequence not over
     if mol and not np.argmax(action) == EOS and len(self.generated_seq) + 1 < self.max_seq_len:
-      sum_mol_rewards = logp + ringp + qed + sa
       if verbose:
         print "Sequence unfinished, getting small reward for valid sequence:", self.reward_values.any_valid_bonus
       return self.reward_values.any_valid_bonus + sum_mol_rewards
