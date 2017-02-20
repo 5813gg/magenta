@@ -357,10 +357,10 @@ class SmilesTutor(RLTutor):
 
     #end_bonus = self.reward_values.valid_length_multiplier * len(self.generated_seq)
     if mol:
-      if verbose: print "Applying final bonus for ending on valid sequence!", self.reward_values.end_valid_bonus
+      if verbose: print "Applying final bonus for ending on valid sequence!", self.reward_values.end_valid_bonus * self.reward_scaler
       return sum_mol_rewards + length_penalties + self.reward_values.end_valid_bonus
     else:
-      if verbose: print "Penalizing ending on invalid sequence!", self.reward_values.end_invalid_penalty
+      if verbose: print "Penalizing ending on invalid sequence!", self.reward_values.end_invalid_penalty * self.reward_scaler
       return length_penalties + self.reward_values.end_invalid_penalty
     
 
