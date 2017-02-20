@@ -353,7 +353,7 @@ class SmilesTutor(RLTutor):
     # invalid molecule, sequence not over
     if not mol and not np.argmax(action) == EOS and len(self.generated_seq) + 1 < self.max_seq_len:
       if verbose: print "Temporarily invalid penalty:", self.reward_values.any_invalid_penalty * self.reward_scaler
-      return self.reward_values.any_invalid_penalty + self.carbon_penalty
+      return self.reward_values.any_invalid_penalty + carbon_penalty
 
     # valid molecule
     if mol:
