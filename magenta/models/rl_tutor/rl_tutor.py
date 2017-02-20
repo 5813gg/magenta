@@ -59,6 +59,7 @@ class RLTutor(object):
                # Logistics.
                input_size=rl_tutor_ops.NUM_CLASSES,
                num_actions=rl_tutor_ops.NUM_CLASSES,
+               train_seq_length=32,
                save_name='rl_tuner.ckpt',
                output_every_nth=1000,
                summary_writer=None,
@@ -115,6 +116,7 @@ class RLTutor(object):
     with self.graph.as_default():
       # Memorize arguments.
       self.input_size = input_size
+      self.train_seq_length = train_seq_length
       self.num_actions = num_actions
       self.output_every_nth = output_every_nth
       self.output_dir = output_dir
@@ -449,10 +451,8 @@ class RLTutor(object):
     last_observation = self.prime_internal_models()
 
     for i in range(num_steps):
-      # Experiencing observation, state, action, reward, new observation,
-      # new state tuples, and storing them.
-      state = np.array(self.q_network.state_value).flatten()
-      reward_rnn_state = np.array(self.reward_rnn.state_value).flatten()
+      # Experiencing observation, action, reward, new observation tuples and
+      # storing them.
 
       if self.exploration_mode == 'boltzmann' or self.stochastic_observations:
         action, new_observation, reward_scores = self.action(
@@ -464,8 +464,6 @@ class RLTutor(object):
                                             enable_random=enable_random,
                                             sample_next_obs=False)
         new_observation = action
-      new_state = np.array(self.q_network.state_value).flatten()
-      new_reward_state = np.array(self.reward_rnn.state_value).flatten()
 
       if verbose:
         print "Action (in train func):", np.argmax(action)
@@ -475,16 +473,12 @@ class RLTutor(object):
         r_obs = self.reward_from_reward_rnn_scores(new_observation, 
                                                    reward_scores)
         print "reward_rnn output for new obs (in train func):", r_obs
-        r_diff = np.sum((reward_rnn_state - new_reward_state)**2)
-        print "Diff between successive reward_rnn states:", r_diff
-        s_diff = np.sum((new_state - new_reward_state)**2)
-        print "Diff between reward_rnn state and q_network state:", s_diff
 
       reward = self.collect_reward(last_observation, new_observation, 
                                    reward_scores, verbose=verbose)
 
-      self.store(last_observation, state, action, reward, new_observation,
-                 new_state, new_reward_state)
+      new_seq = self.generated_seq + [new_observation]
+      self.store(self.generated_seq, action, reward, new_seq)
 
       # Used to keep track of how the reward is changing over time.
       self.reward_last_n += reward
@@ -619,30 +613,25 @@ class RLTutor(object):
                                                    self.num_actions)).flatten()
         return action, next_obs, reward_scores
 
-  def store(self, observation, state, action, reward, newobservation, newstate, 
-            new_reward_state):
+  def store(self, observation, action, reward, newobservation):
     """Stores an experience in the model's experience replay buffer.
 
-    One experience consists of an initial observation and internal LSTM state,
-    which led to the execution of an action, the receipt of a reward, and
-    finally a new observation and a new LSTM internal state.
+    One experience consists of an observation, which is a list of items 
+    in the sequence so far, an action, a received reward, and finally a 
+    new observation which is the list of items in the sequence so far with
+    the newest observed token appended.
 
     Args:
-      observation: A one hot encoding of an observed token.
-      state: The internal state of the q_network MelodyRNN LSTM model.
+      observation: A list of integers representing the tokens in the 
+        sequence up to the current time step. 
       action: A one hot encoding of action taken by network.
       reward: Reward received for taking the action.
       newobservation: The next observation that resulted from the action.
-        Unless stochastic_observations is True, the action and new
-        observation will be the same.
-      newstate: The internal state of the q_network MelodyRNN that is
-        observed after taking the action.
-      new_reward_state: The internal state of the reward_rnn network that is 
-        observed after taking the action
+        Unless stochastic_observations is True, the newobservation will 
+        be the old observatio with the action argmax appended. 
     """
     if self.num_times_store_called % self.dqn_hparams.store_every_nth == 0:
-      self.experience.append((observation, state, action, reward,
-                              newobservation, newstate, new_reward_state))
+      self.experience.append((observation, action, reward, newobservation))
     self.num_times_store_called += 1
 
   def training_step(self):
@@ -661,31 +650,25 @@ class RLTutor(object):
                               self.dqn_hparams.minibatch_size)
       samples = [self.experience[i] for i in samples]
 
+      # Initial states.
+      q_states = np.zeros((len(samples), self.q_network.cell.state_size))
+      reward_states = np.zeros((len(samples), self.reward_rnn.cell.state_size))
+
       # Batch states.
-      states = np.empty((len(samples), self.q_network.cell.state_size))
-      new_states = np.empty((len(samples),
-                             self.target_q_network.cell.state_size))
-      reward_new_states = np.empty((len(samples), 
-                                   self.reward_rnn.cell.state_size))
-      observations = np.empty((len(samples), self.input_size))
-      new_observations = np.empty((len(samples), self.input_size))
+      observations = np.empty((len(samples), self.train_seq_length, self.input_size))
+      new_observations = np.empty((len(samples), self.train_seq_length, self.input_size))
       action_mask = np.zeros((len(samples), self.num_actions))
       rewards = np.empty((len(samples),))
-      lengths = np.full(len(samples), 1, dtype=int)
+      obs_lengths = np.empty(len(samples), 1, dtype=int)
+      new_obs_lengths = np.empty(len(samples), 1, dtype=int)
 
-      for i, (o, s, a, r, new_o, new_s, reward_s) in enumerate(samples):
-        observations[i, :] = o
-        new_observations[i, :] = new_o
-        states[i, :] = s
-        new_states[i, :] = new_s
+      for i, (o, a, r, new_o) in enumerate(samples):
+        observations[i, :] = rl_tutor_ops.make_onehot(o, self.input_size)
+        new_observations[i, :] = rl_tutor_ops.make_onehot(new_o, self.input_size)
         action_mask[i, :] = a
         rewards[i] = r
-        reward_new_states[i, :] = reward_s
-
-      observations = np.reshape(observations,
-                                (len(samples), 1, self.input_size))
-      new_observations = np.reshape(new_observations,
-                                    (len(samples), 1, self.input_size))
+        obs_lengths[i] = len(o)
+        new_obs_lengths[i] = len(new_o)
 
       calc_summaries = self.iteration % 100 == 0
       calc_summaries = calc_summaries and self.summary_writer is not None
@@ -698,14 +681,14 @@ class RLTutor(object):
             self.summarize if calc_summaries else self.no_op1,
         ], {
             self.reward_rnn.input_sequence: new_observations,
-            self.reward_rnn.initial_state: reward_new_states,
-            self.reward_rnn.lengths: lengths,
+            self.reward_rnn.initial_state: reward_states,
+            self.reward_rnn.lengths: new_obs_lengths,
             self.q_network.input_sequence: observations,
-            self.q_network.initial_state: states,
-            self.q_network.lengths: lengths,
+            self.q_network.initial_state: q_states,
+            self.q_network.lengths: obs_lengths,
             self.target_q_network.input_sequence: new_observations,
-            self.target_q_network.initial_state: new_states,
-            self.target_q_network.lengths: lengths,
+            self.target_q_network.initial_state: q_states,
+            self.target_q_network.lengths: new_obs_lengths,
             self.action_mask: action_mask,
             self.rewards: rewards,
         })
@@ -717,11 +700,11 @@ class RLTutor(object):
             self.summarize if calc_summaries else self.no_op1,
         ], {
             self.q_network.input_sequence: observations,
-            self.q_network.initial_state: states,
-            self.q_network.lengths: lengths,
+            self.q_network.initial_state: q_states,
+            self.q_network.lengths: obs_lengths,
             self.target_q_network.input_sequence: new_observations,
-            self.target_q_network.initial_state: new_states,
-            self.target_q_network.lengths: lengths,
+            self.target_q_network.initial_state: q_states,
+            self.target_q_network.lengths: new_obs_lengths,
             self.action_mask: action_mask,
             self.rewards: rewards,
         })

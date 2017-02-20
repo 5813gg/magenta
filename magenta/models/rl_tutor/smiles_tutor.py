@@ -139,7 +139,7 @@ class SmilesTutor(RLTutor):
       rnn_checkpoint_dir=rnn_checkpoint_dir, 
       rnn_checkpoint_file=rnn_checkpoint_file, 
       rnn_type=rnn_type, rnn_hparams=rnn_hparams, input_size=input_size,
-      num_actions=num_actions, save_name=save_name, 
+      num_actions=num_actions, train_seq_length=max_seq_len, save_name=save_name, 
       output_every_nth=output_every_nth, summary_writer=summary_writer, 
       initialize_immediately=initialize_immediately)
 
