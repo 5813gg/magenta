@@ -396,7 +396,12 @@ class SmilesTutor(RLTutor):
     Returns:
       A float logP
     """
-    return Descriptors.MolLogP(mol)
+    try:
+      logp = Descriptors.MolLogP(mol)
+      return logp
+    except:
+      print "Error! logP could not be computed (most likely because getNumBonds() <= 0)"
+      return 0
 
   def get_qed(self, mol):
     """Gets the Quantitative Estimation of Drug-likeness of mol.
