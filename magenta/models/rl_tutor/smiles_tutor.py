@@ -612,7 +612,7 @@ class SmilesTutor(RLTutor):
   
   def plot_char_frequency(self):
     x = np.arange(len(self.eval_char_frequency))
-    tick_labels = rl_net.convert_seq_to_chars(x)
+    tick_labels = self.convert_seq_to_chars(x)
     plt.figure()
     plt.bar(x,self.eval_char_frequency)
     plt.xticks(x, tick_labels)
