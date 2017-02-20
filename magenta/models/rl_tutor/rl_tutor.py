@@ -450,6 +450,7 @@ class RLTutor(object):
 
     self.reset_for_new_sequence()
     last_observation = self.prime_internal_models()
+    priming_obs = last_observation
 
     for i in range(num_steps):
       # Experiencing observation, action, reward, new observation tuples and
@@ -478,8 +479,10 @@ class RLTutor(object):
       reward = self.collect_reward(last_observation, new_observation, 
                                    reward_scores, verbose=verbose)
 
-      new_seq = self.generated_seq + [np.argmax(new_observation)]
-      self.store(copy.deepcopy(self.generated_seq), action, reward, new_seq)
+      # Store observations, action, reward into experience buffer
+      old_seq = [priming_obs] + self.generated_seq
+      new_seq = old_seq + [np.argmax(new_observation)]
+      self.store(old_seq, action, reward, new_seq)
 
       # Used to keep track of how the reward is changing over time.
       self.reward_last_n += reward
