@@ -486,7 +486,7 @@ class RLTutor(object):
       self.generated_seq_step += 1
 
       if i > 0 and i % self.output_every_nth == 0:
-        print "Evaluating model..."
+        print "Evaluating model at iteration", i, "..."
         self.evaluate_model()
 
         self.save_rewards_for_last_n_steps(i)
