@@ -604,7 +604,7 @@ class SmilesTutor(RLTutor):
     self._add_seq_to_eval_char_frequency(seq)
     self.eval_sum_seq_length += len(seq)
     if self.is_valid_molecule(seq):
-      self.eval_num_valid
+      self.eval_num_valid += 1
   
   def _add_seq_to_eval_char_frequency(self, seq):
     for x in seq:
