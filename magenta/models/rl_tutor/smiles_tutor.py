@@ -385,7 +385,8 @@ class SmilesTutor(RLTutor):
       print "Sequence is weird length. Penalty:", length_penalties
 
     if mol:
-      end_length_bonus = self.reward_values.valid_length_multiplier * len(self.generated_seq)
+      end_length_bonus = min(self.reward_values.valid_length_multiplier * len(self.generated_seq), 
+                             self.reward_values.valid_lenth_bonus_cap)
       if verbose: 
         print "Applying final bonus for ending on VALID SEQUENCE!"
         print "Ending valid bonus:", self.reward_values.end_valid_bonus * self.reward_scaler
