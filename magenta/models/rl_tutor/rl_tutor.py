@@ -15,6 +15,7 @@ from os import makedirs
 from os.path import exists
 import urllib
 import random
+import copy
 
 import matplotlib.pyplot as plt
 
@@ -478,7 +479,7 @@ class RLTutor(object):
                                    reward_scores, verbose=verbose)
 
       new_seq = self.generated_seq + [np.argmax(new_observation)]
-      self.store(self.generated_seq, action, reward, new_seq)
+      self.store(copy.deepcopy(self.generated_seq), action, reward, new_seq)
 
       # Used to keep track of how the reward is changing over time.
       self.reward_last_n += reward
@@ -672,6 +673,11 @@ class RLTutor(object):
 
       calc_summaries = self.iteration % 100 == 0
       calc_summaries = calc_summaries and self.summary_writer is not None
+
+      print "obs shape:", np.shape(observations)
+      print "new obs shape:", np.shape(new_observations)
+      print "obs lengths shape:", np.shape(obs_lengths)
+      print "new obs lengths shape:", np.shape(new_obs_length)
 
       if self.algorithm == 'g':
         _, _, target_vals, summary_str = self.session.run([
