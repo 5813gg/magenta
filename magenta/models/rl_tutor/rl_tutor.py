@@ -280,13 +280,13 @@ class RLTutor(object):
 
     tf.logging.info('Adding reward computation portion of the graph')
     with tf.name_scope('reward_computation'):
-      self.reward_scores = tf.identity(self.reward_rnn(), name='reward_scores')
+      self.reward_scores =tf.stop_gradient(self.reward_rnn(), name='reward_scores')
 
     tf.logging.info('Adding taking action portion of graph')
     with tf.name_scope('taking_action'):
       # Output of the q network gives the value of taking each action
       self.action_scores = tf.identity(self.q_network(), name='action_scores')
-      tf.histogram_summary('action_scores', self.action_scores)
+      tf.summary.histogram('action_scores', self.action_scores)
 
       # The action values for the G algorithm are computed differently.
       if self.algorithm == 'g':
@@ -313,7 +313,7 @@ class RLTutor(object):
       # The target q network is used to estimate the value of the best action at
       # the state resulting from the current action.
       self.next_action_scores = tf.stop_gradient(self.target_q_network())
-      tf.histogram_summary('target_action_scores', self.next_action_scores)
+      tf.summary.histogram('target_action_scores', self.next_action_scores)
 
       # Rewards are observed from the environment and are fed in later.
       self.rewards = tf.placeholder(tf.float32, (None,), name='rewards')
@@ -368,9 +368,10 @@ class RLTutor(object):
           self.gradients[i] = (tf.clip_by_norm(grad, 5), var)
 
       for grad, var in self.gradients:
-        tf.histogram_summary(var.name, var)
+        tf.summary.histogram(var.name, var)
         if grad is not None:
-          tf.histogram_summary(var.name + '/gradients', grad)
+          print "GRADIENT FOUND FOR", var.name, "WHICH IS", grad
+          tf.summary.histogram(var.name + '/gradients', grad)
 
       # Backprop.
       self.train_op = self.optimizer.apply_gradients(self.gradients)
