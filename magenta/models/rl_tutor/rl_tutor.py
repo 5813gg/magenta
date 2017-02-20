@@ -488,33 +488,10 @@ class RLTutor(object):
       if i > 0 and i % self.output_every_nth == 0:
         print "Evaluating model..."
         self.evaluate_model()
+
+        self.save_rewards_for_last_steps()
+
         self.save_model(self.algorithm)
-
-        if self.algorithm == 'g':
-          self.rewards_batched.append(
-            self.domain_reward_last_n + self.data_reward_last_n)
-        else:
-          self.rewards_batched.append(self.reward_last_n)
-        self.domain_rewards_batched.append(
-          self.domain_reward_last_n)
-        self.data_rewards_batched.append(self.data_reward_last_n)
-
-        # Save a checkpoint.
-        save_step = len(self.rewards_batched)*self.output_every_nth
-        self.saver.save(self.session, self.save_path, global_step=save_step)
-
-        r = self.reward_last_n
-        tf.logging.info('Training iteration %s', i)
-        tf.logging.info('\tReward for last %s steps: %s', 
-                        self.output_every_nth, r)
-        tf.logging.info('\t\tDomain reward: %s', 
-                        self.domain_reward_last_n)
-        tf.logging.info('\t\tReward RNN reward: %s', self.data_reward_last_n)
-        
-        print 'Training iteration', i
-        print '\tReward for last', self.output_every_nth, 'steps:', r
-        print '\t\tDomain reward:', self.domain_reward_last_n
-        print '\t\tReward RNN reward:', self.data_reward_last_n
 
         if self.exploration_mode == 'egreedy':
           exploration_p = rl_tutor_ops.linear_annealing(
@@ -522,10 +499,6 @@ class RLTutor(object):
               self.dqn_hparams.random_action_probability)
           tf.logging.info('\tExploration probability is %s', exploration_p)
           print '\tExploration probability is', exploration_p
-        
-        self.reward_last_n = 0
-        self.domain_reward_last_n = 0
-        self.data_reward_last_n = 0
 
       # Backprop.
       self.training_step()
@@ -538,6 +511,33 @@ class RLTutor(object):
         if verbose: print "\nResetting composition!\n"
         self.reset_for_new_sequence()
         last_observation = self.prime_internal_models()
+
+  def save_rewards_for_last_steps(self):
+    if self.algorithm == 'g':
+      self.rewards_batched.append(
+        self.domain_reward_last_n + self.data_reward_last_n)
+    else:
+      self.rewards_batched.append(self.reward_last_n)
+    self.domain_rewards_batched.append(
+      self.domain_reward_last_n)
+    self.data_rewards_batched.append(self.data_reward_last_n)
+
+    r = self.reward_last_n
+    tf.logging.info('Training iteration %s', i)
+    tf.logging.info('\tReward for last %s steps: %s', 
+                    self.output_every_nth, r)
+    tf.logging.info('\t\tDomain reward: %s', 
+                    self.domain_reward_last_n)
+    tf.logging.info('\t\tReward RNN reward: %s', self.data_reward_last_n)
+    
+    print 'Training iteration', i
+    print '\tReward for last', self.output_every_nth, 'steps:', r
+    print '\t\tDomain reward:', self.domain_reward_last_n
+    print '\t\tReward RNN reward:', self.data_reward_last_n
+
+    self.reward_last_n = 0
+    self.domain_reward_last_n = 0
+    self.data_reward_last_n = 0
 
   def action(self, observation, exploration_period=0, enable_random=True,
              sample_next_obs=False):

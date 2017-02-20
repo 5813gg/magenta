@@ -147,8 +147,11 @@ class SmilesTutor(RLTutor):
     self.max_seq_len = max_seq_len
     self.load_vocab()
 
-    # State variables needed by reward functions.
     self.data_reward_this_sequence = 0
+    self.domain_reward_this_sequence = 0
+    self.num_sequences_last_n = 0
+    self.avg_train_data_reward_per_sequence = []
+    self.avg_train_domain_reward_per_sequence = []
 
   def load_vocab(self):
     print "Loading vocabulary from file", self.vocab_file
@@ -252,6 +255,18 @@ class SmilesTutor(RLTutor):
     self.generated_seq_step = 0
     self.generated_seq = []
     self.data_reward_this_sequence = 0
+    self.domain_reward_this_sequence = 0
+
+  def save_rewards_for_last_steps(self):
+    super(RLTutor, self).save_rewards_for_last_steps()
+
+    avg_data_reward = float(self.data_reward_last_n) / self.num_sequences_last_n
+    self.avg_train_data_reward_per_sequence.append(avg_data_reward)
+
+    avg_domain_reward = float(self.domain_reward_last_n) / self.num_sequences_last_n
+    self.avg_train_domain_reward_per_sequence.append(avg_domain_reward)
+    
+    self.num_sequences_last_n = 0
 
   def collect_reward(self, obs, action, reward_scores, verbose=False):
     """Collects reward from pre-trained RNN and domain-specific functions.
@@ -272,12 +287,15 @@ class SmilesTutor(RLTutor):
     self.data_reward_last_n += data_reward
 
     domain_reward = self.collect_domain_reward(obs, action, verbose=verbose)
+    self.domain_reward_this_sequence += domain_reward
     self.domain_reward_last_n += domain_reward * self.reward_scaler
 
-    if verbose and self.is_end_of_sequence(self.generated_seq + [np.argmax(action)]):
-      print 'Cumulative Reward RNN reward:', self.data_reward_this_sequence
-      print 'Total domain reward:', self.reward_scaler * domain_reward
-      print ""
+    if self.is_end_of_sequence(self.generated_seq + [np.argmax(action)]):
+      self.num_sequences_last_n += 1
+      if verbose:
+        print 'Cumulative Reward RNN reward:', self.data_reward_this_sequence
+        print 'Cumulative domain reward:', self.reward_scaler * self.domain_reward_this_sequence
+        print ""
       
     if not self.domain_rewards_only:
       return domain_reward * self.reward_scaler + data_reward
@@ -496,6 +514,37 @@ class SmilesTutor(RLTutor):
         print "VALID molecule"
     else:
         print "Invalid molecule :("
+
+  def plot_rewards(self, image_name=None, directory=None):
+    """Plots the cumulative rewards received as the model was trained.
+
+    If image_name is None, should be used in jupyter notebook. If 
+    called outside of jupyter, execution of the program will halt and 
+    a pop-up with the graph will appear. Execution will not continue 
+    until the pop-up is closed.
+
+    Args:
+      image_name: Name to use when saving the plot to a file. If not
+        provided, image will be shown immediately.
+      directory: Path to directory where figure should be saved. If
+        None, defaults to self.output_dir.
+    """
+    if directory is None:
+      directory = self.output_dir
+    super(RLTutor, self).plot_rewards(image_name=image_name, directory=directory)
+
+    reward_batch = self.output_every_nth
+    x = [reward_batch * i for i in np.arange(len(self.rewards_batched))]
+    plt.figure()
+    plt.plot(x, self.avg_train_domain_reward_per_sequence)
+    plt.plot(x, self.avg_train_data_reward_per_sequence)
+    plt.xlabel('Training epoch')
+    plt.ylabel('Avg reward per sequence')
+    plt.legend(['Domain', 'Reward RNN'], loc='best')
+    if image_name is not None:
+      plt.savefig(directory + '/' + image_name)
+    else:
+      plt.show()
   
   # The following functions evaluate generated molecules for quality.
   # TODO: clean up since there is code repeated from rl_tuner_eval_metric
