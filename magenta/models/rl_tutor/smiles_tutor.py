@@ -126,6 +126,8 @@ class SmilesTutor(RLTutor):
 
     if reward_values is None:
       self.reward_values = rl_tutor_ops.smiles_reward_values()
+    else:
+      self.reward_values = reward_values
 
     if rnn_hparams is None:
       rnn_hparams = rl_tutor_ops.smiles_hparams()
