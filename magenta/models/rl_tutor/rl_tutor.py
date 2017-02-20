@@ -489,7 +489,7 @@ class RLTutor(object):
         print "Evaluating model..."
         self.evaluate_model()
 
-        self.save_rewards_for_last_n_steps()
+        self.save_rewards_for_last_n_steps(i)
 
         self.save_model(self.algorithm)
 
@@ -512,7 +512,7 @@ class RLTutor(object):
         self.reset_for_new_sequence()
         last_observation = self.prime_internal_models()
 
-  def save_rewards_for_last_n_steps(self):
+  def save_rewards_for_last_n_steps(self, iteration):
     if self.algorithm == 'g':
       self.rewards_batched.append(
         self.domain_reward_last_n + self.data_reward_last_n)
@@ -523,14 +523,14 @@ class RLTutor(object):
     self.data_rewards_batched.append(self.data_reward_last_n)
 
     r = self.reward_last_n
-    tf.logging.info('Training iteration %s', i)
+    tf.logging.info('Training iteration %s', iteration)
     tf.logging.info('\tReward for last %s steps: %s', 
                     self.output_every_nth, r)
     tf.logging.info('\t\tDomain reward: %s', 
                     self.domain_reward_last_n)
     tf.logging.info('\t\tReward RNN reward: %s', self.data_reward_last_n)
     
-    print 'Training iteration', i
+    print 'Training iteration', iteration
     print '\tReward for last', self.output_every_nth, 'steps:', r
     print '\t\tDomain reward:', self.domain_reward_last_n
     print '\t\tReward RNN reward:', self.data_reward_last_n
