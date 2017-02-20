@@ -450,7 +450,7 @@ class RLTutor(object):
 
     self.reset_for_new_sequence()
     last_observation = self.prime_internal_models()
-    priming_obs = last_observation
+    priming_obs = np.argmax(last_observation)
 
     for i in range(num_steps):
       # Experiencing observation, action, reward, new observation tuples and
