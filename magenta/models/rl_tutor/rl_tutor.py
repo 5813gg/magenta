@@ -680,7 +680,7 @@ class RLTutor(object):
       print "obs shape:", np.shape(observations)
       print "new obs shape:", np.shape(new_observations)
       print "obs lengths shape:", np.shape(obs_lengths)
-      print "new obs lengths shape:", np.shape(new_obs_length)
+      print "new obs lengths shape:", np.shape(new_obs_lengths)
 
       if self.algorithm == 'g':
         _, _, target_vals, summary_str = self.session.run([
