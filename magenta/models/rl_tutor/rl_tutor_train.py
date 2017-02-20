@@ -19,7 +19,7 @@ FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_string('domain_application', 'smiles',
                            'Application for which you are training model. Can either '
                            'be smiles (for molecule generation) or melody (for music).')
-tf.app.flags.DEFINE_string('output_dir', '/home/natasha/Dropbox/Google/SMILES-Project/output/',
+tf.app.flags.DEFINE_string('output_dir', '/home/natasha/Dropbox/Google/SMILES-Project/output/round4/',
                            'Directory where the model will save its'
                            'compositions and checkpoints (midi files)')
 tf.app.flags.DEFINE_string('rnn_checkpoint_dir', '/home/natasha/Dropbox/Google/SMILES-Project/models/',
