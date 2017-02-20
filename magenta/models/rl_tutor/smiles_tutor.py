@@ -265,6 +265,7 @@ class SmilesTutor(RLTutor):
     Returns:
       Float reward value.
     """
+    if verbose: print "In Smiles Tutor collect reward"
     # Gets and saves log p(a|s) as output by reward_rnn.
     data_reward = self.reward_values.data_scalar * self.reward_from_reward_rnn_scores(action, reward_scores)
     self.data_reward_this_sequence += data_reward
