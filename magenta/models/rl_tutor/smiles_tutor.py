@@ -513,7 +513,7 @@ class SmilesTutor(RLTutor):
     return penalty
   
   def get_excessive_carbon_penalty(self, action):
-    C_index = rl_net.char_to_index['C']
+    C_index = self.char_to_index['C']
     action_idx = np.argmax(action)
     if action_idx != C_index:
       return 0
