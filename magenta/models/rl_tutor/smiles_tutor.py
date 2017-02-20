@@ -288,7 +288,6 @@ class SmilesTutor(RLTutor):
     Returns:
       Float reward value.
     """
-    if verbose: print "In Smiles Tutor collect reward"
     # Gets and saves log p(a|s) as output by reward_rnn.
     data_reward = self.reward_values.data_scalar * self.reward_from_reward_rnn_scores(action, reward_scores)
     self.data_reward_this_sequence += data_reward
@@ -345,13 +344,16 @@ class SmilesTutor(RLTutor):
     Returns:
       Float reward value.
     """
+    carbon_penalty = self.get_excessive_carbon_penalty(action)
+    if verbose and carbon_penalty != 0:
+      print "Too many carbons! Applying penalty:", carbon_penalty * self.reward_scaler
 
     mol = self.is_valid_molecule(self.generated_seq)
     
     # invalid molecule, sequence not over
     if not mol and not np.argmax(action) == EOS and len(self.generated_seq) + 1 < self.max_seq_len:
       if verbose: print "Temporarily invalid penalty:", self.reward_values.any_invalid_penalty * self.reward_scaler
-      return self.reward_values.any_invalid_penalty
+      return self.reward_values.any_invalid_penalty + self.carbon_penalty
 
     # valid molecule
     if mol:
@@ -373,7 +375,7 @@ class SmilesTutor(RLTutor):
     if mol and not np.argmax(action) == EOS and len(self.generated_seq) + 1 < self.max_seq_len:
       if verbose:
         print "Temporarily valid reward:", self.reward_values.any_valid_bonus * self.reward_scaler
-      return self.reward_values.any_valid_bonus + sum_mol_rewards
+      return self.reward_values.any_valid_bonus + sum_mol_rewards + carbon_penalty
 
     # Applying end of sequence penalties and bonuses
     if verbose: print "Sequence finished!"
@@ -388,14 +390,14 @@ class SmilesTutor(RLTutor):
         print "Applying final bonus for ending on VALID SEQUENCE!"
         print "Ending valid bonus:", self.reward_values.end_valid_bonus * self.reward_scaler
         print "Valid length bonus:", end_length_bonus * self.reward_scaler
-      return sum_mol_rewards + length_penalties + self.reward_values.end_valid_bonus + end_length_bonus
+      return sum_mol_rewards + length_penalties + self.reward_values.end_valid_bonus + end_length_bonus + carbon_penalty
     else:
       end_length_penalty = self.reward_values.invalid_length_multiplier * len(self.generated_seq)
       if verbose: 
         print "Penalizing ending on invalid sequence!"
         print "Ending invalid penalty:", self.reward_values.end_invalid_penalty * self.reward_scaler
         print "Invalid length penalty:", end_length_penalty * self.reward_scaler
-      return length_penalties + self.reward_values.end_invalid_penalty + end_length_penalty
+      return length_penalties + self.reward_values.end_invalid_penalty + end_length_penalty + carbon_penalty
     
 
   def convert_seq_to_chars(self, seq):
@@ -509,6 +511,27 @@ class SmilesTutor(RLTutor):
       penalty +=  self.reward_values.longish_seq
 
     return penalty
+  
+  def get_excessive_carbon_penalty(self, action):
+    C_index = rl_net.char_to_index['C']
+    action_idx = np.argmax(action)
+    if action_idx != C_index:
+      return 0
+
+    most_repeated_in_training = 11
+    num_repeated = 0
+
+    # Note that the current action yas not yet been added to the composition
+    for i in xrange(len(self.generated_seq)-1, -1, -1):
+      if self.generated_seq[i] == C_index:
+        num_repeated += 1
+      else:
+        break
+
+    if num_repeated > most_repeated_in_training + (most_repeated_in_training / 2): 
+      return self.reward_values.repeated_C_penalty
+    else:
+      return 0
 
   def render_sequence(self, generated_seq, title='smiles_seq'):
     """Renders a generated SMILES sequence its string version.

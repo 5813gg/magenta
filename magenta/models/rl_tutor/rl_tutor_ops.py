@@ -177,7 +177,8 @@ def smiles_reward_values():
                 any_valid_bonus=1,
                 any_invalid_penalty=1,
                 end_invalid_penalty=-10,
-                end_valid_bonus=10)
+                end_valid_bonus=10,
+                repeated_C_penalty=-100)
 
 def autocorrelate(signal, lag=1):
   """Gives the correlation coefficient for the signal's correlation with itself.
