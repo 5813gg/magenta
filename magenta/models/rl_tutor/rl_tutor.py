@@ -659,8 +659,8 @@ class RLTutor(object):
       new_observations = np.empty((len(samples), self.train_seq_length, self.input_size))
       action_mask = np.zeros((len(samples), self.num_actions))
       rewards = np.empty((len(samples),))
-      obs_lengths = np.empty(len(samples), 1, dtype=int)
-      new_obs_lengths = np.empty(len(samples), 1, dtype=int)
+      obs_lengths = np.empty((len(samples),), dtype=int)
+      new_obs_lengths = np.empty((len(samples),), dtype=int)
 
       for i, (o, a, r, new_o) in enumerate(samples):
         observations[i, :] = rl_tutor_ops.make_onehot(o, self.input_size)
