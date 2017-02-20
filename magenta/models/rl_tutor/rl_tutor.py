@@ -372,7 +372,7 @@ class RLTutor(object):
         if grad is not None:
           tf.histogram_summary(var.name + '/gradients', grad)
 
-      # Backprop.
+      """# Backprop.
       self.train_op = self.optimizer.apply_gradients(self.gradients)
 
     tf.logging.info('Adding target network update portion of graph')
@@ -391,7 +391,7 @@ class RLTutor(object):
     tf.scalar_summary('prediction_error', self.prediction_error)
 
     self.summarize = tf.merge_all_summaries()
-    self.no_op1 = tf.no_op()
+    self.no_op1 = tf.no_op()"""
 
   def get_random_action(self):
     """Sample an action uniformly at random.
