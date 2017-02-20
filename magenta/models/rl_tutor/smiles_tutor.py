@@ -259,7 +259,6 @@ class SmilesTutor(RLTutor):
 
   def save_rewards_for_last_n_steps(self, iteration):
     #super(RLTutor, self).save_rewards_for_last_n_steps()
-
     avg_data_reward = float(self.data_reward_last_n) / self.num_sequences_last_n
     self.avg_train_data_reward_per_sequence.append(avg_data_reward)
 
@@ -535,15 +534,19 @@ class SmilesTutor(RLTutor):
       directory = self.output_dir
     #super(RLTutor, self).plot_rewards(image_name=image_name, directory=directory)
     RLTutor.plot_rewards(self, image_name=image_name, directory=directory)
-
+  
     reward_batch = self.output_every_nth
-    x = [reward_batch * i for i in np.arange(len(self.rewards_batched))]
+    num_points = len(self.rewards_batched)
+    x = [reward_batch * i for i in np.arange(num_points)]
+    total = [rl_net.avg_train_domain_reward_per_sequence[i] + rl_net.avg_train_data_reward_per_sequence[i] for i in range(num_points)]
+
     plt.figure()
+    plt.plot(x, total)
     plt.plot(x, self.avg_train_domain_reward_per_sequence)
     plt.plot(x, self.avg_train_data_reward_per_sequence)
     plt.xlabel('Training epoch')
     plt.ylabel('Avg reward per sequence')
-    plt.legend(['Domain', 'Reward RNN'], loc='best')
+    plt.legend(['Total', 'Domain', 'Reward RNN'], loc='best')
     if image_name is not None:
       plt.savefig(directory + '/' + image_name)
     else:
