@@ -164,6 +164,7 @@ def smiles_dqn_hparams():
 def smiles_reward_values():
   """Generates the default reward values for the smiles model."""
   return HParams(valid_length_multiplier=2,
+                valid_lenth_bonus_cap=300,
                 invalid_length_multiplier=0,
                 sa_multiplier=0,
                 logp_multiplier=0,
