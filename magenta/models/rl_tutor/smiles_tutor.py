@@ -259,7 +259,6 @@ class SmilesTutor(RLTutor):
 
   def save_rewards_for_last_n_steps(self, iteration):
     #super(RLTutor, self).save_rewards_for_last_n_steps()
-    RLTutor.save_rewards_for_last_n_steps(self, iteration)
 
     avg_data_reward = float(self.data_reward_last_n) / self.num_sequences_last_n
     self.avg_train_data_reward_per_sequence.append(avg_data_reward)
@@ -268,6 +267,8 @@ class SmilesTutor(RLTutor):
     self.avg_train_domain_reward_per_sequence.append(avg_domain_reward)
     
     self.num_sequences_last_n = 0
+
+    RLTutor.save_rewards_for_last_n_steps(self, iteration)
 
   def collect_reward(self, obs, action, reward_scores, verbose=False):
     """Collects reward from pre-trained RNN and domain-specific functions.
