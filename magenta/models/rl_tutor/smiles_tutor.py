@@ -334,7 +334,6 @@ class SmilesTutor(RLTutor):
       sum_mol_rewards = logp + ringp + qed + sa
 
       if verbose:
-        print "VALID SEQUENCE!"
         print "logP reward:", logp * self.reward_scaler
         print "SA reward:", sa * self.reward_scaler
         print "QED reward:", qed * self.reward_scaler
@@ -345,7 +344,7 @@ class SmilesTutor(RLTutor):
     # valid molecule, sequence not over
     if mol and not np.argmax(action) == EOS and len(self.generated_seq) + 1 < self.max_seq_len:
       if verbose:
-        print "Sequence unfinished, getting small reward for valid sequence:", self.reward_values.any_valid_bonus
+        print "Temporarily valid reward:", self.reward_values.any_valid_bonus * self.reward_scaler
       return self.reward_values.any_valid_bonus + sum_mol_rewards
 
     # Applying end of sequence penalties and bonuses
@@ -357,7 +356,7 @@ class SmilesTutor(RLTutor):
 
     #end_bonus = self.reward_values.valid_length_multiplier * len(self.generated_seq)
     if mol:
-      if verbose: print "Applying final bonus for ending on valid sequence!", self.reward_values.end_valid_bonus * self.reward_scaler
+      if verbose: print "Applying final bonus for ending on VALID SEQUENCE!", self.reward_values.end_valid_bonus * self.reward_scaler
       return sum_mol_rewards + length_penalties + self.reward_values.end_valid_bonus
     else:
       if verbose: print "Penalizing ending on invalid sequence!", self.reward_values.end_invalid_penalty * self.reward_scaler
