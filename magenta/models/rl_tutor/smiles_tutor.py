@@ -354,13 +354,20 @@ class SmilesTutor(RLTutor):
     if verbose and length_penalties != 0:
       print "Sequence is weird length. Penalty:", length_penalties
 
-    #end_bonus = self.reward_values.valid_length_multiplier * len(self.generated_seq)
     if mol:
-      if verbose: print "Applying final bonus for ending on VALID SEQUENCE!", self.reward_values.end_valid_bonus * self.reward_scaler
-      return sum_mol_rewards + length_penalties + self.reward_values.end_valid_bonus
+      end_length_bonus = self.reward_values.valid_length_multiplier * len(self.generated_seq)
+      if verbose: 
+        print "Applying final bonus for ending on VALID SEQUENCE!"
+        print "Ending valid bonus:", self.reward_values.end_valid_bonus * self.reward_scaler
+        print "Valid length bonus:", end_length_bonus * self.reward_scaler
+      return sum_mol_rewards + length_penalties + self.reward_values.end_valid_bonus + end_length_bonus
     else:
-      if verbose: print "Penalizing ending on invalid sequence!", self.reward_values.end_invalid_penalty * self.reward_scaler
-      return length_penalties + self.reward_values.end_invalid_penalty
+      end_length_penalty = self.reward_values.invalid_length_multiplier * len(self.generated_seq)
+      if verbose: 
+        print "Penalizing ending on invalid sequence!"
+        print "Ending invalid penalty:", self.reward_values.end_invalid_penalty * self.reward_scaler
+        print "Invalid length penalty:", end_length_penalty * self.reward_scaler
+      return length_penalties + self.reward_values.end_invalid_penalty + end_length_penalty
     
 
   def convert_seq_to_chars(self, seq):
