@@ -164,16 +164,19 @@ def smiles_dqn_hparams():
 def smiles_reward_values():
   """Generates the default reward values for the smiles model."""
   return HParams(valid_length_multiplier=2,
-                 invalid_length_multiplier=0,
-                 sa_multiplier=1,
-                 logp_multiplier=0.5,
-                 ringp_multiplier=1,
-                 qed_multiplier=5,
-                 shortish_seq=-5,
-                 short_seq=-30,
-                 longish_seq=-50,
-                 long_seq=-100,
-                 data_scalar=1)
+                invalid_length_multiplier=0,
+                sa_multiplier=0,
+                logp_multiplier=0,
+                ringp_multiplier=0,
+                qed_multiplier=0,
+                shortish_seq=-5,
+                short_seq=-30,
+                longish_seq=0,
+                long_seq=0,
+                data_scalar=1,
+                any_valid_bonus=1,
+                end_invalid_penalty=-10,
+                end_valid_bonus=10)
 
 def autocorrelate(signal, lag=1):
   """Gives the correlation coefficient for the signal's correlation with itself.
