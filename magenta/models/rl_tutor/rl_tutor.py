@@ -477,7 +477,7 @@ class RLTutor(object):
       reward = self.collect_reward(last_observation, new_observation, 
                                    reward_scores, verbose=verbose)
 
-      new_seq = self.generated_seq + [new_observation]
+      new_seq = self.generated_seq + [np.argmax(new_observation)]
       self.store(self.generated_seq, action, reward, new_seq)
 
       # Used to keep track of how the reward is changing over time.
