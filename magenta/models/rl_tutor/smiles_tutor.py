@@ -318,35 +318,51 @@ class SmilesTutor(RLTutor):
     Returns:
       Float reward value.
     """
-    if not np.argmax(action) == EOS and len(self.generated_seq) + 1 < self.max_seq_len:
+
+    mol = self.is_valid_molecule(self.generated_seq)
+    
+    # invalid molecule, sequence not over
+    if not mol and not np.argmax(action) == EOS and len(self.generated_seq) + 1 < self.max_seq_len:
       return 0
+
+    # valid molecule
+    if mol:
+      sa = self.reward_values.sa_multiplier * self.get_sa_score(mol)
+      logp = self.reward_values.logp_multiplier * self.get_logp(mol)
+      ringp = self.reward_values.ringp_multiplier * self.get_ring_penalty(mol)
+      qed = self.reward_values.qed_multiplier * self.get_qed(mol)
+      
+      if verbose:
+        print "VALID SEQUENCE! Bonus:", bonus * self.reward_scaler
+        print "logP reward:", logp * self.reward_scaler
+        print "SA reward:", sa * self.reward_scaler
+        print "QED reward:", qed * self.reward_scaler
+        print "ring penalty reward:", ringp * self.reward_scaler
+        
+        print "Total:", (bonus + logp + ringp + qed + sa) * self.reward_scaler
+
+    # valid molecule, sequence not over
+    if mol and not np.argmax(action) == EOS and len(self.generated_seq) + 1 < self.max_seq_len:
+      sum_mol_rewards = logp + ringp + qed + sa
+      if verbose:
+        print "Sequence unfinished, getting small reward for valid sequence:", self.reward_values.any_valid_bonus
+      return self.reward_values.any_valid_bonus + sum_mol_rewards
+
+    # Applying end of sequence penalties and bonuses
+    if verbose: print "Sequence finished!"
 
     length_penalties = self.get_length_penalty()
     if verbose and length_penalties != 0:
       print "Sequence is weird length. Penalty:", length_penalties
 
-    mol = self.is_valid_molecule(self.generated_seq)
-    if not mol:
-      penalty = self.reward_values.invalid_length_multiplier * len(self.generated_seq)
-      if verbose: print "Not a valid molecule. Penalty:", penalty * self.reward_scaler
-      return penalty + length_penalties
-
-    bonus = self.reward_values.valid_length_multiplier * len(self.generated_seq)
-    sa = self.reward_values.sa_multiplier * self.get_sa_score(mol)
-    logp = self.reward_values.logp_multiplier * self.get_logp(mol)
-    ringp = self.reward_values.ringp_multiplier * self.get_ring_penalty(mol)
-    qed = self.reward_values.qed_multiplier * self.get_qed(mol)
+    #end_bonus = self.reward_values.valid_length_multiplier * len(self.generated_seq)
+    if mol:
+      if verbose: print "Applying final bonus for ending on valid sequence!", self.reward_values.end_valid_bonus
+      return sum_mol_rewards + length_penalties + self.reward_values.end_valid_bonus
+    else:
+      if verbose: print "Penalizing ending on invalid sequence!", self.reward_values.end_invalid_penalty
+      return length_penalties + self.reward_values.end_invalid_penalty
     
-    if verbose:
-      print "VALID SEQUENCE! Bonus:", bonus * self.reward_scaler
-      print "logP reward:", logp * self.reward_scaler
-      print "SA reward:", sa * self.reward_scaler
-      print "QED reward:", qed * self.reward_scaler
-      print "ring penalty reward:", ringp * self.reward_scaler
-      
-      print "Total:", (bonus + length_penalties + logp + ringp + qed + sa) * self.reward_scaler
-
-    return bonus + length_penalties + logp + ringp + qed + sa
 
   def convert_seq_to_chars(self, seq):
     """Converts a list of ints to a SMILES string
@@ -411,7 +427,10 @@ class SmilesTutor(RLTutor):
     Returns:
       A float QED score
     """
-    return qed.default(mol)
+    try:
+      return qed.default(mol)
+    except:
+      return 0
 
   def get_ring_penalty(self, mol):
     """Calculates a penalty based on carbon rings larger than 6.
