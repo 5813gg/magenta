@@ -187,6 +187,7 @@ class RLTutor(object):
     self.nan_rewards = None
     self.nan_actions = None
     self.nan_samples = None
+    self.nan_grads = None
 
   # The following functions should be overwritten in classes inheriting from this one.
   def initialize_internal_models(self):
@@ -761,6 +762,7 @@ class RLTutor(object):
         self.nan_rewards = rewards
         self.nan_actions = action_mask
         self.nan_samples = samples
+        self.nan_grads = grads[0]
 
 
       total_logs = (self.iteration * self.dqn_hparams.train_every_nth)
