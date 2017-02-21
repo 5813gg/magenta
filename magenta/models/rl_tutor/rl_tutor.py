@@ -455,6 +455,7 @@ class RLTutor(object):
     for i in range(num_steps):
       # Experiencing observation, action, reward, new observation tuples and
       # storing them.
+      print "Training iteration", i
 
       if self.exploration_mode == 'boltzmann' or self.stochastic_observations:
         action, new_observation, reward_scores = self.action(
@@ -594,6 +595,7 @@ class RLTutor(object):
        self.reward_rnn.initial_state: self.reward_rnn.state_value,
        self.reward_rnn.lengths: lengths})
 
+    print "action_softmax", action_softmax
     # this is apparently not needed
     #if self.algorithm == 'psi':
     #  action_scores = np.exp(action_scores)
@@ -649,6 +651,7 @@ class RLTutor(object):
       if len(self.experience) < self.dqn_hparams.minibatch_size:
         return
 
+      print "About to send a batch of training experience to network to backprop"
       # Sample experience.
       samples = random.sample(range(len(self.experience)),
                               self.dqn_hparams.minibatch_size)
