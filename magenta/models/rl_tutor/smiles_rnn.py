@@ -349,12 +349,17 @@ class SmilesRNN(object):
     """
     with self.graph.as_default():
       with tf.variable_scope(self.scope, reuse=True):
-        #batch_size = self.input_sequence.get_shape()[0]
-        #max_length = self.input_sequence.get_shape()[1]
+        batch_size = tf.shape(self.input_sequence)[0]
+        max_length = tf.shape(self.input_sequence)[1]
+
         logits, self.state_tensor = self.run_network(self.input_sequence, 
           self.lengths, self.initial_state)
+
+        # Get only the last (relevant) output from each batch
+        self.index = tf.range(0, batch_size) * max_length + (self.lengths - 1)
+        self.relevant = tf.gather(logits, self.index)
         
-        return logits
+        return self.relevant
 
   def train(self, num_steps=30000):
     """Runs one batch of training data through the model.
