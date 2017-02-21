@@ -344,14 +344,16 @@ class SmilesTutor(RLTutor):
     Returns:
       Float reward value.
     """
-    carbon_penalty = self.get_excessive_carbon_penalty(action)
+    action_idx = np.argmax(action)
+    seq = self.generated_seq + [action_idx]
+    carbon_penalty = self.get_excessive_carbon_penalty(action_idx)
     if verbose and carbon_penalty != 0:
       print "Too many carbons! Applying penalty:", carbon_penalty * self.reward_scaler
 
-    mol = self.is_valid_molecule(self.generated_seq)
+    mol = self.is_valid_molecule(seq)
     
     # invalid molecule, sequence not over
-    if not mol and not np.argmax(action) == EOS and len(self.generated_seq) + 1 < self.max_seq_len:
+    if not mol and not action_idx == EOS and len(seq) < self.max_seq_len:
       if verbose: print "Temporarily invalid penalty:", self.reward_values.any_invalid_penalty * self.reward_scaler
       return self.reward_values.any_invalid_penalty + carbon_penalty
 
@@ -372,7 +374,7 @@ class SmilesTutor(RLTutor):
         print "Total:", sum_mol_rewards * self.reward_scaler
 
     # valid molecule, sequence not over
-    if mol and not np.argmax(action) == EOS and len(self.generated_seq) + 1 < self.max_seq_len:
+    if mol and not action_idx == EOS and len(seq) < self.max_seq_len:
       if verbose:
         print "Temporarily valid reward:", self.reward_values.any_valid_bonus * self.reward_scaler
       return self.reward_values.any_valid_bonus + sum_mol_rewards + carbon_penalty
@@ -380,12 +382,12 @@ class SmilesTutor(RLTutor):
     # Applying end of sequence penalties and bonuses
     if verbose: print "Sequence finished!"
 
-    length_penalties = self.get_length_penalty()
+    length_penalties = self.get_length_penalty(seq)
     if verbose and length_penalties != 0:
       print "Sequence is weird length. Penalty:", length_penalties
 
     if mol:
-      end_length_bonus = min(self.reward_values.valid_length_multiplier * len(self.generated_seq), 
+      end_length_bonus = min(self.reward_values.valid_length_multiplier * len(seq), 
                              self.reward_values.valid_lenth_bonus_cap)
       if verbose: 
         print "Applying final bonus for ending on VALID SEQUENCE!"
@@ -393,7 +395,7 @@ class SmilesTutor(RLTutor):
         print "Valid length bonus:", end_length_bonus * self.reward_scaler
       return sum_mol_rewards + length_penalties + self.reward_values.end_valid_bonus + end_length_bonus + carbon_penalty
     else:
-      end_length_penalty = self.reward_values.invalid_length_multiplier * len(self.generated_seq)
+      end_length_penalty = self.reward_values.invalid_length_multiplier * len(seq)
       if verbose: 
         print "Penalizing ending on invalid sequence!"
         print "Ending invalid penalty:", self.reward_values.end_invalid_penalty * self.reward_scaler
@@ -487,7 +489,7 @@ class SmilesTutor(RLTutor):
         return 0
     return -1* (cycle_length - 6)
 
-  def get_length_penalty(self):
+  def get_length_penalty(self, seq):
     """Calculates a penalty based on unusually short or long seqs.
 
     Args:
@@ -501,21 +503,20 @@ class SmilesTutor(RLTutor):
     training_data_max=78
 
     penalty = 0
-    if len(self.generated_seq) < training_data_min:
+    if len(seq) < training_data_min:
       penalty += self.reward_values.short_seq
-    elif len(self.generated_seq) < training_data_average - 2 * training_data_std:
+    elif len(seq) < training_data_average - 2 * training_data_std:
       penalty +=  self.reward_values.shortish_seq
   
-    if len(self.generated_seq) > training_data_max:
+    if len(seq) > training_data_max:
       penalty += self.reward_values.long_seq
-    elif len(self.generated_seq) > training_data_average + 2 * training_data_std:
+    elif len(seq) > training_data_average + 2 * training_data_std:
       penalty +=  self.reward_values.longish_seq
 
     return penalty
   
-  def get_excessive_carbon_penalty(self, action):
+  def get_excessive_carbon_penalty(self, action_idx):
     C_index = self.char_to_index['C']
-    action_idx = np.argmax(action)
     if action_idx != C_index:
       return 0
 
