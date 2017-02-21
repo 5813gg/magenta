@@ -354,8 +354,7 @@ class SmilesRNN(object):
         logits, self.state_tensor = self.run_network(self.input_sequence, 
           self.lengths, self.initial_state)
         
-        
-        return self.relevant
+        return logits
 
   def train(self, num_steps=30000):
     """Runs one batch of training data through the model.
