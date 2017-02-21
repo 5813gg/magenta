@@ -116,6 +116,10 @@ class SmilesRNN(object):
     self.session = None
     self.saver = None
 
+    self.flat = None
+    self.index = None
+    self.relevant = None
+
   def get_zero_state(self):
     """Gets an initial state of zeros appropriate for a single input.
 
@@ -347,7 +351,16 @@ class SmilesRNN(object):
       with tf.variable_scope(self.scope, reuse=True):
         logits, self.state_tensor = self.run_network(self.input_sequence, 
           self.lengths, self.initial_state)
-        return logits
+        
+        # Get last relevant states
+        batch_size = tf.shape(logits)[0]
+        max_length = tf.shape(logits)[1]
+        out_size = int(logits.get_shape()[2])
+        self.index = tf.range(0, batch_size) * max_length + (self.lengths - 1)
+        self.flat = tf.reshape(self.logits, [-1, out_size])
+        self.relevant = tf.gather(self.flat, self.index)
+        
+        return self.relevant
 
   def train(self, num_steps=30000):
     """Runs one batch of training data through the model.
