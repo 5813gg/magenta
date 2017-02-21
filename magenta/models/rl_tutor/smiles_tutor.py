@@ -158,7 +158,7 @@ class SmilesTutor(RLTutor):
     self.eval_sum_seq_length = 0
     self.eval_num_valid = 0 
     self.eval_avg_seq_length_during_training = []
-    self.eval_num_valid_during_training = []
+    self.eval_percent_valid_during_training = []
 
   def load_vocab(self):
     print "Loading vocabulary from file", self.vocab_file
@@ -610,7 +610,7 @@ class SmilesTutor(RLTutor):
     start_index = start_at_epoch / self.output_every_nth
     plt.figure()
     plt.plot(x[start_index:], self.eval_avg_seq_length_during_training[start_index:])
-    plt.plot(x[start_index:], self.eval_num_valid_during_training[start_index:])
+    plt.plot(x[start_index:], self.eval_percent_valid_during_training[start_index:])
     plt.xlabel('Training epoch')
     plt.ylabel('Sequence statistics')
     plt.legend(['Avg. length', 'Num valid'], loc='best')
@@ -644,12 +644,14 @@ class SmilesTutor(RLTutor):
   
   def save_evaluation_stats(self, num_trials):
     avg_seq_length = self.eval_sum_seq_length / float(num_trials)
+    percent_valid = self.eval_num_valid / float(num_trials)
 
     print "\tAverage length:", avg_seq_length
     print "\tNum valid:", self.eval_num_valid
+    print "\tPercent valid:", percent_valid
 
     self.eval_avg_seq_length_during_training.append(avg_seq_length)
-    self.eval_num_valid_during_training.append(self.eval_num_valid)
+    self.eval_percent_valid_during_training.append(self.percent_valid)
 
     self.plot_char_frequency()
   
