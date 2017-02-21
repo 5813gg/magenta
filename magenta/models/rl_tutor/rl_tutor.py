@@ -378,7 +378,8 @@ class RLTutor(object):
       # Clip gradients.
       for i, (grad, var) in enumerate(self.all_gradients):
         if grad is not None:
-          self.gradients.append((tf.clip_by_norm(grad, 5), var))
+          #self.gradients.append((tf.clip_by_norm(grad, 5), var))
+          self.gradients.append((tf.clip_by_value(grad, -5, 5), var))
 
       for grad, var in self.gradients:
         tf.summary.histogram(var.name, var)
