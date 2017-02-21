@@ -529,7 +529,7 @@ class SmilesTutor(RLTutor):
       else:
         break
 
-    if num_repeated > most_repeated_in_training + 2: #+ (most_repeated_in_training / 2): 
+    if num_repeated > most_repeated_in_training: #+ (most_repeated_in_training / 2): 
       return self.reward_values.repeated_C_penalty
     else:
       return 0
