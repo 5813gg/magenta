@@ -349,15 +349,14 @@ class SmilesRNN(object):
     """
     with self.graph.as_default():
       with tf.variable_scope(self.scope, reuse=True):
+        batch_size = tf.shape(logits)[0]
+        max_length = tf.shape(logits)[1]
+        out_size = int(logits.get_shape()[2])
         logits, self.state_tensor = self.run_network(self.input_sequence, 
           self.lengths, self.initial_state)
         
         # Get last relevant states
-        batch_size = tf.shape(logits)[0]
-        max_length = tf.shape(logits)[1]
-        out_size = int(logits.get_shape()[2])
         self.index = tf.range(0, batch_size) * max_length + (self.lengths - 1)
-        self.flat = tf.reshape(self.logits, [-1, out_size])
         self.relevant = tf.gather(self.flat, self.index)
         
         return self.relevant
