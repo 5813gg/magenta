@@ -470,7 +470,7 @@ class RLTutor(object):
                                               enable_random=enable_random,
                                               sample_next_obs=False)
           new_observation = action
-      except Exception as error
+      except Exception as error:
         print "Encountered an error during training:", repr(error)
         print "Currently at iteration", i
         print "Training must be stopped."
