@@ -651,7 +651,7 @@ class SmilesTutor(RLTutor):
     print "\tPercent valid:", percent_valid
 
     self.eval_avg_seq_length_during_training.append(avg_seq_length)
-    self.eval_percent_valid_during_training.append(self.percent_valid)
+    self.eval_percent_valid_during_training.append(percent_valid)
 
     self.plot_char_frequency()
   
