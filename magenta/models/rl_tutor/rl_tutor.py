@@ -372,12 +372,13 @@ class RLTutor(object):
 
       # Compute gradients.
       self.params = tf.trainable_variables()
-      self.gradients = self.optimizer.compute_gradients(self.prediction_error)
+      self.all_gradients = self.optimizer.compute_gradients(self.prediction_error)
+      self.gradients = []
 
       # Clip gradients.
-      for i, (grad, var) in enumerate(self.gradients):
+      for i, (grad, var) in enumerate(self.all_gradients):
         if grad is not None:
-          self.gradients[i] = (tf.clip_by_norm(grad, 5), var)
+          self.gradients.append(tf.clip_by_norm(grad, 5), var)
 
       for grad, var in self.gradients:
         tf.summary.histogram(var.name, var)
