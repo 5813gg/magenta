@@ -351,15 +351,17 @@ class SmilesRNN(object):
     with self.graph.as_default():
       with tf.variable_scope(self.scope, reuse=True):
         batch_size = tf.shape(self.input_sequence)[0]
-        max_length = tf.shape(self.input_sequence)[1]
+        max_length = int(tf.shape(self.input_sequence)[1])
 
         self.call_logits, self.state_tensor = self.run_network(self.input_sequence, 
           self.lengths, self.initial_state)
 
         # Get only the last (relevant) output from each batch
-        self.call_flat = tf.reshape(self.call_logits, [-1, self.hparams.one_hot_length])
-        self.index = tf.range(0, batch_size) * max_length + (self.lengths - 1)
-        self.relevant = tf.gather(self.call_flat, self.index)
+        #self.call_flat = tf.reshape(self.call_logits, [-1, self.hparams.one_hot_length])
+        output = tf.reshape(self.call_logits, [1, -1, self.hparams.one_hot_length])
+        #self.index = tf.range(0, batch_size) * max_length + (self.lengths - 1)
+        #self.relevant = tf.gather(self.call_flat, self.index)
+        self.relevant = tf.reduce_sum(tf.mul(output, tf.expand_dims(tf.one_hot(self.lengths, max_length), -1)), 1)
         
         return self.relevant
 

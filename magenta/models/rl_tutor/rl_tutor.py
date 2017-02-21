@@ -518,7 +518,7 @@ class RLTutor(object):
 
       # Reset the state after each composition is complete.
       if self.is_end_of_sequence():
-        if verbose: print "\nResetting composition!\n"
+        if verbose: print "\nResetting sequence!\n"
         self.reset_for_new_sequence()
         last_observation = self.prime_internal_models()
 
