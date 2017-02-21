@@ -179,6 +179,14 @@ class RLTutor(object):
     if initialize_immediately:
       self.initialize()
 
+    # For catching nans in training data
+    self.nan_obs = None
+    self.nan_new_obs = None
+    self.nan_lens = None
+    self.nan_new_obs = None
+    self.nan_rewards = None
+    self.nan_actions = None
+
   # The following functions should be overwritten in classes inheriting from this one.
   def initialize_internal_models(self):
     """Initializes internal RNN models: q_network, target_q_network, reward_rnn.
@@ -378,8 +386,8 @@ class RLTutor(object):
       # Clip gradients.
       for i, (grad, var) in enumerate(self.all_gradients):
         if grad is not None:
-          #self.gradients.append((tf.clip_by_norm(grad, 5), var))
-          self.gradients.append((tf.clip_by_value(grad, -5, 5), var))
+          self.gradients.append((tf.clip_by_norm(grad, 5), var))
+          #self.gradients.append((tf.clip_by_value(grad, -5, 5), var))
 
       for grad, var in self.gradients:
         tf.summary.histogram(var.name, var)
@@ -693,12 +701,17 @@ class RLTutor(object):
       calc_summaries = self.iteration % 100 == 0
       calc_summaries = calc_summaries and self.summary_writer is not None
 
+      grads = [0] * len(self.gradients)
+
       #print "about to call train_op to backprop some gradients"
       if self.algorithm == 'g':
-        _, _, target_vals, summary_str = self.session.run([
+        (_, _, target_vals, grads[0], grads[1], grads[2], grads[3], 
+         summary_str) = self.session.run([
             self.prediction_error,
             self.train_op,
             self.target_vals,
+            self.gradients[0], self.gradients[1], self.gradients[2], 
+            self.gradients[3],
             self.summarize if calc_summaries else self.no_op1,
         ], {
             self.reward_rnn.input_sequence: new_observations,
@@ -714,10 +727,13 @@ class RLTutor(object):
             self.rewards: rewards,
         })
       else:
-        _, _, target_vals, summary_str = self.session.run([
+        (_, _, target_vals, grads[0], grads[1], grads[2], grads[3], 
+         summary_str) = self.session.run([
             self.prediction_error,
             self.train_op,
             self.target_vals,
+            self.gradients[0], self.gradients[1], self.gradients[2], 
+            self.gradients[3],
             self.summarize if calc_summaries else self.no_op1,
         ], {
             self.q_network.input_sequence: observations,
@@ -729,6 +745,21 @@ class RLTutor(object):
             self.action_mask: action_mask,
             self.rewards: rewards,
         })
+
+      finite_grads = [not_entirely_finite(grads[i]) for i in range(len(grads))]
+      if np.sum(finite_grads) != 0:
+        print "ERROR! There are nans in the gradients!!!"
+        for i, (grad, var) in enumerate(rl_net.gradients):
+          print "Does gradient of variable", var.name, "have nans?", finite_grads[i] == True
+        
+        print "Setting class level nan variables for debugging"
+        self.nan_obs = observations
+        self.nan_new_obs = new_observations
+        self.nan_lens = obs_lengths
+        self.nan_new_lens = new_obs_lengths
+        self.nan_rewards = rewards
+        self.nan_actions = action_mask
+
 
       total_logs = (self.iteration * self.dqn_hparams.train_every_nth)
       if total_logs % self.output_every_nth == 0:
@@ -1164,4 +1195,5 @@ class RLTutor(object):
       self.eval_avg_data_reward = npz_file['eval_data_rewards']
       self.target_val_list = npz_file['target_val_list']
 
-  
+def not_entirely_finite(matrix):
+  return np.sum(np.isfinite(matrix)) != np.product(np.shape(matrix))
