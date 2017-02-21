@@ -459,16 +459,22 @@ class RLTutor(object):
       # storing them.
       if verbose: print "Training iteration", i
 
-      if self.exploration_mode == 'boltzmann' or self.stochastic_observations:
-        action, new_observation, reward_scores = self.action(
-          last_observation, exploration_period, enable_random=enable_random,
-          sample_next_obs=True)
-      else:
-        action, reward_scores = self.action(last_observation,
-                                            exploration_period,
-                                            enable_random=enable_random,
-                                            sample_next_obs=False)
-        new_observation = action
+      try:
+        if self.exploration_mode == 'boltzmann' or self.stochastic_observations:
+          action, new_observation, reward_scores = self.action(
+            last_observation, exploration_period, enable_random=enable_random,
+            sample_next_obs=True)
+        else:
+          action, reward_scores = self.action(last_observation,
+                                              exploration_period,
+                                              enable_random=enable_random,
+                                              sample_next_obs=False)
+          new_observation = action
+      except Exception as error
+        print "Encountered an error during training:", repr(error)
+        print "Currently at iteration", i
+        print "Training must be stopped."
+        break
 
       if verbose:
         print "Action (in train func):", np.argmax(action)
@@ -597,6 +603,11 @@ class RLTutor(object):
        self.reward_rnn.initial_state: self.reward_rnn.state_value,
        self.reward_rnn.lengths: lengths})
 
+    # check for nans or infs:
+    if np.sum(np.isfinite(action_softmax)) != np.product(np.shape(action_softmax)):
+      print "ERROR!! Network is outputting non-finite numbers!"
+      print action_softmax
+      raise ValueError('Nans in the output! Run for your lives!')
     # this is apparently not needed
     #if self.algorithm == 'psi':
     #  action_scores = np.exp(action_scores)
@@ -680,6 +691,7 @@ class RLTutor(object):
       calc_summaries = self.iteration % 100 == 0
       calc_summaries = calc_summaries and self.summary_writer is not None
 
+      print "about to call train_op to backprop some gradients"
       if self.algorithm == 'g':
         _, _, target_vals, summary_str = self.session.run([
             self.prediction_error,
