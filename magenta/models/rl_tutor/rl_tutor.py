@@ -749,7 +749,7 @@ class RLTutor(object):
       finite_grads = [not_entirely_finite(grads[i]) for i in range(len(grads))]
       if np.sum(finite_grads) != 0:
         print "ERROR! There are nans in the gradients!!!"
-        for i, (grad, var) in enumerate(rl_net.gradients):
+        for i, (grad, var) in enumerate(self.gradients):
           print "Does gradient of variable", var.name, "have nans?", finite_grads[i] == True
         
         print "Setting class level nan variables for debugging"
