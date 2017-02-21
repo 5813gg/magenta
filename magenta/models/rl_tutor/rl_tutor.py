@@ -692,7 +692,7 @@ class RLTutor(object):
       calc_summaries = self.iteration % 100 == 0
       calc_summaries = calc_summaries and self.summary_writer is not None
 
-      print "about to call train_op to backprop some gradients"
+      #print "about to call train_op to backprop some gradients"
       if self.algorithm == 'g':
         _, _, target_vals, summary_str = self.session.run([
             self.prediction_error,
