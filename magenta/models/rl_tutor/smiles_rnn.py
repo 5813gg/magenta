@@ -356,8 +356,9 @@ class SmilesRNN(object):
           self.lengths, self.initial_state)
 
         # Get only the last (relevant) output from each batch
+        flat = tf.reshape(logits, [-1, self.hparams.one_hot_length])
         self.index = tf.range(0, batch_size) * max_length + (self.lengths - 1)
-        self.relevant = tf.gather(logits, self.index)
+        self.relevant = tf.gather(flat, self.index)
         
         return self.relevant
 
