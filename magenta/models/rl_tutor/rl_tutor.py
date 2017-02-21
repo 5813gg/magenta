@@ -425,7 +425,7 @@ class RLTutor(object):
     self.generated_seq = []
 
   def train(self, num_steps=10000, exploration_period=5000, enable_random=True, 
-            verbose=False):
+            verbose=False, eval_on=True):
     """Main training function that allows model to act, collects reward, trains.
 
     Iterates a number of times, getting the model to act each time, saving the
@@ -441,7 +441,8 @@ class RLTutor(object):
       verbose: If True, will output debugging statements
     """
     print "Evaluating initial model..."
-    self.evaluate_model()
+
+    if eval_on: self.evaluate_model()
 
     self.actions_executed_so_far = 0
 
@@ -495,7 +496,7 @@ class RLTutor(object):
 
       if i > 0 and i % self.output_every_nth == 0:
         print "Evaluating model at iteration", i, "..."
-        self.evaluate_model()
+        if eval_on: self.evaluate_model()
 
         self.save_rewards_for_last_n_steps(i)
 
