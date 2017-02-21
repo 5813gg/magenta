@@ -613,7 +613,7 @@ class SmilesTutor(RLTutor):
     plt.plot(x[start_index:], self.eval_percent_valid_during_training[start_index:])
     plt.xlabel('Training epoch')
     plt.ylabel('Sequence statistics')
-    plt.legend(['Avg. length', 'Num valid'], loc='best')
+    plt.legend(['Avg. length', 'Percent valid'], loc='best')
     if image_name is not None:
       plt.savefig(directory + '/' + image_name)
     else:
@@ -644,7 +644,7 @@ class SmilesTutor(RLTutor):
   
   def save_evaluation_stats(self, num_trials):
     avg_seq_length = self.eval_sum_seq_length / float(num_trials)
-    percent_valid = self.eval_num_valid / float(num_trials)
+    percent_valid = (self.eval_num_valid / float(num_trials)) * 100.0
 
     print "\tAverage length:", avg_seq_length
     print "\tNum valid:", self.eval_num_valid
