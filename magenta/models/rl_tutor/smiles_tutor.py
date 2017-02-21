@@ -712,6 +712,7 @@ class SmilesTutor(RLTutor):
       String containing several lines of formatted stats.
     """
     tot_seqs = float(stat_dict['num_sequences'])
+    tot_valid_seqs = float(stat_dict['num_valid_sequences'])
     tot_toks = float(stat_dict['num_tokens'])
     avg_seq_len = tot_toks / tot_seqs
 
@@ -725,13 +726,13 @@ class SmilesTutor(RLTutor):
     return_str += 'Percent with no carbon rings larger than six: '
     return_str += str((stat_dict['num_seqs_w_no_ring_penalty'] / tot_seqs)*100.0) + '%\n'
     return_str += 'Average logP: '
-    return_str += str(float(stat_dict['sum_logp']) / tot_seqs) + '\n'
+    return_str += str(float(stat_dict['sum_logp']) / tot_valid_seqs) + '\n'
     return_str += 'Average ring penalty: '
-    return_str += str(float(stat_dict['sum_ring_penalty']) / tot_seqs) + '\n'
+    return_str += str(float(stat_dict['sum_ring_penalty']) / tot_valid_seqs) + '\n'
     return_str += 'Average SA: '
-    return_str += str(float(stat_dict['sum_sa']) / tot_seqs) + '\n'
+    return_str += str(float(stat_dict['sum_sa']) / tot_valid_seqs) + '\n'
     return_str += 'Average QED: '
-    return_str += str(float(stat_dict['sum_qed']) / tot_seqs) + '\n'
+    return_str += str(float(stat_dict['sum_qed']) / tot_valid_seqs) + '\n'
     
     return_str += '\n'
     return_str += 'Best logP: ' + str(stat_dict['best_logp']) + '\n'
