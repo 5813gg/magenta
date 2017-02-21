@@ -685,8 +685,8 @@ class RLTutor(object):
       reward_states = np.zeros((len(samples), self.reward_rnn.cell.state_size))
 
       # Batch states.
-      observations = np.empty((len(samples), self.train_seq_length, self.input_size))
-      new_observations = np.empty((len(samples), self.train_seq_length, self.input_size))
+      observations = np.zeros((len(samples), self.train_seq_length, self.input_size))
+      new_observations = np.zeros((len(samples), self.train_seq_length, self.input_size))
       action_mask = np.zeros((len(samples), self.num_actions))
       rewards = np.empty((len(samples),))
       obs_lengths = np.empty((len(samples),), dtype=int)

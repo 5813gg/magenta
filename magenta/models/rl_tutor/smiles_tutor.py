@@ -440,7 +440,6 @@ class SmilesTutor(RLTutor):
       return -1 * sascorer.calculateScore(mol)
     except Exception as error:
       print "Uh oh, SA scorer had an error:", repr(error) 
-      print "Sequence was", self.generated_seq
       return -5
 
   def get_logp(self, mol):
