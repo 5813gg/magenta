@@ -439,7 +439,6 @@ class SmilesTutor(RLTutor):
     try:
       return -1 * sascorer.calculateScore(mol)
     except Exception as error:
-      print "Uh oh, SA scorer had an error:", repr(error) 
       return -5
 
   def get_logp(self, mol):
@@ -454,7 +453,7 @@ class SmilesTutor(RLTutor):
       logp = Descriptors.MolLogP(mol)
       return logp
     except:
-      print "Error! logP could not be computed (most likely because getNumBonds() <= 0)"
+      #print "Error! logP could not be computed (most likely because getNumBonds() <= 0)"
       return 0
 
   def get_qed(self, mol):
