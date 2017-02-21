@@ -116,9 +116,10 @@ class SmilesRNN(object):
     self.session = None
     self.saver = None
 
-    self.flat = None
+    self.call_flat = None
     self.index = None
     self.relevant = None
+    self.call_logits = None
 
   def get_zero_state(self):
     """Gets an initial state of zeros appropriate for a single input.
@@ -352,13 +353,13 @@ class SmilesRNN(object):
         batch_size = tf.shape(self.input_sequence)[0]
         max_length = tf.shape(self.input_sequence)[1]
 
-        logits, self.state_tensor = self.run_network(self.input_sequence, 
+        self.call_logits, self.state_tensor = self.run_network(self.input_sequence, 
           self.lengths, self.initial_state)
 
         # Get only the last (relevant) output from each batch
-        flat = tf.reshape(logits, [-1, self.hparams.one_hot_length])
+        self.call_flat = tf.reshape(self.call_logits, [-1, self.hparams.one_hot_length])
         self.index = tf.range(0, batch_size) * max_length + (self.lengths - 1)
-        self.relevant = tf.gather(flat, self.index)
+        self.relevant = tf.gather(self.call_flat, self.index)
         
         return self.relevant
 
