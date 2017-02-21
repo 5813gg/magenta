@@ -677,11 +677,6 @@ class RLTutor(object):
       calc_summaries = self.iteration % 100 == 0
       calc_summaries = calc_summaries and self.summary_writer is not None
 
-      print "obs shape:", np.shape(observations)
-      print "new obs shape:", np.shape(new_observations)
-      print "obs lengths shape:", np.shape(obs_lengths)
-      print "new obs lengths shape:", np.shape(new_obs_lengths)
-
       if self.algorithm == 'g':
         _, _, target_vals, summary_str = self.session.run([
             self.prediction_error,
