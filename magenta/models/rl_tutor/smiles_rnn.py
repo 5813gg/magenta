@@ -349,9 +349,8 @@ class SmilesRNN(object):
     """
     with self.graph.as_default():
       with tf.variable_scope(self.scope, reuse=True):
-        batch_size = tf.shape(logits)[0]
-        max_length = tf.shape(logits)[1]
-        out_size = int(logits.get_shape()[2])
+        batch_size = tf.shape(self.input_sequence)[0]
+        max_length = tf.shape(self.input_sequence)[1]
         logits, self.state_tensor = self.run_network(self.input_sequence, 
           self.lengths, self.initial_state)
         
