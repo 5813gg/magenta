@@ -301,9 +301,9 @@ class SmilesRNN(object):
       saver = tf.train.Saver(var_list=var_dict)
 
     tf.logging.info('Checkpoint dir: %s', checkpoint_dir)
+    print "Looking for checkpoint file in", checkpoint_dir
     checkpoint_file = tf.train.latest_checkpoint(checkpoint_dir)
     print "Found checkpoint file:", checkpoint_file
-    print "In checkpoint dir", checkpoint_dir
 
     if checkpoint_file is None:
       tf.logging.warn("Can't find checkpoint file, using backup, which is %s", 
