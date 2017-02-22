@@ -162,7 +162,7 @@ class RLTutor(object):
       # DQN state.
       self.actions_executed_so_far = 0
       self.experience = [None] * self.dqn_hparams.max_experience
-      self.experience_priorities = [1] * self.dqn_hparams.max_experience
+      self.experience_priorities = [0.0] * self.dqn_hparams.max_experience
       self.experience_pointer = 0
       self.iteration = 0
       self.summary_writer = summary_writer
@@ -635,7 +635,7 @@ class RLTutor(object):
       })
     
     print "td_error shape", np.shape(td_error)
-    return td_error[0]
+    return td_error[0][0]
 
   def action(self, observation, exploration_period=0, enable_random=True,
              sample_next_obs=False):
