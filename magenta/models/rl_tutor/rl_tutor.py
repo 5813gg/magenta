@@ -609,30 +609,30 @@ class RLTutor(object):
     action_mask[0, :] = action
 
     if self.algorithm == 'g':
-        td_error = self.session.run([self.td_error], {
-            self.reward_rnn.input_sequence: new_observations,
-            self.reward_rnn.initial_state: reward_states,
-            self.reward_rnn.lengths: new_obs_lengths,
-            self.q_network.input_sequence: observations,
-            self.q_network.initial_state: q_states,
-            self.q_network.lengths: obs_lengths,
-            self.target_q_network.input_sequence: new_observations,
-            self.target_q_network.initial_state: q_states,
-            self.target_q_network.lengths: new_obs_lengths,
-            self.action_mask: action_mask,
-            self.rewards: rewards,
-        })
-      else:
-        td_error = self.session.run([self.td_error], {
-            self.q_network.input_sequence: observations,
-            self.q_network.initial_state: q_states,
-            self.q_network.lengths: obs_lengths,
-            self.target_q_network.input_sequence: new_observations,
-            self.target_q_network.initial_state: q_states,
-            self.target_q_network.lengths: new_obs_lengths,
-            self.action_mask: action_mask,
-            self.rewards: rewards,
-        })
+      td_error = self.session.run([self.td_error], {
+          self.reward_rnn.input_sequence: new_observations,
+          self.reward_rnn.initial_state: reward_states,
+          self.reward_rnn.lengths: new_obs_lengths,
+          self.q_network.input_sequence: observations,
+          self.q_network.initial_state: q_states,
+          self.q_network.lengths: obs_lengths,
+          self.target_q_network.input_sequence: new_observations,
+          self.target_q_network.initial_state: q_states,
+          self.target_q_network.lengths: new_obs_lengths,
+          self.action_mask: action_mask,
+          self.rewards: rewards,
+      })
+    else:
+      td_error = self.session.run([self.td_error], {
+          self.q_network.input_sequence: observations,
+          self.q_network.initial_state: q_states,
+          self.q_network.lengths: obs_lengths,
+          self.target_q_network.input_sequence: new_observations,
+          self.target_q_network.initial_state: q_states,
+          self.target_q_network.lengths: new_obs_lengths,
+          self.action_mask: action_mask,
+          self.rewards: rewards,
+      })
 
   def action(self, observation, exploration_period=0, enable_random=True,
              sample_next_obs=False):
