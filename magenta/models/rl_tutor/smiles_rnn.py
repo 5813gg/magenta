@@ -82,6 +82,9 @@ class SmilesRNN(object):
     self.output_every=output_every
     self.vocab_size = vocab_size
 
+    print "In SmilesRNN. Going to load checkpoint from", self.checkpoint_dir
+    print "Or:", self.checkpoint_file
+
     if graph is None:
       self.graph = tf.Graph()
     else:

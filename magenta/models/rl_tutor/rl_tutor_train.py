@@ -132,6 +132,8 @@ def main(_):
                                         end_valid_bonus=600,
                                         repeated_C_penalty=-150)
 
+    print "Trying to load rnn checkpoint from", FLAGS.rnn_checkpoint_dir
+    print "Or else:", backup_checkpoint_file
     rlt = smiles_tutor.SmilesTutor(output_dir,
                                   reward_values=reward_values,
                                   dqn_hparams=rl_tutor_hparams,
@@ -144,6 +146,7 @@ def main(_):
                                   exploration_mode=FLAGS.exploration_mode,
                                   algorithm=FLAGS.algorithm) 
 
+                                
   tf.logging.info('Will save models, images, and melodies to: %s', rlt.output_dir)
 
   tf.logging.info('\nTraining...')
