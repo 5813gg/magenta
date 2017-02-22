@@ -123,7 +123,7 @@ def main(_):
     rlt = smiles_tutor.SmilesTutor(output_dir,
                                   dqn_hparams=dqn_hparams, 
                                   reward_values=reward_values,
-                                  dqn_hparams=rl_tutor_hparams
+                                  dqn_hparams=rl_tutor_hparams,
                                   reward_scaler=FLAGS.reward_scaler,
                                   save_name = output_ckpt,
                                   output_every_nth=FLAGS.output_every_nth, 
