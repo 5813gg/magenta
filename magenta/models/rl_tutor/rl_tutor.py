@@ -841,13 +841,8 @@ class RLTutor(object):
       # to compute new priorities. 
       td_error = self.session.run(self.td_error, feed_dict)
 
-      print "td error shape", np.shape(td_error)
-
       for i in range(len(samples_idxs)):
-        print "reweighting experience", samples_idxs[i]
-        print "used to have priority", self.experience_priorities[samples_idxs[i]]
         priority = self.get_priority_from_td_error(td_error[i])
-        print "now will have priority", priority
         self.experience_priorities[samples_idxs[i]] = priority
 
       finite_grads = [not_entirely_finite(grads[i]) for i in range(len(grads))]
