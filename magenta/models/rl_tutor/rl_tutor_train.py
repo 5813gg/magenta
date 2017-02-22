@@ -116,7 +116,7 @@ def main(_):
                                             initial_learning_rate=0.0001)
 
     reward_values = rl_tutor_ops.HParams(valid_length_multiplier=0,
-                                        valid_lenth_bonus_cap=0,
+                                        valid_length_bonus_cap=0,
                                         invalid_length_multiplier=0,
                                         sa_multiplier=2,
                                         logp_multiplier=3,
