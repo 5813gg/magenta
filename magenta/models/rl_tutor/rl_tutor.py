@@ -429,7 +429,7 @@ class RLTutor(object):
 
     #tf.scalar_summary('prediction_error', self.prediction_error)
 
-    self.summarize = tf.merge_all_summaries()
+    #self.summarize = tf.merge_all_summaries()
     self.no_op1 = tf.no_op()
 
   def get_random_action(self):
