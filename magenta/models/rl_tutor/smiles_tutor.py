@@ -389,8 +389,8 @@ class SmilesTutor(RLTutor):
     if mol:
       end_length_bonus = min(self.reward_values.valid_length_multiplier * len(seq), 
                              self.reward_values.valid_length_bonus_cap)
+      quality_rewards = self.reward_values.end_valid_drug_quality_multiplier * sum_mol_rewards
       if verbose: 
-        quality_rewards = self.reward_values.end_valid_drug_quality_multiplier * sum_mol_rewards
         print "Applying final bonus for ending on VALID SEQUENCE!"
         print "Ending valid bonus:", self.reward_values.end_valid_bonus * self.reward_scaler
         print "Valid length bonus:", end_length_bonus * self.reward_scaler
