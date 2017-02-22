@@ -614,7 +614,7 @@ class SmilesTutor(RLTutor):
     plt.ylabel('Sequence statistics')
     plt.legend(['Avg. length', 'Percent valid'], loc='best')
     if image_name is not None:
-      plt.savefig(directory + '/ValidityStatsOverTime.eps)
+      plt.savefig(directory + '/ValidityStatsOverTime.eps')
     else:
       plt.show()
 
