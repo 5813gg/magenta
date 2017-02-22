@@ -346,18 +346,18 @@ def make_cell(hparams, note_rnn_type, state_is_tuple=False):
   cells = []
   for num_units in hparams.rnn_layer_sizes:
     if note_rnn_type == 'default':
-      cell = tf.contrib.rnn.LSTMCell(
+      cell = tf.nn.rnn_cell.LSTMCell(
           num_units, state_is_tuple=state_is_tuple)
     else:
-      cell = tf.contrib.rnn.BasicLSTMCell(
+      cell = tf.nn.rnn_cell.BasicLSTMCell(
           num_units, state_is_tuple=state_is_tuple)
-      cell = tf.contrib.rnn.DropoutWrapper(
+      cell = tf.nn.rnn_cell.DropoutWrapper(
           cell, output_keep_prob=hparams.dropout_keep_prob)
     cells.append(cell)
 
-  cell = tf.contrib.rnn.MultiRNNCell(cells, state_is_tuple=state_is_tuple)
+  cell = tf.nn.rnn_cell.MultiRNNCell(cells, state_is_tuple=state_is_tuple)
   if hparams.attn_length:
-    cell = tf.contrib.rnn.AttentionCellWrapper(
+    cell = tf.nn.rnn_cell.AttentionCellWrapper(
         cell, hparams.attn_length, state_is_tuple=state_is_tuple)
 
   return cell
