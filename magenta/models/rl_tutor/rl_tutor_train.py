@@ -10,6 +10,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import os
+import sys
 
 import tensorflow as tf
 
@@ -134,6 +135,8 @@ def main(_):
 
     print "Trying to load rnn checkpoint from", FLAGS.rnn_checkpoint_dir
     print "Or else:", backup_checkpoint_file
+    tf.logging.info('Trying to load rnn checkpoint from %s', FLAGS.checkpoint_dir)
+    sys.stdout.flush()
     rlt = smiles_tutor.SmilesTutor(output_dir,
                                   reward_values=reward_values,
                                   dqn_hparams=rl_tutor_hparams,
