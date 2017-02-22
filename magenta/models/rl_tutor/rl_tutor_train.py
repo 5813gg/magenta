@@ -121,7 +121,6 @@ def main(_):
                                         repeated_C_penalty=-150)
 
     rlt = smiles_tutor.SmilesTutor(output_dir,
-                                  dqn_hparams=dqn_hparams, 
                                   reward_values=reward_values,
                                   dqn_hparams=rl_tutor_hparams,
                                   reward_scaler=FLAGS.reward_scaler,
