@@ -135,7 +135,7 @@ def main(_):
 
     print "Trying to load rnn checkpoint from", FLAGS.rnn_checkpoint_dir
     print "Or else:", backup_checkpoint_file
-    tf.logging.info('Trying to load rnn checkpoint from %s', FLAGS.checkpoint_dir)
+    tf.logging.info('Trying to load rnn checkpoint from %s', FLAGS.rnn_checkpoint_dir)
     sys.stdout.flush()
     rlt = smiles_tutor.SmilesTutor(output_dir,
                                   reward_values=reward_values,
