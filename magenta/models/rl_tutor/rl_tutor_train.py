@@ -30,7 +30,7 @@ tf.app.flags.DEFINE_string('rnn_checkpoint_dir','/home/natasha/Dropbox/Google/SM
 tf.app.flags.DEFINE_string('rnn_checkpoint_name', 'smiles_rnn_31001',
                            'Filename of a checkpoint within the '
                            'rnn_checkpoint_dir directory.')
-tf.app.flags.DEFINE_float('reward_scaler', 0.4,
+tf.app.flags.DEFINE_float('reward_scaler', 0.35,
                           'The weight placed on music theory rewards')
 tf.app.flags.DEFINE_string('algorithm', 'psi',
                            'The name of the algorithm to use for training the'
@@ -111,7 +111,7 @@ def main(_):
                                         train_every_nth=50,
                                         minibatch_size=512,
                                         discount_rate=0.95,
-                                        max_experience=500000,
+                                        max_experience=350000,
                                         target_network_update_rate=0.01,
                                         initial_learning_rate=0.0001)
 
