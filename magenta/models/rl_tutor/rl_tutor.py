@@ -427,7 +427,7 @@ class RLTutor(object):
         self.target_network_update.append(update_op)
       self.target_network_update = tf.group(*self.target_network_update)
 
-    tf.scalar_summary('prediction_error', self.prediction_error)
+    #tf.scalar_summary('prediction_error', self.prediction_error)
 
     self.summarize = tf.merge_all_summaries()
     self.no_op1 = tf.no_op()
