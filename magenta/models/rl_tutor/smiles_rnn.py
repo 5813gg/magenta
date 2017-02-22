@@ -197,7 +197,7 @@ class SmilesRNN(object):
         elif 'multi_rnn_cell' in inner_name and 'bias' in inner_name:
           var_dict['smiles_rnn/RNN/MultiRNNCell/Cell0/LSTMCell/B'] = var
         else:
-          var_dict[inner_name] = var
+          var_dict[self.checkpoint_scope + '/' + inner_name] = var
       elif self.rnn_type == 'basic_rnn':
         if 'fully_connected' in inner_name and 'bias' in inner_name:
           # 'fully_connected/bias' has been changed to 'fully_connected/biases'
