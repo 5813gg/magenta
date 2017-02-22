@@ -180,7 +180,7 @@ class SmilesRNN(object):
         self.session = session
       self.session.run(tf.initialize_all_variables())
 
-  def get_variable_name_dict(self):
+  def get_variable_name_dict(self, old_checkpoint=True):
     """Constructs a dict mapping the checkpoint variables to those in new graph.
 
     Returns:
@@ -190,7 +190,15 @@ class SmilesRNN(object):
     for var in self.variables():
       inner_name = rl_tutor_ops.get_inner_scope(var.name)
       inner_name = rl_tutor_ops.trim_variable_postfixes(inner_name)
-      if self.rnn_type == 'basic_rnn':
+      
+      if old_checkpoint:
+        if 'multi_rnn_cell' in inner_name and 'weights' in inner_name:
+          var_dict['smiles_rnn/RNN/MultiRNNCell/Cell0/LSTMCell/W_0'] = var
+        elif 'multi_rnn_cell' in inner_name and 'bias' in inner_name:
+          var_dict['smiles_rnn/RNN/MultiRNNCell/Cell0/LSTMCell/B'] = var
+        else:
+          var_dict[inner_name] = var
+      elif self.rnn_type == 'basic_rnn':
         if 'fully_connected' in inner_name and 'bias' in inner_name:
           # 'fully_connected/bias' has been changed to 'fully_connected/biases'
           # in newest checkpoints.
