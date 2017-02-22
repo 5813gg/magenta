@@ -19,6 +19,7 @@ These functions are necessary for use with the RL Tutor class.
 """
 
 import os
+import sys
 
 import numpy as np
 import tensorflow as tf
@@ -301,11 +302,16 @@ class SmilesRNN(object):
 
     tf.logging.info('Checkpoint dir: %s', checkpoint_dir)
     checkpoint_file = tf.train.latest_checkpoint(checkpoint_dir)
+    print "Found checkpoint file:", checkpoint_file
+    print "In checkpoint dir", checkpoint_dir
+
     if checkpoint_file is None:
       tf.logging.warn("Can't find checkpoint file, using backup, which is %s", 
                       self.checkpoint_file)
       checkpoint_file = self.checkpoint_file
+      print "Can't find checkpoint file, using backup, which is", checkpoint_file
     tf.logging.info('Checkpoint file: %s', checkpoint_file)
+    sys.stdout.flush()
 
     saver.restore(self.session, checkpoint_file)
 
