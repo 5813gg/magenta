@@ -749,6 +749,7 @@ class RLTutor(object):
       priority = self.get_priority_from_td_error(td_error)
       if np.isnan(priority):
         print "ALERT! priority is nan for some reason!", priority
+        print "td error was:", td_error
 
       self.experience[self.experience_pointer] = (observation, action, reward, newobservation)
       self.experience_priorities[self.experience_pointer] = priority
