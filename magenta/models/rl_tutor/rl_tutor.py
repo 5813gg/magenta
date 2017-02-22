@@ -482,9 +482,6 @@ class RLTutor(object):
     for i in range(num_steps):
       # Experiencing observation, action, reward, new observation tuples and
       # storing them.
-      #if verbose: 
-      print "Training iteration", i
-
       try:
         if self.exploration_mode == 'boltzmann' or self.stochastic_observations:
           action, new_observation, reward_scores = self.action(
@@ -842,7 +839,9 @@ class RLTutor(object):
       
       # After training, compute the new TD errors of these samples in order
       # to compute new priorities. 
-      td_error = self.session.run([self.td_error], feed_dict)
+      td_error = self.session.run(self.td_error, feed_dict)
+
+      print "td error shape", np.shape(td_error)
 
       for i in range(len(samples_idxs)):
         print "reweighting experience", samples_idxs[i]
