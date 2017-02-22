@@ -107,13 +107,13 @@ def main(_):
                                     exponentially_decay_learning_rate=True)
 
     rl_tutor_hparams = rl_tutor_ops.HParams(random_action_probability=0.01,
-                                            store_every_nth=1,
-                                            train_every_nth=50,
-                                            minibatch_size=512,
-                                            discount_rate=0.95,
-                                            max_experience=500000,
-                                            target_network_update_rate=0.01,
-                                            initial_learning_rate=0.0001)
+                                        store_every_nth=1,
+                                        train_every_nth=50,
+                                        minibatch_size=512,
+                                        discount_rate=0.95,
+                                        max_experience=500000,
+                                        target_network_update_rate=0.01,
+                                        initial_learning_rate=0.0001)
 
     reward_values = rl_tutor_ops.HParams(valid_length_multiplier=0,
                                         valid_length_bonus_cap=0,
