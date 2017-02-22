@@ -136,8 +136,13 @@ def main(_):
   tf.logging.info('Will save models, images, and melodies to: %s', rlt.output_dir)
 
   tf.logging.info('\nTraining...')
-  rlt.train(num_steps=FLAGS.training_steps,
-               exploration_period=FLAGS.exploration_steps)
+  rlt.train(num_steps=FLAGS.training_steps/2, exploration_period=FLAGS.exploration_steps)
+
+  tf.logging.info('\nHalfway through training. Saving model.')
+  rlt.save_model_and_figs(FLAGS.algorithm + '-halfway')
+
+  tf.logging.info('\nResuming training...')
+  rlt.train(num_steps=FLAGS.training_steps/2, exploration_period=FLAGS.exploration_steps)
 
   tf.logging.info('\nFinished training. Saving output figures and renders.')
   rlt.plot_rewards(image_name='Rewards-' + FLAGS.algorithm + '.eps')
