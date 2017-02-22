@@ -806,16 +806,7 @@ class RLTutor(object):
       grads = [0] * len(self.gradients)
 
       if self.algorithm == 'g':
-        (total_pred_error, td_error, _, target_vals, grads[0], grads[1], 
-        grads[2], grads[3], summary_str) = self.session.run([
-            self.prediction_error,
-            self.td_error,
-            self.train_op,
-            self.target_vals,
-            self.gradients[0], self.gradients[1], self.gradients[2], 
-            self.gradients[3],
-            self.summarize if calc_summaries else self.no_op1,
-        ], {
+        feed_dict = {
             self.reward_rnn.input_sequence: new_observations,
             self.reward_rnn.initial_state: reward_states,
             self.reward_rnn.lengths: new_obs_lengths,
@@ -827,18 +818,9 @@ class RLTutor(object):
             self.target_q_network.lengths: new_obs_lengths,
             self.action_mask: action_mask,
             self.rewards: rewards,
-        })
+        }
       else:
-        (total_pred_error, td_error, _, target_vals, grads[0], grads[1], 
-         grads[2], grads[3], summary_str) = self.session.run([
-            self.prediction_error,
-            self.td_error,
-            self.train_op,
-            self.target_vals,
-            self.gradients[0], self.gradients[1], self.gradients[2], 
-            self.gradients[3],
-            self.summarize if calc_summaries else self.no_op1,
-        ], {
+        feed_dict = {
             self.q_network.input_sequence: observations,
             self.q_network.initial_state: q_states,
             self.q_network.lengths: obs_lengths,
@@ -847,9 +829,21 @@ class RLTutor(object):
             self.target_q_network.lengths: new_obs_lengths,
             self.action_mask: action_mask,
             self.rewards: rewards,
-        })
+        }
       
-      # Assign the TD errors back as priorities to the samples
+      (total_pred_error, _, target_vals, grads[0], grads[1], 
+      grads[2], grads[3], summary_str) = self.session.run([
+          self.prediction_error,
+          self.train_op,
+          self.target_vals,
+          self.gradients[0], self.gradients[1], self.gradients[2], 
+          self.gradients[3],
+          self.summarize if calc_summaries else self.no_op1], feed_dict)
+      
+      # After training, compute the new TD errors of these samples in order
+      # to compute new priorities. 
+      td_error = self.session.run([self.td_error], feed_dict)
+
       for i in range(len(samples_idxs)):
         print "reweighting experience", samples_idxs[i]
         print "used to have priority", self.experience_priorities[samples_idxs[i]]
