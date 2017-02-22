@@ -50,6 +50,8 @@ class RLTutor(object):
                priming_mode='random',
                stochastic_observations=False,
                algorithm='q',
+               prioritized_replay_alpha=0.5,
+               prioritized_replay_epsilon=.01,
 
                # Pre-trained RNN to load and train
                rnn_checkpoint_dir=None,
@@ -89,6 +91,14 @@ class RLTutor(object):
         will be sampled from the model's softmax output.
       algorithm: can be 'default', 'psi', 'g' or 'pure_rl', for different 
         learning algorithms
+      prioritized_replay_alpha: Float between 0 and 1. 
+        From https://arxiv.org/pdf/1511.05952.pdf, a higher alpha will lead to 
+        higher priority samples being chosen more frequently. An alpha of 0 
+        corresponds to uniform sampling, so set to 0 to turn of prioritized 
+        replay.
+      prioritized_replay_epsilon: Small float value (e.g. .01) that is added to
+        the priority of each element in the experience buffer to ensure at least
+        some probability of it being sampled.
       rnn_checkpoint_dir: The directory from which the internal 
         RNN loader class will load its checkpointed LSTM.
       rnn_checkpoint_file: A checkpoint file to use in case one cannot be
@@ -125,6 +135,8 @@ class RLTutor(object):
       self.reward_scaler = reward_scaler
       self.reward_mode = reward_mode
       self.exploration_mode = exploration_mode
+      self.prioritized_replay_alpha = prioritized_replay_alpha
+      self.prioritized_replay_epsilon = prioritized_replay_epsilon
       self.stochastic_observations = stochastic_observations
       self.algorithm = algorithm
       self.priming_mode = priming_mode
@@ -149,7 +161,9 @@ class RLTutor(object):
 
       # DQN state.
       self.actions_executed_so_far = 0
-      self.experience = deque(maxlen=self.dqn_hparams.max_experience)
+      self.experience = [None] * self.dqn_hparams.max_experience
+      self.experience_priorities = [1] * self.dqn_hparams.max_experience
+      self.experience_pointer = 0
       self.iteration = 0
       self.summary_writer = summary_writer
       self.num_times_store_called = 0
@@ -373,12 +387,12 @@ class RLTutor(object):
                                                 self.action_mask,
                                                 reduction_indices=[1,])
 
-      temp_diff = self.masked_action_scores - self.future_rewards
+      self.td_error = self.masked_action_scores - self.future_rewards
 
       # Prediction error is the mean squared error between the reward the
       # network actually received for a given action, and what it expected to
       # receive.
-      self.prediction_error = tf.reduce_mean(tf.square(temp_diff))
+      self.prediction_error = tf.reduce_mean(tf.square(self.td_error))
 
       # Compute gradients.
       self.params = tf.trainable_variables()
@@ -468,7 +482,8 @@ class RLTutor(object):
     for i in range(num_steps):
       # Experiencing observation, action, reward, new observation tuples and
       # storing them.
-      if verbose: print "Training iteration", i
+      #if verbose: 
+      print "Training iteration", i
 
       try:
         if self.exploration_mode == 'boltzmann' or self.stochastic_observations:
@@ -567,6 +582,58 @@ class RLTutor(object):
     self.domain_reward_last_n = 0
     self.data_reward_last_n = 0
 
+  def get_priority_from_td_error(self, td_error):
+    return (td_error + self.prioritized_replay_epsilon) ** self.prioritized_replay_alpha
+
+  def get_td_error(self, obs, action, reward, new_obs):
+    """
+    Args:
+      obs: List of ints encoding tokens.
+      action: One hot encoding of action.
+      reward: Float reward value.
+      new_obs: List of ints encoding tokens.
+    """
+    # Initial states.
+    q_states = np.zeros((1, self.q_network.cell.state_size))
+    reward_states = np.zeros((1, self.reward_rnn.cell.state_size))
+
+    observations = np.zeros((1, len(obs), self.input_size))
+    new_observations = np.zeros((1, len(new_obs), self.input_size))
+    action_mask = np.zeros((1, self.num_actions))
+    rewards = np.full(1, reward, dtype=int)
+    obs_lengths = np.full(1, len(obs), dtype=int)
+    new_obs_lengths = np.full(1, len(new_obs), dtype=int)
+
+    observations[0, :len(obs), :] = rl_tutor_ops.make_onehot(obs, self.input_size)
+    new_observations[0, :len(new_obs), :] = rl_tutor_ops.make_onehot(new_obs, self.input_size)
+    action_mask[0, :] = action
+
+    if self.algorithm == 'g':
+        td_error = self.session.run([self.td_error], {
+            self.reward_rnn.input_sequence: new_observations,
+            self.reward_rnn.initial_state: reward_states,
+            self.reward_rnn.lengths: new_obs_lengths,
+            self.q_network.input_sequence: observations,
+            self.q_network.initial_state: q_states,
+            self.q_network.lengths: obs_lengths,
+            self.target_q_network.input_sequence: new_observations,
+            self.target_q_network.initial_state: q_states,
+            self.target_q_network.lengths: new_obs_lengths,
+            self.action_mask: action_mask,
+            self.rewards: rewards,
+        })
+      else:
+        td_error = self.session.run([self.td_error], {
+            self.q_network.input_sequence: observations,
+            self.q_network.initial_state: q_states,
+            self.q_network.lengths: obs_lengths,
+            self.target_q_network.input_sequence: new_observations,
+            self.target_q_network.initial_state: q_states,
+            self.target_q_network.lengths: new_obs_lengths,
+            self.action_mask: action_mask,
+            self.rewards: rewards,
+        })
+
   def action(self, observation, exploration_period=0, enable_random=True,
              sample_next_obs=False):
     """Given an observation, runs the q_network to choose the current action.
@@ -658,10 +725,22 @@ class RLTutor(object):
       reward: Reward received for taking the action.
       newobservation: The next observation that resulted from the action.
         Unless stochastic_observations is True, the newobservation will 
-        be the old observatio with the action argmax appended. 
+        be the old observation with the action argmax appended. 
     """
     if self.num_times_store_called % self.dqn_hparams.store_every_nth == 0:
-      self.experience.append((observation, action, reward, newobservation))
+      # Compute priority.
+      td_error = self.get_td_error(observation, action, reward, newobservation)
+      priority = self.get_priority_from_td_error(td_error)
+
+      self.experience[self.experience_pointer] = (observation, action, reward, newobservation)
+      self.experience_priorities[self.experience_pointer] = priority
+      self.experience_pointer += 1
+      
+      # Move pointer.
+      if self.experience_pointer >= self.dqn_hparams.max_experience:
+        print "Experience buffer is looping back to the beginning"
+        self.experience_pointer = 0
+    
     self.num_times_store_called += 1
 
   def training_step(self):
@@ -676,9 +755,12 @@ class RLTutor(object):
         return
 
       # Sample experience.
-      samples = random.sample(range(len(self.experience)),
-                              self.dqn_hparams.minibatch_size)
-      samples = [self.experience[i] for i in samples]
+      norm_priorities = self.experience_priorities / np.sum(self.experience_priorities)
+      samples_idxs = np.random.choice(range(len(self.experience)),
+                                      size=self.dqn_hparams.minibatch_size,
+                                      p=norm_priorities)
+      samples = [self.experience[i] for i in samples_idxs]
+      print "idxs chosen were:", samples_idxs
 
       # Initial states.
       q_states = np.zeros((len(samples), self.q_network.cell.state_size))
@@ -705,11 +787,11 @@ class RLTutor(object):
 
       grads = [0] * len(self.gradients)
 
-      #print "about to call train_op to backprop some gradients"
       if self.algorithm == 'g':
-        (_, _, target_vals, grads[0], grads[1], grads[2], grads[3], 
-         summary_str) = self.session.run([
+        (total_pred_error, td_error, _, target_vals, grads[0], grads[1], 
+        grads[2], grads[3], summary_str) = self.session.run([
             self.prediction_error,
+            self.td_error,
             self.train_op,
             self.target_vals,
             self.gradients[0], self.gradients[1], self.gradients[2], 
@@ -729,9 +811,10 @@ class RLTutor(object):
             self.rewards: rewards,
         })
       else:
-        (_, _, target_vals, grads[0], grads[1], grads[2], grads[3], 
-         summary_str) = self.session.run([
+        (total_pred_error, td_error, _, target_vals, grads[0], grads[1], 
+         grads[2], grads[3], summary_str) = self.session.run([
             self.prediction_error,
+            self.td_error,
             self.train_op,
             self.target_vals,
             self.gradients[0], self.gradients[1], self.gradients[2], 
@@ -747,6 +830,8 @@ class RLTutor(object):
             self.action_mask: action_mask,
             self.rewards: rewards,
         })
+
+      print "TD error shape is:", np.shape(td_error)
 
       finite_grads = [not_entirely_finite(grads[i]) for i in range(len(grads))]
       if np.sum(finite_grads) != 0:
