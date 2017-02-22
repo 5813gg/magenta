@@ -636,6 +636,10 @@ class RLTutor(object):
     
     if np.sum(np.isfinite(td_error)) != np.product(np.shape(td_error)):
       print "EERK! TD error is nan! Setting nan values in class"
+      print "Observation:", obs
+      print "Action:", action
+      print "Reward:", reward
+      print "New observation:", new_obs
       self.nan_obs = observations
       self.nan_new_obs = new_observations
       self.nan_lens = obs_lengths
