@@ -648,7 +648,7 @@ class RLTutor(object):
       self.nan_actions = action_mask
       raise ValueError('KILL THIS PROCESS')
 
-    return td_error[0][0]
+    return np.abs(td_error[0][0])
 
   def action(self, observation, exploration_period=0, enable_random=True,
              sample_next_obs=False):
