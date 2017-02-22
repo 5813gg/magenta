@@ -265,7 +265,7 @@ class SmilesRNN(object):
         # Code for training the model
         self.labels_flat = tf.reshape(self.train_labels, [-1])
         self.loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(
-          self.logits, self.labels_flat))
+          logits=self.logits, labels=self.labels_flat))
         
         self.global_step = tf.Variable(0, trainable=False, name='global_step')
 
