@@ -633,6 +633,9 @@ class RLTutor(object):
           self.action_mask: action_mask,
           self.rewards: rewards,
       })
+    
+    print "td_error shape", np.shape(td_error)
+    return td_error
 
   def action(self, observation, exploration_period=0, enable_random=True,
              sample_next_obs=False):
