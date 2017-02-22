@@ -634,6 +634,16 @@ class RLTutor(object):
           self.rewards: rewards,
       })
     
+    if np.sum(np.isfinite(td_error)) != np.product(np.shape(td_error)):
+      print "EERK! TD error is nan! Setting nan values in class"
+      self.nan_obs = observations
+      self.nan_new_obs = new_observations
+      self.nan_lens = obs_lengths
+      self.nan_new_lens = new_obs_lengths
+      self.nan_rewards = rewards
+      self.nan_actions = action_mask
+      raise ValueError('KILL THIS PROCESS')
+
     print "td_error shape", np.shape(td_error)
     return td_error[0][0]
 
@@ -734,6 +744,8 @@ class RLTutor(object):
       # Compute priority.
       td_error = self.get_td_error(observation, action, reward, newobservation)
       priority = self.get_priority_from_td_error(td_error)
+      if np.isnan(priority):
+        print "ALERT! priority is nan for some reason!", priority
 
       self.experience[self.experience_pointer] = (observation, action, reward, newobservation)
       self.experience_priorities[self.experience_pointer] = priority
@@ -753,7 +765,7 @@ class RLTutor(object):
     replay buffer and used to update the weights of the q_network and
     target_q_network.
     """
-    if self.num_times_train_called % self.dqn_hparams.train_every_nth == 0:
+    if self.num_times_train_called > 1 and self.num_times_train_called % self.dqn_hparams.train_every_nth == 0:
       if len(self.experience) < self.dqn_hparams.minibatch_size:
         return
 
@@ -833,8 +845,6 @@ class RLTutor(object):
             self.action_mask: action_mask,
             self.rewards: rewards,
         })
-
-      print "TD error shape is:", np.shape(td_error)
 
       finite_grads = [not_entirely_finite(grads[i]) for i in range(len(grads))]
       if np.sum(finite_grads) != 0:
