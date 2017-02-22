@@ -578,7 +578,7 @@ class SmilesTutor(RLTutor):
     plt.ylabel('Avg reward per sequence')
     plt.legend(['Total', 'Domain', 'Reward RNN'], loc='best')
     if image_name is not None:
-      plt.savefig(directory + '/' + image_name)
+      plt.savefig(directory + '/PerSeq' + image_name)
     else:
       plt.show()
 
@@ -614,7 +614,7 @@ class SmilesTutor(RLTutor):
     plt.ylabel('Sequence statistics')
     plt.legend(['Avg. length', 'Percent valid'], loc='best')
     if image_name is not None:
-      plt.savefig(directory + '/' + image_name)
+      plt.savefig(directory + '/ValidityStatsOverTime.eps)
     else:
       plt.show()
 

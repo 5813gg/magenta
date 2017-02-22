@@ -29,24 +29,24 @@ tf.app.flags.DEFINE_string('rnn_checkpoint_dir', '/home/natasha/Dropbox/Google/S
 tf.app.flags.DEFINE_string('rnn_checkpoint_name', 'smiles_rnn_100_350001.ckpt',
                            'Filename of a checkpoint within the '
                            'rnn_checkpoint_dir directory.')
-tf.app.flags.DEFINE_float('reward_scaler', 1,
+tf.app.flags.DEFINE_float('reward_scaler', 0.25,
                           'The weight placed on music theory rewards')
 tf.app.flags.DEFINE_string('algorithm', 'psi',
                            'The name of the algorithm to use for training the'
                            'model. Can be q, psi, or g')
-tf.app.flags.DEFINE_integer('training_steps', 1000000,
+tf.app.flags.DEFINE_integer('training_steps', 2000000,
                             'The number of steps used to train the model')
-tf.app.flags.DEFINE_integer('exploration_steps', 500000,
+tf.app.flags.DEFINE_integer('exploration_steps', 0,
                             'The number of steps over which the models'
                             'probability of taking a random action (exploring)'
                             'will be annealed from 1.0 to its normal'
                             'exploration probability. Typically about half the'
                             'training_steps')
-tf.app.flags.DEFINE_string('exploration_mode', 'boltzmann',
+tf.app.flags.DEFINE_string('exploration_mode', 'egreedy',
                            'Can be either egreedy for epsilon-greedy or '
                            'boltzmann, which will sample from the models'
                            'output distribution to select the next action')
-tf.app.flags.DEFINE_integer('output_every_nth', 50000,
+tf.app.flags.DEFINE_integer('output_every_nth', 10000,
                             'The number of steps before the model will evaluate'
                             'itself and store a checkpoint')
 tf.app.flags.DEFINE_string('training_data_path', '',
@@ -60,14 +60,6 @@ tf.app.flags.DEFINE_string('midi_primer', '/home/natasha/Dropbox/Google/code/tes
 
 
 def main(_):
-  dqn_hparams = rl_tutor_ops.HParams(random_action_probability=0.1,
-                               store_every_nth=1,
-                               train_every_nth=5,
-                               minibatch_size=32,
-                               discount_rate=0.95,
-                               max_experience=100000,
-                               target_network_update_rate=0.01)
-
   output_dir = os.path.join(FLAGS.output_dir, FLAGS.algorithm)
   output_ckpt = FLAGS.algorithm + '.ckpt'
   backup_checkpoint_file = os.path.join(FLAGS.rnn_checkpoint_dir, 
@@ -76,6 +68,14 @@ def main(_):
   if FLAGS.domain_application == 'melody':
     import rl_tuner
     hparams = rl_tutor_ops.default_hparams()
+
+    dqn_hparams = rl_tutor_ops.HParams(random_action_probability=0.1,
+                               store_every_nth=1,
+                               train_every_nth=5,
+                               minibatch_size=32,
+                               discount_rate=0.95,
+                               max_experience=100000,
+                               target_network_update_rate=0.01)
 
     rlt = rl_tuner.RLTuner(output_dir,
                           midi_primer=FLAGS.midi_primer, 
@@ -93,8 +93,37 @@ def main(_):
     import smiles_tutor
     hparams = rl_tutor_ops.smiles_hparams()
 
+    rl_tutor_hparams = rl_tutor_ops.HParams(random_action_probability=0.01,
+                                            store_every_nth=1,
+                                            train_every_nth=100,
+                                            minibatch_size=512,
+                                            discount_rate=0.95,
+                                            max_experience=350000,
+                                            target_network_update_rate=0.01,
+                                            initial_learning_rate=0.0001)
+
+    reward_values = rl_tutor_ops.HParams(valid_length_multiplier=0,
+                                        valid_lenth_bonus_cap=0,
+                                        invalid_length_multiplier=0,
+                                        sa_multiplier=2,
+                                        logp_multiplier=3,
+                                        ringp_multiplier=5,
+                                        qed_multiplier=40,
+                                        shortish_seq=-25,
+                                        short_seq=-200,
+                                        longish_seq=0,
+                                        long_seq=0,
+                                        data_scalar=1,
+                                        any_valid_bonus=5,
+                                        any_invalid_penalty=-5,
+                                        end_invalid_penalty=0,
+                                        end_valid_bonus=600,
+                                        repeated_C_penalty=-150)
+
     rlt = smiles_tutor.SmilesTutor(output_dir,
                                   dqn_hparams=dqn_hparams, 
+                                  reward_values=reward_values,
+                                  dqn_hparams=rl_tutor_hparams
                                   reward_scaler=FLAGS.reward_scaler,
                                   save_name = output_ckpt,
                                   output_every_nth=FLAGS.output_every_nth, 
@@ -104,7 +133,7 @@ def main(_):
                                   exploration_mode=FLAGS.exploration_mode,
                                   algorithm=FLAGS.algorithm) 
 
-  tf.logging.info('Saving images and melodies to: %s', rlt.output_dir)
+  tf.logging.info('Will save models, images, and melodies to: %s', rlt.output_dir)
 
   tf.logging.info('\nTraining...')
   rlt.train(num_steps=FLAGS.training_steps,
