@@ -583,7 +583,7 @@ class RLTutor(object):
     self.data_reward_last_n = 0
 
   def get_priority_from_td_error(self, td_error):
-    return (td_error + self.prioritized_replay_epsilon) ** self.prioritized_replay_alpha
+    return (np.abs(td_error) + self.prioritized_replay_epsilon) ** self.prioritized_replay_alpha
 
   def get_td_error(self, obs, action, reward, new_obs):
     """
@@ -648,7 +648,7 @@ class RLTutor(object):
       self.nan_actions = action_mask
       raise ValueError('KILL THIS PROCESS')
 
-    return np.abs(td_error[0][0])
+    return td_error[0][0]
 
   def action(self, observation, exploration_period=0, enable_random=True,
              sample_next_obs=False):
@@ -779,7 +779,6 @@ class RLTutor(object):
                                       size=self.dqn_hparams.minibatch_size,
                                       p=norm_priorities)
       samples = [self.experience[i] for i in samples_idxs]
-      print "idxs chosen were:", samples_idxs
 
       # Initial states.
       q_states = np.zeros((len(samples), self.q_network.cell.state_size))
@@ -849,6 +848,14 @@ class RLTutor(object):
             self.action_mask: action_mask,
             self.rewards: rewards,
         })
+      
+      # Assign the TD errors back as priorities to the samples
+      for i in range(len(samples_idxs)):
+        print "reweighting experience", samples_idxs[i]
+        print "used to have priority", self.experience_priorities[samples_idxs[i]]
+        priority = self.get_priority_from_td_error(td_error[i])
+        print "now will have priority", priority
+        self.experience_priorities[samples_idxs[i]] = priority
 
       finite_grads = [not_entirely_finite(grads[i]) for i in range(len(grads))]
       if np.sum(finite_grads) != 0:
