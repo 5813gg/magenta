@@ -556,7 +556,7 @@ class SmilesTutor(RLTutor):
         print "Invalid molecule :("
 
   def load_stored_rewards(self, npz_file_name):
-    print "Attempting to load saved reward values from file", npz_file_name
+    print "Attempting to load SMILES TUTOR saved reward values from file", npz_file_name
     npz_file = np.load(npz_file_name)
 
     self.rewards_batched = npz_file['train_rewards']
