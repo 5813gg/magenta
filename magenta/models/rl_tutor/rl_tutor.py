@@ -1284,7 +1284,7 @@ class RLTutor(object):
     if not new_checkpoint:
       self.saver.restore(self.session, checkpoint_file)
     else:
-      var_dict = self.get_variable_name_dict()
+      var_dict = self.get_variable_name_dict_new_checkpoint()
       with self.graph.as_default():
         saver = tf.train.Saver(var_list=var_dict)
 
@@ -1301,7 +1301,7 @@ class RLTutor(object):
       self.eval_avg_data_reward = npz_file['eval_data_rewards']
       self.target_val_list = npz_file['target_val_list']
 
-  def get_variable_name_dict(self):
+  def get_variable_name_dict_new_checkpoint(self):
     """Constructs a dict mapping the checkpoint variables to those in new graph.
 
     Returns:
