@@ -587,6 +587,7 @@ class SmilesTutor(RLTutor):
              eval_data_rewards=self.eval_avg_data_reward,
              target_val_list=self.target_val_list,
              avg_train_domain_reward_per_sequence=self.avg_train_domain_reward_per_sequence,
+             avg_train_data_reward_per_sequence=self.avg_train_data_reward_per_sequence,
              eval_avg_seq_length_during_training=self.eval_avg_seq_length_during_training,
              eval_percent_valid_during_training=self.eval_percent_valid_during_training)
 
@@ -610,9 +611,12 @@ class SmilesTutor(RLTutor):
     RLTutor.plot_rewards(self, image_name=image_name, directory=directory)
   
     reward_batch = self.output_every_nth
-    num_points = len(self.rewards_batched)
+    num_points = len(self.avg_train_domain_reward_per_sequence)
     x = [reward_batch * i for i in np.arange(num_points)]
-    total = [self.avg_train_domain_reward_per_sequence[i] + self.avg_train_data_reward_per_sequence[i] for i in range(num_points)]
+    if len(self.avg_train_data_reward_per_sequence) >= num_points:
+      total = [self.avg_train_domain_reward_per_sequence[i] + self.avg_train_data_reward_per_sequence[i] for i in range(num_points)]
+    else:
+      total = self.avg_train_domain_reward_per_sequence
 
     plt.figure()
     plt.plot(x, total)
@@ -621,6 +625,7 @@ class SmilesTutor(RLTutor):
     plt.xlabel('Training epoch')
     plt.ylabel('Avg reward per sequence')
     plt.legend(['Total', 'Domain', 'Reward RNN'], loc='best')
+    else:
     if image_name is not None:
       plt.savefig(directory + '/PerSeq' + image_name)
     else:
