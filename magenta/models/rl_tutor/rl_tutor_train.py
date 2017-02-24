@@ -131,7 +131,8 @@ def main(_):
                                         any_invalid_penalty=-5,
                                         end_invalid_penalty=0,
                                         end_valid_bonus=600,
-                                        repeated_C_penalty=-150)
+                                        repeated_C_penalty=-150,
+                                        end_valid_drug_quality_multiplier=10)
 
     print "Trying to load rnn checkpoint from", FLAGS.rnn_checkpoint_dir
     print "Or else:", backup_checkpoint_file
