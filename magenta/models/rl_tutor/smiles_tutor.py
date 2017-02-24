@@ -389,11 +389,13 @@ class SmilesTutor(RLTutor):
     if mol:
       end_length_bonus = min(self.reward_values.valid_length_multiplier * len(seq), 
                              self.reward_values.valid_length_bonus_cap)
+      quality_rewards = self.reward_values.end_valid_drug_quality_multiplier * sum_mol_rewards
       if verbose: 
         print "Applying final bonus for ending on VALID SEQUENCE!"
         print "Ending valid bonus:", self.reward_values.end_valid_bonus * self.reward_scaler
         print "Valid length bonus:", end_length_bonus * self.reward_scaler
-      return sum_mol_rewards + length_penalties + self.reward_values.end_valid_bonus + end_length_bonus + carbon_penalty
+        print "Ending valid multiplier will be applied to drug quality rewards. Total drug quality reward:", quality_rewards * self.reward_scaler
+      return quality_rewards + length_penalties + self.reward_values.end_valid_bonus + end_length_bonus + carbon_penalty
     else:
       end_length_penalty = self.reward_values.invalid_length_multiplier * len(seq)
       if verbose: 
@@ -546,6 +548,22 @@ class SmilesTutor(RLTutor):
     else:
         print "Invalid molecule :("
 
+  def load_stored_rewards(self, npz_file_name):
+    print "Attempting to load SMILES TUTOR saved reward values from file", npz_file_name
+    npz_file = np.load(npz_file_name)
+    self.rewards_batched = npz_file['train_rewards']
+    self.domain_rewards_batched = npz_file['train_domain_rewards']
+    self.data_rewards_batched = npz_file['train_data_rewards']
+    self.eval_avg_reward = npz_file['eval_rewards']
+    self.eval_avg_domain_reward = npz_file['eval_domain_rewards']
+    self.eval_avg_data_reward = npz_file['eval_data_rewards']
+    self.target_val_list = npz_file['target_val_list']
+    self.avg_train_domain_reward_per_sequence = npz_file['avg_train_domain_reward_per_sequence']
+    self.eval_avg_seq_length_during_training = npz_file['eval_avg_seq_length_during_training']
+    self.eval_percent_valid_during_training = npz_file['eval_percent_valid_during_training']
+    if 'avg_train_data_reward_per_sequence' in npz_file.keys():
+      self.avg_train_data_reward_per_sequence = npz_file['avg_train_data_reward_per_sequence']
+
   def save_stored_rewards(self, file_name):
     """Saves the models stored rewards over time in a .npz file.
 
@@ -564,6 +582,7 @@ class SmilesTutor(RLTutor):
              eval_data_rewards=self.eval_avg_data_reward,
              target_val_list=self.target_val_list,
              avg_train_domain_reward_per_sequence=self.avg_train_domain_reward_per_sequence,
+             avg_train_data_reward_per_sequence=self.avg_train_data_reward_per_sequence,
              eval_avg_seq_length_during_training=self.eval_avg_seq_length_during_training,
              eval_percent_valid_during_training=self.eval_percent_valid_during_training)
   
@@ -587,14 +606,21 @@ class SmilesTutor(RLTutor):
     RLTutor.plot_rewards(self, image_name=image_name, directory=directory)
   
     reward_batch = self.output_every_nth
-    num_points = len(self.rewards_batched)
+    num_points = len(self.avg_train_domain_reward_per_sequence)
     x = [reward_batch * i for i in np.arange(num_points)]
-    total = [self.avg_train_domain_reward_per_sequence[i] + self.avg_train_data_reward_per_sequence[i] for i in range(num_points)]
 
+    if len(self.avg_train_data_reward_per_sequence) >= num_points:
+      total = [self.avg_train_domain_reward_per_sequence[i] + self.avg_train_data_reward_per_sequence[i] for i in range(num_points)]
+      data_reward = [0] * num_points
+    else:
+      print "DATA REWARDS NOT AVAILABLE"
+      total = self.avg_train_domain_reward_per_sequence
+      data_reward = self.avg_train_domain_reward_per_sequence
+    
     plt.figure()
     plt.plot(x, total)
     plt.plot(x, self.avg_train_domain_reward_per_sequence)
-    plt.plot(x, self.avg_train_data_reward_per_sequence)
+    plt.plot(x, data_reward)
     plt.xlabel('Training epoch')
     plt.ylabel('Avg reward per sequence')
     plt.legend(['Total', 'Domain', 'Reward RNN'], loc='best')
