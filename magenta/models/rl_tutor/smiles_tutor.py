@@ -566,7 +566,7 @@ class SmilesTutor(RLTutor):
     self.eval_avg_domain_reward = npz_file['eval_domain_rewards']
     self.eval_avg_data_reward = npz_file['eval_data_rewards']
     self.target_val_list = npz_file['target_val_list']
-    self.avg_train_data_reward_per_sequence = npz_file['avg_train_data_reward_per_sequence']
+    self.avg_train_domain_reward_per_sequence = npz_file['avg_train_domain_reward_per_sequence']
     self.eval_avg_seq_length_during_training = npz_file['eval_avg_seq_length_during_training']
     self.eval_percent_valid_during_training = npz_file['eval_percent_valid_during_training']
 
