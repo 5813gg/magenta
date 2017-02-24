@@ -192,6 +192,7 @@ class SmilesRNN(object):
       inner_name = rl_tutor_ops.get_inner_scope(var.name)
       inner_name = rl_tutor_ops.trim_variable_postfixes(inner_name)
       if self.new_checkpoint:
+        # THIS SHIT DOES NOTHING
         if 'multi_rnn_cell' in inner_name and 'weights' in inner_name:
           var_dict['smiles_rnn/RNN/MultiRNNCell/Cell0/LSTMCell/W_0'] = var
         elif 'multi_rnn_cell' in inner_name and 'bias' in inner_name:

@@ -291,6 +291,10 @@ def get_inner_scope(scope_str):
   idx = scope_str.find('/')
   return scope_str[idx + 1:]
 
+def get_outer_scope(scope_str):
+  idx = scope_str.find('/')
+  return scope_str[0:idx]
+
 
 def trim_variable_postfixes(scope_str):
   """Trims any extra numbers added to a tensorflow scope string.

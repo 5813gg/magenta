@@ -1255,7 +1255,7 @@ class RLTutor(object):
     return next_obs
 
   def restore_from_directory(self, directory=None, checkpoint_name=None, 
-                             reward_file_name=None):
+                             reward_file_name=None, new_checkpoint=False):
     """Restores this model from a saved checkpoint.
 
     Args:
@@ -1281,7 +1281,12 @@ class RLTutor(object):
       return
     print "Attempting to restore from checkpoint", checkpoint_file
 
-    self.saver.restore(self.session, checkpoint_file)
+    if not new_checkpoint:
+      self.saver.restore(self.session, checkpoint_file)
+    else:
+      var_dict = self.get_variable_name_dict()
+      with self.graph.as_default():
+        saver = tf.train.Saver(var_list=var_dict)
 
     if reward_file_name is not None:
       npz_file_name = os.path.join(directory, reward_file_name)
@@ -1295,6 +1300,39 @@ class RLTutor(object):
       self.eval_avg_domain_reward = npz_file['eval_domain_rewards']
       self.eval_avg_data_reward = npz_file['eval_data_rewards']
       self.target_val_list = npz_file['target_val_list']
+
+  def get_variable_name_dict(self):
+    """Constructs a dict mapping the checkpoint variables to those in new graph.
+
+    Returns:
+      A dict mapping variable names in the checkpoint to variables in the graph.
+    """
+    var_dict = dict()
+    for var in self.variables():
+      #inner_name = rl_tutor_ops.get_inner_scope(var.name)
+      inner_name = rl_tutor_ops.trim_variable_postfixes(inner_name)
+      if 'MultiRNNCell' in inner_name and 'W_0' in inner_name:
+        network_name = rl_tutor_ops.get_outer_scope(inner_name):
+        var_dict[network_name + '/' + 'rnn/multi_rnn_cell/cell_0/lstm_cell/weights'] = var
+      elif 'MultiRNNCell' in inner_name and '/B' in inner_name:
+        network_name = rl_tutor_ops.get_outer_scope(inner_name):
+        var_dict[network_name + '/' + 'rnn/multi_rnn_cell/cell_0/lstm_cell/biases'] = var
+      else:
+        var_dict[inner_name] = var
+      
+    return var_dict
+
+  def variables(self):
+    """Gets names of all the variables in the graph belonging to this model.
+
+    Returns:
+      List of variable names.
+    """
+    with self.graph.as_default():
+      return [v for v in tf.all_variables() 
+              if v.name.startswith(self.scope) 
+              and 'Adam' not in v.name] #and 'global_step' not in v.name 
+
 
 def not_entirely_finite(matrix):
   return np.sum(np.isfinite(matrix)) != np.product(np.shape(matrix))
