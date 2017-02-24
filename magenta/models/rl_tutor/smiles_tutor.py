@@ -625,7 +625,7 @@ class SmilesTutor(RLTutor):
     plt.figure()
     plt.plot(x, total)
     plt.plot(x, self.avg_train_domain_reward_per_sequence)
-    plt.plot(x, self.avg_train_data_reward_per_sequence)
+    plt.plot(x, data_reward)
     plt.xlabel('Training epoch')
     plt.ylabel('Avg reward per sequence')
     plt.legend(['Total', 'Domain', 'Reward RNN'], loc='best')
