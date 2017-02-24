@@ -615,8 +615,12 @@ class SmilesTutor(RLTutor):
     x = [reward_batch * i for i in np.arange(num_points)]
     if len(self.avg_train_data_reward_per_sequence) >= num_points:
       total = [self.avg_train_domain_reward_per_sequence[i] + self.avg_train_data_reward_per_sequence[i] for i in range(num_points)]
+      data_reward = self.avg_train_data_reward_per_sequence
     else:
+      print "DATA REWARDS NOT AVAILABLE"
       total = self.avg_train_domain_reward_per_sequence
+      data_reward = self.avg_train_domain_reward_per_sequence
+
 
     plt.figure()
     plt.plot(x, total)
