@@ -185,4 +185,5 @@ if __name__ == '__main__':
   if len(sys.argv) > 1:
     alg = sys.argv[1]
     print "Received command line argument to use algorithm", alg
+    GLOBAL_ALG = alg
   tf.app.run()
