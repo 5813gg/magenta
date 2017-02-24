@@ -32,10 +32,10 @@ tf.app.flags.DEFINE_string('rnn_checkpoint_name', 'smiles_rnn_100_350001.ckpt',
                            'rnn_checkpoint_dir directory.')
 tf.app.flags.DEFINE_float('reward_scaler', 0.35,
                           'The weight placed on music theory rewards')
-tf.app.flags.DEFINE_string('algorithm', 'q',
+tf.app.flags.DEFINE_string('algorithm', 'pure_rl',
                            'The name of the algorithm to use for training the'
                            'model. Can be q, psi, or g')
-tf.app.flags.DEFINE_integer('training_steps', 4000000,
+tf.app.flags.DEFINE_integer('training_steps', 2500000,
                             'The number of steps used to train the model')
 tf.app.flags.DEFINE_integer('exploration_steps', 0,
                             'The number of steps over which the models'
@@ -127,7 +127,7 @@ def main(_):
                                         sa_multiplier=2,
                                         logp_multiplier=3,
                                         ringp_multiplier=5,
-                                        qed_multiplier=40,
+                                        qed_multiplier=50,
                                         shortish_seq=-25,
                                         short_seq=-200,
                                         longish_seq=0,
@@ -137,7 +137,8 @@ def main(_):
                                         any_invalid_penalty=-5,
                                         end_invalid_penalty=0,
                                         end_valid_bonus=600,
-                                        repeated_C_penalty=-150)
+                                        repeated_C_penalty=-150,
+                                        end_valid_drug_quality_multiplier=10)
 
     print "Trying to load rnn checkpoint from", FLAGS.rnn_checkpoint_dir
     print "Or else:", backup_checkpoint_file
