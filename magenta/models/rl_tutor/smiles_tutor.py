@@ -64,6 +64,7 @@ class SmilesTutor(RLTutor):
                # Pre-trained RNN to load and tune
                rnn_checkpoint_dir=None,
                rnn_checkpoint_file=None,
+               rnn_checkpoint_is_new_type=True,
                rnn_type='default',
                rnn_hparams=None,
 
@@ -132,6 +133,8 @@ class SmilesTutor(RLTutor):
     if rnn_hparams is None:
       rnn_hparams = rl_tutor_ops.smiles_hparams()
 
+    self.rnn_checkpoint_is_new_type = rnn_checkpoint_is_new_type
+
     RLTutor.__init__(self, output_dir, dqn_hparams=dqn_hparams, 
       reward_mode=reward_mode, reward_scaler=reward_scaler, 
       exploration_mode=exploration_mode, priming_mode=priming_mode,
@@ -184,6 +187,7 @@ class SmilesTutor(RLTutor):
       graph=self.graph, 
       scope='q_network', 
       checkpoint_file=self.rnn_checkpoint_file,
+      new_checkpoint=self.rnn_checkpoint_is_new_type,
       hparams=self.rnn_hparams,
       rnn_type=self.rnn_type,
       vocab_size=self.input_size)
@@ -194,6 +198,7 @@ class SmilesTutor(RLTutor):
       graph=self.graph, 
       scope='target_q_network', 
       checkpoint_file=self.rnn_checkpoint_file,
+      new_checkpoint=self.rnn_checkpoint_is_new_type,
       hparams=self.rnn_hparams,
       rnn_type=self.rnn_type,
       vocab_size=self.input_size)
@@ -204,6 +209,7 @@ class SmilesTutor(RLTutor):
       graph=self.graph, 
       scope='reward_rnn', 
       checkpoint_file=self.rnn_checkpoint_file,
+      new_checkpoint=self.rnn_checkpoint_is_new_type,
       hparams=self.rnn_hparams,
       rnn_type=self.rnn_type,
       vocab_size=self.input_size)

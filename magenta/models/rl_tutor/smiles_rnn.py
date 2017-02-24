@@ -45,7 +45,7 @@ class SmilesRNN(object):
   """
 
   def __init__(self, checkpoint_dir, graph=None, scope='smiles_rnn', checkpoint_file=None, 
-               hparams=None, rnn_type='default', checkpoint_scope='smiles_rnn', 
+               hparams=None, rnn_type='default', checkpoint_scope='smiles_rnn', new_checkpoint=True,
                load_training_data=False, data_file=SMILES_DATA+'250k_drugs_clean.smi', 
                vocab_file=SMILES_DATA+'zinc_char_list.json', pickle_file=SMILES_DATA+'smiles.p',
                output_every=1000, vocab_size=rl_tutor_ops.NUM_CLASSES_SMILE):
@@ -76,6 +76,7 @@ class SmilesRNN(object):
     self.session = None
     self.scope = scope
     self.checkpoint_scope = checkpoint_scope
+    self.new_checkpoint = new_checkpoint
     self.rnn_type = rnn_type
     self.checkpoint_dir = checkpoint_dir
     self.checkpoint_file = checkpoint_file
@@ -190,6 +191,13 @@ class SmilesRNN(object):
     for var in self.variables():
       inner_name = rl_tutor_ops.get_inner_scope(var.name)
       inner_name = rl_tutor_ops.trim_variable_postfixes(inner_name)
+      if self.new_checkpoint:
+        if 'multi_rnn_cell' in inner_name and 'weights' in inner_name:
+          var_dict['smiles_rnn/RNN/MultiRNNCell/Cell0/LSTMCell/W_0'] = var
+        elif 'multi_rnn_cell' in inner_name and 'bias' in inner_name:
+          var_dict['smiles_rnn/RNN/MultiRNNCell/Cell0/LSTMCell/B'] = var
+        else:
+          var_dict[self.checkpoint_scope + '/' + inner_name] = var
       if self.rnn_type == 'basic_rnn':
         if 'fully_connected' in inner_name and 'bias' in inner_name:
           # 'fully_connected/bias' has been changed to 'fully_connected/biases'
