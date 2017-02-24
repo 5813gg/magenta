@@ -546,6 +546,27 @@ class SmilesTutor(RLTutor):
     else:
         print "Invalid molecule :("
 
+  def save_stored_rewards(self, file_name):
+    """Saves the models stored rewards over time in a .npz file.
+
+    Args:
+      file_name: Name of the file that will be saved.
+    """
+    training_epochs = len(self.rewards_batched) * self.output_every_nth
+    filename = os.path.join(self.output_dir, 
+                            file_name + '-' + str(training_epochs))
+    np.savez(filename,
+             train_rewards=self.rewards_batched,
+             train_domain_rewards=self.domain_rewards_batched,
+             train_data_rewards=self.data_rewards_batched,
+             eval_rewards=self.eval_avg_reward,
+             eval_domain_rewards=self.eval_avg_domain_reward,
+             eval_data_rewards=self.eval_avg_data_reward,
+             target_val_list=self.target_val_list,
+             avg_train_domain_reward_per_sequence=self.avg_train_domain_reward_per_sequence,
+             eval_avg_seq_length_during_training=self.eval_avg_seq_length_during_training,
+             eval_percent_valid_during_training=self.eval_percent_valid_during_training)
+  
   def plot_rewards(self, image_name=None, directory=None):
     """Plots the cumulative rewards received as the model was trained.
 
