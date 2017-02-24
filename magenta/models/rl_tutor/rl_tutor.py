@@ -1310,7 +1310,7 @@ class RLTutor(object):
     var_dict = dict()
     for var in self.variables():
       #inner_name = rl_tutor_ops.get_inner_scope(var.name)
-      inner_name = rl_tutor_ops.trim_variable_postfixes(inner_name)
+      inner_name = rl_tutor_ops.trim_variable_postfixes(var.name)
       if 'MultiRNNCell' in inner_name and 'W_0' in inner_name:
         network_name = rl_tutor_ops.get_outer_scope(inner_name)
         var_dict[network_name + '/' + 'rnn/multi_rnn_cell/cell_0/lstm_cell/weights'] = var
