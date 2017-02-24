@@ -163,23 +163,24 @@ def smiles_dqn_hparams():
 
 def smiles_reward_values():
   """Generates the default reward values for the smiles model."""
-  return HParams(valid_length_multiplier=2,
-                valid_lenth_bonus_cap=300,
+  return HParams(valid_length_multiplier=0,
+                valid_lenth_bonus_cap=0,
                 invalid_length_multiplier=0,
-                sa_multiplier=0,
-                logp_multiplier=0,
-                ringp_multiplier=0,
-                qed_multiplier=0,
-                shortish_seq=-5,
-                short_seq=-30,
+                sa_multiplier=2,
+                logp_multiplier=3,
+                ringp_multiplier=5,
+                qed_multiplier=50,
+                shortish_seq=-25,
+                short_seq=-200,
                 longish_seq=0,
                 long_seq=0,
                 data_scalar=1,
-                any_valid_bonus=1,
-                any_invalid_penalty=1,
-                end_invalid_penalty=-10,
-                end_valid_bonus=10,
-                repeated_C_penalty=-100)
+                any_valid_bonus=5,
+                any_invalid_penalty=-5,
+                end_invalid_penalty=0,
+                end_valid_bonus=600,
+                repeated_C_penalty=-150,
+                end_valid_drug_quality_multiplier=10)
 
 def autocorrelate(signal, lag=1):
   """Gives the correlation coefficient for the signal's correlation with itself.
@@ -289,6 +290,11 @@ def get_inner_scope(scope_str):
   """
   idx = scope_str.find('/')
   return scope_str[idx + 1:]
+
+
+def get_outer_scope(scope_str):
+  idx = scope_str.find('/')
+  return scope_str[0:idx]
 
 
 def trim_variable_postfixes(scope_str):
