@@ -1290,16 +1290,19 @@ class RLTutor(object):
 
     if reward_file_name is not None:
       npz_file_name = os.path.join(directory, reward_file_name)
-      print "Attempting to load saved reward values from file", npz_file_name
-      npz_file = np.load(npz_file_name)
+      self.load_stored_rewards(npz_file_name)
 
-      self.rewards_batched = npz_file['train_rewards']
-      self.domain_rewards_batched = npz_file['train_domain_rewards']
-      self.data_rewards_batched = npz_file['train_data_rewards']
-      self.eval_avg_reward = npz_file['eval_rewards']
-      self.eval_avg_domain_reward = npz_file['eval_domain_rewards']
-      self.eval_avg_data_reward = npz_file['eval_data_rewards']
-      self.target_val_list = npz_file['target_val_list']
+  def load_stored_rewards(self, npz_file_name):
+    print "Attempting to load saved reward values from file", npz_file_name
+    npz_file = np.load(npz_file_name)
+
+    self.rewards_batched = npz_file['train_rewards']
+    self.domain_rewards_batched = npz_file['train_domain_rewards']
+    self.data_rewards_batched = npz_file['train_data_rewards']
+    self.eval_avg_reward = npz_file['eval_rewards']
+    self.eval_avg_domain_reward = npz_file['eval_domain_rewards']
+    self.eval_avg_data_reward = npz_file['eval_data_rewards']
+    self.target_val_list = npz_file['target_val_list']
 
   def get_variable_name_dict_new_checkpoint(self):
     """Constructs a dict mapping the checkpoint variables to those in new graph.
