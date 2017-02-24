@@ -58,11 +58,14 @@ tf.app.flags.DEFINE_integer('num_notes_in_melody', 32,
 tf.app.flags.DEFINE_string('midi_primer', '/home/natasha/Dropbox/Google/code/testdata/primer.mid',
                            'A midi file that can be used to prime the model')
 
+GLOBAL_ALG=None
 
-
-def main(alg=None):
-  if alg is None:
+def main(_):
+  if GLOBAL_ALG is None:
     alg = FLAGS.algorithm
+  else:
+    alg = GLOBAL_ALG
+    print "In main function, using algorithm", alg
 
   output_dir = os.path.join(FLAGS.output_dir, alg)
   output_ckpt = alg + '.ckpt'
@@ -182,4 +185,4 @@ if __name__ == '__main__':
   if len(sys.argv) > 1:
     alg = sys.argv[1]
     print "Received command line argument to use algorithm", alg
-  tf.app.run(alg)
+  tf.app.run()
