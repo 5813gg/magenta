@@ -625,7 +625,6 @@ class SmilesTutor(RLTutor):
     plt.xlabel('Training epoch')
     plt.ylabel('Avg reward per sequence')
     plt.legend(['Total', 'Domain', 'Reward RNN'], loc='best')
-    else:
     if image_name is not None:
       plt.savefig(directory + '/PerSeq' + image_name)
     else:
