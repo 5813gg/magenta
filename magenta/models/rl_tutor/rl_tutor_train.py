@@ -60,9 +60,12 @@ tf.app.flags.DEFINE_string('midi_primer', '/home/natasha/Dropbox/Google/code/tes
 
 
 
-def main(_):
-  output_dir = os.path.join(FLAGS.output_dir, FLAGS.algorithm)
-  output_ckpt = FLAGS.algorithm + '.ckpt'
+def main(alg=None):
+  if alg is None:
+    alg = FLAGS.algorithm
+
+  output_dir = os.path.join(FLAGS.output_dir, alg)
+  output_ckpt = alg + '.ckpt'
   backup_checkpoint_file = os.path.join(FLAGS.rnn_checkpoint_dir, 
                                         FLAGS.rnn_checkpoint_name)
 
@@ -89,7 +92,7 @@ def main(_):
                           note_rnn_hparams=hparams, 
                           num_notes_in_melody=FLAGS.num_notes_in_melody,
                           exploration_mode=FLAGS.exploration_mode,
-                          algorithm=FLAGS.algorithm)
+                          algorithm=alg)
   elif FLAGS.domain_application == 'smiles':
     import smiles_tutor
     #hparams = rl_tutor_ops.smiles_hparams()
@@ -147,7 +150,7 @@ def main(_):
                                   rnn_checkpoint_file=backup_checkpoint_file,
                                   rnn_hparams=hparams,
                                   exploration_mode=FLAGS.exploration_mode,
-                                  algorithm=FLAGS.algorithm) 
+                                  algorithm=alg) 
 
                                 
   tf.logging.info('Will save models, images, and melodies to: %s', rlt.output_dir)
@@ -156,18 +159,18 @@ def main(_):
   rlt.train(num_steps=FLAGS.training_steps/2, exploration_period=FLAGS.exploration_steps)
 
   tf.logging.info('\nHalfway through training. Saving model.')
-  rlt.save_model_and_figs(FLAGS.algorithm + '-halfway')
+  rlt.save_model_and_figs(alg + '-halfway', directory=FLAGS.output_dir + 'halfway_save')
 
   tf.logging.info('\nResuming training...')
   rlt.train(num_steps=FLAGS.training_steps/2, exploration_period=FLAGS.exploration_steps)
 
   tf.logging.info('\nFinished training. Saving output figures and renders.')
-  rlt.plot_rewards(image_name='Rewards-' + FLAGS.algorithm + '.eps')
+  rlt.plot_rewards(image_name='Rewards-' + alg + '.eps')
 
-  rlt.generate_sample(visualize_probs=True, title=FLAGS.algorithm,
-                                 prob_image_name=FLAGS.algorithm + '.png')
+  rlt.generate_sample(visualize_probs=True, title=alg,
+                                 prob_image_name=alg + '.png')
 
-  rlt.save_model_and_figs(FLAGS.algorithm)
+  rlt.save_model_and_figs(alg)
 
   tf.logging.info('\nCalculating domain metric stats for 1000 '
                   'compositions')
@@ -175,4 +178,8 @@ def main(_):
 
 
 if __name__ == '__main__':
-  tf.app.run()
+  alg = None
+  if len(sys.argv) > 1:
+    alg = sys.argv[1]
+    print "Received command line argument to use algorithm", alg
+  tf.app.run(alg)
