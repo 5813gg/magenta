@@ -64,7 +64,7 @@ class SmilesTutor(RLTutor):
                # Pre-trained RNN to load and tune
                rnn_checkpoint_dir=None,
                rnn_checkpoint_file=None,
-               rnn_checkpoint_is_new_type=True,
+               rnn_checkpoint_is_new_type=False,
                rnn_type='default',
                rnn_hparams=None,
 
