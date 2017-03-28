@@ -26,10 +26,10 @@ import networkx as nx
 
 from rdkit.Chem import MolFromSmiles, Descriptors, rdmolops
 
-import qed
+# import qed -> needs to be imported/installed from this library somehow: http://silicos-it.be.s3-website-eu-west-1.amazonaws.com/software/biscu-it/qed/1.0.1/qed.html
 import smiles_rnn
 import rl_tutor_ops
-import sascorer
+# import sascorer -> needs to be imported from this: https://github.com/rdkit/rdkit/blob/master/Contrib/SA_Score/sascorer.py -> code that calls it may need more exception handling
 from rl_tutor import RLTutor
 
 def reload_files():
@@ -39,7 +39,6 @@ def reload_files():
   reload(smiles_rnn)
   reload(rl_tutor_ops)
   reload(sascorer)
-  reload(qed)
 
 # Special token indicating EOS
 EOS = 0
