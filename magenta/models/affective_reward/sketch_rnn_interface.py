@@ -15,11 +15,13 @@ import tensorflow as tf
 import svgwrite
 from IPython.display import SVG, display
 
-flags = tf.app.flags.FLAGS
-
 import sketch_rnn_utils
 import sketch_rnn_train
 import sketch_rnn_model
+
+from absl import flags, app
+
+FLAGS = flags.FLAGS
 
 def reload_dependencies():
   reload(sketch_rnn_utils)
@@ -45,7 +47,7 @@ flags.DEFINE_integer(
     'num_repeats', 100,
     'Number of times to run the script')
 
-FLAGS = flags.FLAGS
+FLAGS = tf.flags.FLAGS
 
 
 LOCAL_MODELS = [{'name':'aaron_sheep', 'path':'aaron_sheep/layer_norm/'},
