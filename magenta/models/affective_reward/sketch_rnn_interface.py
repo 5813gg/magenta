@@ -19,14 +19,17 @@ import sketch_rnn_utils
 import sketch_rnn_train
 import sketch_rnn_model
 
-from absl import flags, app
+#from absl import flags, app
 
-FLAGS = flags.FLAGS
+#FLAGS = flags.FLAGS
 
 def reload_dependencies():
   reload(sketch_rnn_utils)
   reload(sketch_rnn_train)
   reload(sketch_rnn_model)
+
+flags = tf.app.flags
+FLAGS = tf.app.flags.FLAGS
 
 flags.DEFINE_string(
     'models_location', 'local',
@@ -46,8 +49,6 @@ flags.DEFINE_float(
 flags.DEFINE_integer(
     'num_repeats', 100,
     'Number of times to run the script')
-
-FLAGS = tf.flags.FLAGS
 
 
 LOCAL_MODELS = [{'name':'aaron_sheep', 'path':'aaron_sheep/layer_norm/'},
@@ -335,4 +336,4 @@ def main(unused_argv):
     print('The script has run', i, 'times. Only', num_left, 'left to go')
 
 if __name__ == '__main__':
-  app.run(main)
+  tf.app.run(main)
